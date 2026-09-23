@@ -158,7 +158,7 @@
   .species-btn.active { border-color: #fff; }
   .modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:14px; flex-wrap:wrap; }
   .modal select { background: var(--panel2); color: var(--text); border:1px solid var(--border); border-radius:6px; padding:3px 6px; }
-  .info-modal ul, .info-modal ol { margin:6px 0 10px 18px; line-height:1.8; }
+  .info-modal ul, .info-modal ol { margin:6px 0 10px; padding-left:1.4em; line-height:1.8; }
   .ask-text { white-space: pre-line; }
 
   footer { text-align:center; color: var(--text-dim); font-size:11px; margin-top:24px; padding-bottom:20px; }
@@ -175,20 +175,15 @@
   /* はじめての方へ(使い方の流れ) */
   .guide { border:1px solid var(--border); border-radius:8px; background: var(--panel2); padding:8px 12px; margin:0 0 12px; font-size:13px; }
   .guide summary { cursor:pointer; font-weight:700; }
-  .guide ol { margin:4px 0 6px; padding-left:1.6em; line-height:1.7; }
+  .guide ol { margin:4px 0 6px; padding-left:1.4em; line-height:1.7; }
   .guide .guide-lead { margin:8px 0 4px; }
   .guide ol ul { margin:2px 0 4px; padding-left:1.3em; list-style: disc; }
   .guide .guide-h { margin:8px 0 0; font-weight:700; }
   /* 「手順を探す」の2つのボタンの違い */
-  .search-compare { width:100%; table-layout:fixed; border-collapse:collapse; font-size:12px; margin:0 0 8px; color: var(--text-dim); }
-  .search-compare th, .search-compare td { border:1px solid var(--border); padding:4px 6px; text-align:left; vertical-align:top; }
-  .search-compare tr:first-child th { color: var(--text); white-space: normal; }
-  .search-compare th { font-weight:600; white-space:nowrap; }
-  .search-about { margin:0 0 8px; }
-  .search-about > summary { cursor:pointer; font-size:13px; font-weight:700; color: var(--text); margin-bottom:6px; }
   .warn-why { margin-top:4px; }
   .warn-why summary { cursor:pointer; color: var(--text-dim); font-size:12px; }
-  .warn-why ul { margin:4px 0 0 18px; line-height:1.7; }
+  .warn-why ul { margin:4px 0 0; padding-left:1.4em; line-height:1.7; }
+  .collapse-bar { position:fixed; left:50%; transform:translateX(-50%); bottom:10px; z-index:60; opacity:.94; box-shadow:0 2px 8px #0008; }
   .warn-note { border:1px solid var(--danger); border-radius:6px; padding:6px 10px; margin:0 0 8px; font-size:12px; color: var(--text); background: rgba(224,87,76,.08); }
   .warn-note b { color: var(--danger); }
   .cfg-h { font-size:14px; margin:16px 0 4px; }
@@ -224,7 +219,7 @@
   <header>
     <div>
       <h1>スラだんパズルナビゲーター <span class="sign">created by シナっぷ</span></h1>
-      <div class="ver">版 2026-09-23</div>
+      <div class="ver">version 2026-09-23</div>
       <div class="sub">ゲームと同じ盤面を入力して1手ずつ進められるシミュレーターです。MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖も探せます。</div>
     </div>
     <div class="toolbar">
@@ -238,31 +233,21 @@
 
   <details class="guide" id="quickGuide">
     <summary>はじめての方へ（クイックガイド）</summary>
-    <p class="guide-lead">使い方は大きく2通りあります。</p>
-    <p class="guide-h">① シミュレーターとして使う（1手ずつ最後まで試す）</p>
+    <p class="guide-lead">使い方は、目的に合わせて大きく2通りあります。</p>
+    <p class="guide-h">■ ① シミュレーターとして自由に試す</p>
     <ol>
-      <li>試したい盤面と残り手数を入力して、「この盤面で始める」を押します。入力を省いたマスは「?」になります。</li>
-      <li>入替や削除を1手ずつ打つと、そのたびにマッチの結果・盤面・残り手数が更新されます。補充されたマスを入力して進めれば、何手先まででも続けて試せます（補充されたマスの入力を省いて「?」のまま進めることもできます）。</li>
-      <li>「1手戻す<span class="key"> （U）</span>」で何手でも戻れるので、別の手順を試して比べられます。</li>
-      <li>斜め入替や補充のレベルなど、ほかのゲームモードで試したいときは ⚙ 設定で選べます。</li>
+      <li>試したい盤面と残り手数を入力し、「この盤面で始める」を押します（入力を省いたマスは「?」になります）。</li>
+      <li>「入替<span class="key"> （S）</span>」や「削除<span class="key"> （D）</span>」を1手ずつ打つと、マッチ結果や残り手数が更新されます。</li>
+      <li>補充されたマスを入力して進めれば、何手先まででも試せます。「1手戻す<span class="key"> （U）</span>」で何度でもやり直せるので、色々な手順を比べてみてください。</li>
     </ol>
-    <p class="guide-h">② MAX布陣づくりのサポートに使う</p>
+    <p class="guide-h">■ ② MAX布陣づくりのサポートに使う</p>
     <ol>
-      <li>⚙ 設定でゲームモードを合わせ、目標MAX布陣を選びます（「🔗 連鎖を探す」だけなら、選ばなくても使えます）。</li>
-      <li>手を相談したい場面で、今の盤面と残り手数を入力して、「この盤面で始める」を押します。</li>
-      <li>手順を探します。
-        <ul>
-          <li>🔄 盤面を進める手を探す … 目標MAX布陣に必要な素材を、少ない手数で増やせる手順を探します。ツールのサポートをフルに活用したいときに向いています。駒の配置は計算に入れていないので、どこに配置するかはご自身で判断する必要があります。</li>
-          <li>🔗 連鎖を探す … 手数が増える連鎖の手順を探します。序盤の大きな連鎖を狙うときや、まず手軽に試したいときに向いています。</li>
-        </ul>
-      </li>
-      <li>続けて使うときは、盤面をゲームに合わせます。
-        <ul>
-          <li>ゲームと同じ手を打ち、補充されたマスを入力して「確定」を押します。1手ずつ合わせておくと、次に探すときに入力し直さずに済みます。手順の途中でも、補充を見てから探し直せます。</li>
-          <li>盤面が少し変わっただけなら「盤面を直す<span class="key"> （E）</span>」で直し、大きく変わったら「リセット」して入力し直します。</li>
-        </ul>
-      </li>
+      <li>⚙ 設定でゲームモードを合わせ、「目標MAX布陣」を選びます。</li>
+      <li>手を相談したい盤面・残り手数を入力し、「この盤面で始める」を押します。</li>
+      <li>状況に合わせて「🔄 盤面を進める手を探す」か「🔗 連鎖を探す」を選び、ツールに手順を探させます。</li>
+      <li>良い手が見つかったら実際のゲームで打ち、新しく降ってきた駒をツールに入力して「確定」を押して進めます。</li>
     </ol>
+    <p class="note">※盤面が少しずれたら「盤面を直す<span class="key"> （E）</span>」で修正し、大きく変わった時は「リセット」して最初から入力し直してください。</p>
   </details>
 
   <div class="layout">
@@ -288,25 +273,7 @@
             <select id="chainDepth"><option value="3" selected>3手まで（1秒ほど）</option><option value="4">4手まで（数十秒）</option></select>
           </label>
         </div>
-        <details class="search-about"><summary>2つの探し方の違い</summary>
-        <div class="note" style="margin:0 0 6px;">今の盤面から、入替と削除を3手（または4手）まで組み合わせた手順をすべて調べて、よい手順を並べます。</div>
-        <table class="search-compare">
-          <colgroup><col style="width:7.5em"><col><col></colgroup>
-          <tr><th></th><th>🔄 盤面を進める手を探す</th><th>🔗 連鎖を探す</th></tr>
-          <tr><th>探すもの</th><td>目標MAX布陣に必要な素材が増える手順。連鎖で手数が減らない手順を先に、次に1手あたりの素材の増加の期待値が大きい順に表示します。</td><td>連鎖で手数が増える手順。目標MAX布陣に必要な素材が増えない手順も表示します。</td></tr>
-          <tr><th>目標MAX布陣</th><td>登録が必要</td><td>なくても使える（登録すると、目標MAX布陣に必要な素材が減る連鎖は表示しません）</td></tr>
-          <tr><th>おすすめ</th><td>MAX布陣を決めているとき</td><td>MAX布陣を決めていないとき・とにかく手数を増やしたいとき</td></tr>
-        </table>
-        <div class="warn-note"><b>⚠ 「盤面を進める手を探す」は、目標MAX布陣に必要な素材の数を見て手順を選びます。</b>駒の配置は計算に入れていないので、表示どおりに打つだけでは目標MAX布陣の形になりません。どこに配置するかは、ご自身で判断する必要があります。
-          <details class="warn-why"><summary>ⓘ 駒の相対的な位置を見ない理由</summary>
-            <ul>
-              <li>1手の候補は、入替と削除でおよそ100通りあります。3手先まで読むだけで約90万通り、補充される駒の出方まで含めると、さらにその何十万倍にもなります。</li>
-              <li>しかも、ゲームの始めから終わりまでは、長いと百手を超えます。いま駒をどこに置くのが良いかは、そのずっと先まで打ってみないと分かりません。</li>
-              <li>人は「このあたりに集めておけば、あとで使える」と感覚で判断できます。これをコンピューターにさせるには、大量の対局から盤面の良し悪しを学ばせる、囲碁や将棋のAIと同じような開発が必要になります。</li>
-              <li>そこでこのツールは、コンピューターが得意な「素材の数を数えること」と「補充の運の平均を出すこと」を受け持ち、駒の相対的な位置の判断は人に任せる形にしました。</li>
-            </ul>
-          </details></div>
-        </details>
+        <div class="warn-note"><b>⚠ ツールは「必要な素材を、手数をなるべく使わずに集めること」だけを考えています。</b>示された手を打ち続けてもMAX布陣は完成しません。MAX布陣の形に配置する手は、ご自身で判断して打ってください。</div>
         <div class="chain-meta" id="chainProgress" style="margin-bottom:8px;"></div>
         <div id="chainList" style="margin:0 0 10px;"></div>
       </div>
@@ -327,6 +294,7 @@
     </div>
   </div>
 
+  <button id="btnChainCollapse" class="small collapse-bar" style="display:none;"></button>
   <footer>ブラウザ内で完結・データはこのブラウザだけに自動保存されます（ブラウザのデータを消すと消えます。残しておきたい対局は「📝 記録を書き出す」で書き出してください）。</footer>
 </div>
 
@@ -1056,7 +1024,7 @@ const CHAIN_SCREEN_SAMPLES = 4;
 const CHAIN_SCREEN_SAMPLES_LAST4 = 2;   // 「4手まで」の4手目だけは大ざっぱな比べを2通りにする(時間を抑えるため)
 const CHAIN_SCREEN_MARGIN = -1;   // 荒い試しの差し引きがこれ以上の手順は、全部を確かめ直す
 const CHAIN_REFINE_SAMPLES = 32;
-const CHAIN_SEARCH_SHOW = 5;
+const CHAIN_SEARCH_SHOW = 3;
 const chainListEl = document.getElementById('chainList');
 const chainProgressEl = document.getElementById('chainProgress');
 const btnChainSearch = document.getElementById('btnChainSearch');
@@ -1292,10 +1260,18 @@ function formationLinesHtml(finalGrid) {
   return html;
 }
 let chainShown = [];
+// 一覧を全部出している間だけ、画面の下に「上位◯件だけ表示」を貼り付ける(スマホで下までスクロールせずに戻せるように)
+function setChainCollapse(show, onCollapse) {
+  const b = document.getElementById('btnChainCollapse');
+  b.textContent = `▲ 上位${CHAIN_SEARCH_SHOW}件だけ表示`;
+  b.style.display = show ? '' : 'none';
+  b.onclick = show ? () => { onCollapse(); chainListEl.scrollIntoView({ block: 'start' }); } : null;
+}
 // 盤面に「?」があるときに結果の上に出す一言
 let chainUnknownNote = '';
 function renderChainOptions(list, sec, showAll) {
   renderChainOptionsInner(list, sec, showAll);
+  setChainCollapse(!!showAll && chainShown.length > CHAIN_SEARCH_SHOW, () => renderChainOptions(list, sec, false));
   if (chainUnknownNote) chainListEl.insertAdjacentHTML('afterbegin', chainUnknownNote);
   // 布陣を登録しているときは、布陣を崩す連鎖を除いていることを見出しに出す
   const guarded = currentTargetPattern() ? [currentTargetPattern()].concat(laterTargetPatterns()) : [];
@@ -1653,6 +1629,7 @@ async function findAdvanceOptions(grid, onProgress) {
 }
 function renderAdvanceOptions(list, sec, showAll) {
   renderAdvanceOptionsInner(list, sec, showAll);
+  setChainCollapse(!!showAll && chainShown.length > CHAIN_SEARCH_SHOW, () => renderAdvanceOptions(list, sec, false));
   if (chainUnknownNote) chainListEl.insertAdjacentHTML('afterbegin', chainUnknownNote);
   chainListEl.insertAdjacentHTML('afterbegin', `<div class="chain-meta" style="font-weight:700;color:var(--text);margin-bottom:6px;">🔄 盤面を進める手を探すの結果（${chainSearchDepth}手まで）</div>`);
 }
@@ -2378,6 +2355,7 @@ function restoreSearchResults() {
   return true;
 }
 function clearChainResults() {
+  setChainCollapse(false);
   chainUnknownNote = '';
   chainListEl.innerHTML = '';
   chainShown = [];
@@ -3096,157 +3074,88 @@ function openInfoModal(html) {
 }
 document.getElementById('btnHowItWorks').addEventListener('click', () => openInfoModal(`
   <h2>手順を探す</h2>
-  <p>今の盤面で、次に打つとよい手順を探します。</p>
-  <p>計算に使うのは、素材の数と手数だけです。駒の配置は計算に入れていないので、どこに配置するかはご自身で判断する必要があります。</p>
-  <p style="margin-top:10px;font-weight:700;">2つの探し方</p>
+  <p>今の盤面から数手先までをすべて計算し、次に打つとよいおすすめの手順を探します。</p>
+  <p style="margin-top:10px;font-weight:700;">💡【重要】ツールを使いこなすコツ（配置はご自身のセンスで）</p>
+  <p>ツールは「素材の数」と「手数」の計算は得意ですが、駒の配置（位置関係）までは計算に入れていません。表示された手順を参考に、最終的に「どこに配置するか」はご自身の判断で組み立ててください。</p>
+  <p style="margin-top:10px;font-weight:700;">■ 2つの探し方の違い</p>
   <ul>
-    <li><b>🔄 盤面を進める手を探す</b>: 目標MAX布陣に必要な素材を、少ない手数で増やせる手順を探します。目標MAX布陣の登録が必要です。</li>
-    <li><b>🔗 連鎖を探す</b>: 連鎖で手数が増える手順を探します。目標MAX布陣を登録していなくても使えます。</li>
+    <li><b>🔄 盤面を進める手を探す</b>: 目標に必要な素材が増える手順を探します（目標MAX布陣の登録が必要）。特定のMAX布陣を作りたいときに。</li>
+    <li><b>🔗 連鎖を探す</b>: 連鎖で手数が増える手順を探します（登録なしでも使用可。登録すると、目標に必要な素材が減る連鎖は除外します）。とにかく手数を増やしたい・大連鎖を狙いたいときに。</li>
   </ul>
-  <p style="margin-top:10px;font-weight:700;">言葉の意味</p>
+  <p style="margin-top:10px;font-weight:700;">■ 検索結果（カード）の見方</p>
   <ul>
-    <li><b>必要な素材</b>: 目標MAX布陣を完成させるのに必要な駒です。例えば、プリセットの4MAX（素材A）では、A1が8個とA2が13個です。</li>
-    <li><b>Lv1換算</b>: 素材の量を、Lv1の駒の数にそろえて数える方法です。Lv2の駒1個はLv1の3個分、Lv3の駒1個はLv1の9個分として数えます。</li>
-    <li><b>素材の増加</b>: 盤面にある必要な素材が、手順を打つ前と比べて、Lv1換算で何個分増えるかです。必要な数を超えた分は数えません。</li>
-    <li><b>事故</b>: 補充された駒がマッチして、盤面にある必要な素材が減ることです。目標MAX布陣では使わないレベルの駒ができることも含みます（例: A2が3個マッチしてA3ができる）。</li>
+    <li><b>1手あたり／手数を使わずに ＋◯個</b>: 手順を打った結果、素材がどれくらい増えるかの「期待値」です（Lv1の駒に換算した個数。Lv2＝3個分）。</li>
+    <li><b>差し引き ＋◯手</b>: 手順を打ち終わったあと、手数が何手増えるかの期待値です。</li>
+    <li><b>⚠ 事故の確率</b>: 降ってきた駒が勝手に揃ってしまい、必要な素材が減ってしまう（事故）確率です。5%以上の時は赤く警告します。</li>
+    <li><b>⚠ そろえたマスを動かします</b>: 目標の配置にすでにある駒を動かしてしまう手順です（それでも上位に出る場合は、それを上回る素材増加が見込める手順です）。</li>
+    <li><b>「この手順を打つ」ボタン</b>: 1手目から順に打てます。途中で探し直すこともできるので、降ってきた駒を見てから続きを決められます。</li>
   </ul>
-  <p style="margin-top:10px;font-weight:700;">カードの見方</p>
+  <p style="margin-top:10px;font-weight:700;">■ 検索結果の並び順</p>
   <ul>
-    <li><b>「1手あたり +0.8個」</b>: 残り手数が1手減るごとに、素材の増加がLv1換算で0.8個分ある、という期待値です。</li>
-    <li><b>「手数を使わずに +1.2個」</b>: 連鎖で手数が増えるので、残り手数が減らない手順です。素材の増加の期待値は、Lv1換算で1.2個分です。</li>
-    <li><b>「差し引き +2.3手」</b>: 手順を打ったあと、残り手数が何手増えるかの期待値です。</li>
-    <li><b>「⚠ 事故の確率」</b>: この手順で事故が起きる確率です。5%以上のときは、赤い帯で表示します。</li>
-    <li><b>「⚠ そろえたマスを動かします」</b>: 目標MAX布陣と同じ位置に、同じ素材・同じレベルで配置した駒を動かしてしまう手順です。その分を差し引いて並べているので、それでも上位に出る手順は、それだけ素材が多く増える手順です。</li>
-    <li><b>「途中で補充あり」</b>: 手順の途中で補充があるので、補充された駒しだいで、表示と違う盤面になることがあります。</li>
-    <li><b>盤面の図</b>: ①②③は打つ順番です。赤い枠は入れ替えるマス、赤い✕は削除するマスです。最後の図の「?」は、補充されるマスです。</li>
-    <li><b>「この手順を打つ」ボタン</b>: 1手目が盤面に印で表示されます。「① を打つ」ボタンを押すか、盤面で同じ手を打つと、次の手に進みます。</li>
+    <li><b>盤面を進める手を探す</b>: 「手数を使わずに」の手順を優先し、その中で素材の増加の期待値が大きい順に並びます。そのあとに、「1手あたり」の期待値が大きい順で続きます。</li>
+    <li><b>連鎖を探す</b>: 「差し引き」の期待値が大きい順に並びます。</li>
   </ul>
-  <p style="margin-top:10px;font-weight:700;">並び順</p>
-  <ul>
-    <li><b>盤面を進める手を探す</b>: 「手数を使わずに」の手順が先で、素材の増加の期待値が大きい順です。そのあとに、「1手あたり」の期待値が大きい順で並びます。</li>
-    <li><b>連鎖を探す</b>: 「差し引き」の期待値が大きい順です。</li>
-    <li>期待値がほぼ同じ手順どうしの並べ方は、下の「詳しくアルゴリズムを知りたい方へ」に書いています。</li>
-  </ul>
-  <p style="margin-top:10px;font-weight:700;">表示しない手順</p>
-  <ul>
-    <li>補充された駒に関係なく、必ず事故になる手順</li>
-    <li>MAXの駒（最大レベルの駒）を削除する手順</li>
-    <li>途中で残り手数がなくなる手順</li>
-    <li>連鎖を探すでは、差し引きがマイナスになる手順</li>
-    <li>1手ずつ打って、補充を見てから次を決めたほうがよい手順（例: 最後の手が、何もマッチしない削除になっている手順。互いに関係のない手を並べただけの手順）</li>
-  </ul>
+  <p class="note">※必ず事故になる手順、MAXの駒を削除する手順、途中で手数が尽きる手順などは表示しません。</p>
   <details class="warn-why" style="margin-top:12px;"><summary style="font-size:14px;font-weight:700;color:var(--text);">詳しくアルゴリズムを知りたい方へ</summary>
-    <p style="margin-top:10px;font-weight:700;">計算の流れ</p>
-    <ol>
-      <li>打てる手順を、すべて候補にします。入替と削除を3手まで組み合わせると、約90万通りになります（「4手まで」を選んだときや、斜め入替ありのときは、さらに多くなります）。</li>
-      <li>補充される駒が、A〜Dのどの素材になるかは分かりません。すべての組み合わせを計算すると、補充が10マスの手順では約100万通りになり、1つの手順だけで数十秒かかることがあります。そこで、期待値を次の2段階で簡便に計算します。</li>
-      <li>1段階目: 補充される駒1個につき、目標の素材が来る確率は1/4です。そこで、「補充されるマスの数 × 1/4個」を素材の増加に加えて、簡便的な期待値を出します。この段階では、補充された駒がさらにマッチする場合は計算に入れていません。この期待値が大きい順に、150件を選びます。</li>
-      <li>2段階目: 選んだ150件を、補充される駒の素材をランダムに決めて、それぞれ32回打ってみます（シミュレーション）。上位の20件は256回まで打ちます。補充された駒によるマッチや連鎖も、ここでは計算に入ります。カードの数字と並び順は、この平均によります。</li>
-      <li>連鎖を探すも同じ流れです。ただし1段階目は、最後の手を4回シミュレーションした平均で、差し引きを出します。この段階の数字は回数が少なく誤差が大きいので、少しマイナスでも本当はプラスかもしれない手順を落とさないよう、差し引きが−1手以上の手順をすべて2段階目に回します。2段階目で差し引きがマイナスになった手順は表示しません。</li>
-    </ol>
-    <p style="margin-top:10px;font-weight:700;">4個マッチや5個マッチがあるのに、Lv2をLv1の3個分と数える理由</p>
+    <p style="margin-top:10px;">ツール内部で行っている計算や独自のルールの詳細です。</p>
+    <p style="margin-top:10px;font-weight:700;">探索と期待値計算の流れ</p>
+    <p>打てる手順をすべて候補にします（3手で約90万通り）。すべてを厳密に計算すると時間がかかりすぎるため、2段階で計算しています。まず1段階目で「補充される駒の確率は1/4」として簡便な期待値を出し、上位150件を抽出します。続く2段階目で、その150件に対しランダムな補充を加えたシミュレーションを32回（上位20件は256回）行い、その平均値から最終的な結果を算出しています。</p>
+    <p style="margin-top:10px;font-weight:700;">素材の数え方（Lv1換算）と多重マッチの評価</p>
+    <p>最も多く駒を消費する「3個マッチ」を基準とし、不足分を少なく見積もらないよう Lv2＝Lv1の3個分（Lv3＝9個分）として換算します。4個・5個マッチが起きた場合は、換算倍率を変えるのではなく「素材の増加分」として直接上乗せ（4個なら+2個分、5個なら+4個分）するため、多重マッチを含む手順ほど上位に評価されます。</p>
+    <p style="margin-top:10px;font-weight:700;">表示順や評価の補正</p>
+    <p>シミュレーションの誤差（0.05個未満の差）で期待値がほぼ同じ手順が並んだ場合は、セオリーに従い「目標でない素材のレベルの高い駒（マッチしにくい駒）を削除する手順」を上位にします。また、目標の配置にすでにある駒を動かしてしまう手順は、その駒の分だけ素材の増加を少なく数える補正をかけています。</p>
+    <p style="margin-top:10px;font-weight:700;">駒の相対的な位置を見ない理由</p>
     <ul>
-      <li>Lv2の駒1個を作るのに必要なLv1の駒は、マッチのしかたで変わります。3個マッチなら3個でLv2が1個、4個マッチなら4個でLv2が2個、5個マッチなら5個でLv2が3個できます。</li>
-      <li>このツールは、いちばん多くの駒を使う3個マッチを基準にして、Lv2の駒1個をLv1の3個分と数えます。こうすると、目標MAX布陣を完成させるのに足りない素材の量を、少なく見積もることがありません。</li>
-      <li>4個・5個マッチの得は、換算の倍率を変えるのではなく、「素材の増加」として上乗せします。4個マッチなら、Lv1換算で4個分が6個分になるので2個分増えます。5個マッチなら、5個分が9個分になるので4個分増えます。そのため、4個・5個マッチが起きる手順ほど、上位に並びます。</li>
-      <li>反対に、目標の素材の3個マッチは、4個マッチにできたはずの駒を使ってしまうことがあるので、1回ごとにLv1換算で1個分少なく数えます（Lv2の3個マッチなら3個分）。</li>
-      <li>Lv3以上も同じ考え方で、レベルが1つ上がるごとに3倍です。</li>
-    </ul>
-    <p style="margin-top:10px;font-weight:700;">そろえたマスを動かす手順の数え方</p>
-    <ul>
-      <li>目標MAX布陣と同じ位置に、同じ素材・同じレベルで配置した駒を動かす手順は、動かす駒の分（Lv1換算）だけ、素材の増加を少なく数えます。例えば、A2を1個動かす手順なら、3個分少なく数えます。</li>
-      <li>上のマスがまだ目標MAX布陣どおりでない列の駒は、あとで上のマスを直すときにどうせ動くので、少なく数えません。</li>
-    </ul>
-    <p style="margin-top:10px;font-weight:700;">期待値がほぼ同じ手順どうしの並べ方</p>
-    <ul>
-      <li>期待値の差が0.05個未満のときは、シミュレーションの誤差と同じくらいの差なので、期待値では順番を決めません。</li>
-      <li>代わりに、目標でない素材のレベルの高い駒を削除する手順を先にします。レベルの高い駒はマッチしにくいので、先に削除するのがセオリーだからです。</li>
+      <li>1手の候補は、入替と削除でおよそ100通りあります。3手先まで読むだけで約90万通り、補充される駒の出方まで含めると、さらにその何十万倍にもなります。</li>
+      <li>しかも、ゲームの始めから終わりまでは、長いと百手を超えます。いま駒をどこに置くのが良いかは、そのずっと先まで打ってみないと分かりません。</li>
+      <li>人は「このあたりに集めておけば、あとで使える」と感覚で判断できます。これをコンピューターにさせるには、大量の対局から盤面の良し悪しを学ばせる、囲碁や将棋のAIと同じような開発が必要になります。</li>
+      <li>そこでこのツールは、コンピューターが得意な「素材の数を数えること」と「補充の運の平均を出すこと」を受け持ち、駒の相対的な位置の判断は人に任せる形にしました。</li>
     </ul>
     <p style="margin-top:10px;font-weight:700;">数字の確かさと限界</p>
-    <ul>
-      <li>マッチ、連鎖、残り手数の計算は、いくつかの実際の対局の記録で、盤面と残り手数が1マスも違わないことを確かめています。すべての場面を確かめたわけではないので、ゲームと違う結果になったときは、「盤面を直す」でゲームに合わせてください。</li>
-      <li>表示する数字はシミュレーションの平均なので、正確な期待値とは0.05個程度の誤差があります。</li>
-      <li>見ているのは3手先（「4手まで」なら4手先）までです。</li>
-      <li>補充される駒は、A〜Dの素材が同じ確率で来るものとして計算しています。</li>
-      <li>1段階目では補充による連鎖を計算に入れていないので、補充の連鎖があって初めて素材が増える手順は、150件に入らないことがあります。</li>
-      <li>PvPモードでは、打った手と残り手数の合計が170手までと決まっているため、それを超える分は、連鎖による手数の増加に数えません。</li>
-    </ul>
+    <p>表示する数字はシミュレーションの平均なので、0.05個程度の誤差があります。見ているのは3手先（「4手まで」なら4手先）までです。</p>
   </details>
 `));
 document.getElementById('btnSimHelp').addEventListener('click', () => openInfoModal(`
   <h2>シミュレーター</h2>
-  <p>ゲームと同じ盤面をこの画面に入力して、ゲームと同じ手を1手ずつ打っていきます。残り手数はツールが数えてくれます。</p>
-  <p style="margin-top:10px;font-weight:700;">使い方の流れ</p>
+  <p>ゲーム画面と全く同じ盤面を入力して、1手ずつ仮想で打つことができるシミュレーターです。</p>
+  <p style="margin-top:10px;font-weight:700;">■ 基本の使い方の流れ</p>
   <ol>
-    <li>最初の盤面をゲーム画面どおりに入力し、ゲーム画面の残り手数を入れて「この盤面で始める」を押します。気になる所だけ入力して始めることもできます（入力しなかったマスは「?」のままです）。</li>
-    <li>「入替<span class="key"> （S）</span>」か「削除<span class="key"> （D）</span>」を選んで、ゲームと同じ手を打ちます。</li>
-    <li>補充されたマスが「?」になります。ゲーム画面のマッチが止まったら、その盤面どおりに入力します。補充された駒でマッチが起きたときは、「?」以外の変わったマスも入力し直します。</li>
-    <li>ゲーム画面の残り手数を確かめて「確定」を押します。</li>
+    <li><b>はじめの盤面を入力する</b><br>ゲーム画面どおりに盤面と残り手数を入力し、「この盤面で始める」を押します。<br>（※入力を省いたマスは「?」になります。「?」はどの駒ともマッチしない仮のマスとして扱われます）</li>
+    <li><b>ゲームと同じ手を打つ</b><br>「入替<span class="key"> （S）</span>」か「削除<span class="key"> （D）</span>」を選んで、シミュレーター上で手を打ちます。</li>
+    <li><b>補充されたマスを確定する</b><br>新しく降ってきた駒（「?」になったマス）を入力し、「確定<span class="key"> （Enter）</span>」を押します。</li>
   </ol>
-  <p style="margin-top:10px;font-weight:700;">「?」のマス</p>
+  <p style="margin-top:10px;font-weight:700;">■ ゲームとずれたり、間違えたときは？</p>
   <ul>
-    <li>「?」は、入力を省いたマスです。素材とレベルを選ぶ欄の「?」<span class="key">（キー X）</span>で置けます。最初の盤面は全部「?」で、入力したマスだけが決まります。間違えて入力したマスも、「?」に戻せます。</li>
-    <li>「?」のマスも削除・入替できます。「?」はどの駒ともマッチしない駒として計算するので、実際のゲームとは結果が違うことがあります。</li>
+    <li>入力間違いを直したい → 「盤面を直す<span class="key"> （E）</span>」で修正できます。</li>
+    <li>1手前の状態に戻したい → 「1手戻す<span class="key"> （U）</span>」で戻れます。</li>
+    <li>赤い点線の枠が出た → 「確定」を押した際、ツールが「ありえない盤面（入力ミス）」を検知しました。赤枠のマスを確認し、入力し直してください。そのままもう一度「確定」を押せば、無視して進めることもできます。</li>
   </ul>
-  <p style="margin-top:10px;font-weight:700;">入力間違いの確認</p>
+  <p style="margin-top:10px;font-weight:700;">■ その他の機能</p>
   <ul>
-    <li>「確定」を押すと、入力した盤面と残り手数が、打った手の結果としてありえるかを確かめます。</li>
-    <li>確かめるのは、⚙ 設定の「補充の入力のしかた」が「最後の盤面だけ」のときです。「補充の回ごと」のときは確かめません。</li>
-    <li>ありえない盤面のときは止まり、見比べてほしいマスに赤い点線の枠をつけます。入力し直して「確定」を押すと、もう一度確かめます。入力し直さずにもう一度「確定」を押して、入力した盤面のまま進めることもできます。</li>
-    <li>削除の直後に補充された駒がすぐマッチした場合など、見つけられない入力間違いもあります。</li>
-    <li>MAXの駒（最大レベルの駒）を削除しようとすると、打ち間違いでないか確認します。</li>
-    <li>目標MAX布陣に必要な素材が減るか、使わないレベルの駒ができるおそれがある手（事故の確率が5%以上の手）も、打つ前に確認します。</li>
-  </ul>
-  <p style="margin-top:10px;font-weight:700;">ゲームとずれたとき</p>
-  <ul>
-    <li><b>盤面を直す<span class="key"> （E）</span></b>: 違うマスを入力し直せます。残り手数も直せます。</li>
-    <li><b>1手戻す<span class="key"> （U）</span></b>: 直前の手を取り消します。</li>
-    <li><b>1手進める<span class="key"> （R）</span></b>: 1手戻した手を、そのときの盤面と残り手数のまま進め直します。自分で別の手を打つと、進める先はなくなります。</li>
-  </ul>
-  <p class="key-help" style="margin-top:10px;font-weight:700;">キー操作</p>
-  <ul class="key-help">
-    <li>S: 入替 / D: 削除 / E: 盤面を直す / U: 1手戻す / R: 1手進める / Enter: 確定</li>
-    <li>素材とレベルの選択: A・B・C・D で素材（手を打っているときは、Dは V）、1〜9 でレベル、X で「?」</li>
-  </ul>
-  <p style="margin-top:10px;font-weight:700;">そのほか</p>
-  <ul>
-    <li><b>⚙ 設定</b>: ゲームモード（補充のレベル・斜め入替・PvP・連鎖による手数の増加）をゲームに合わせてください。残り手数の計算や手順の探し方が変わります。補充の入力のしかた（最後の盤面だけ／補充の回ごと）も選べます。</li>
-    <li><b>補充される駒がLv2の素材</b>: 設定の「補充される駒のレベル」でLv2にした素材は、Lv1を選べません。</li>
-    <li><b>📝 記録を書き出す</b>: 打った手と盤面を、ファイル（.txt）に書き出します。1手以上打つと押せます（補充の入力中は押せません）。</li>
-    <li><b>📂 記録を読み込む</b>: 書き出した記録を読み込んで、最初の盤面から「1手進める」で1手ずつ再現できます。設定と目標MAX布陣は、記録のものに置き換わります。</li>
-    <li><b>リセット</b>: 盤面を全部「?」に戻し、打った手の記録も消します。目標MAX布陣と設定は残ります。</li>
+    <li><b>⚙ 設定</b>: ゲームモード（補充のレベル・斜め入替・PvPなど）をゲームに合わせてください。残り手数の計算や手順の探し方が変わります。ほかのゲームモードを試したいときも、ここで切り替えます。</li>
+    <li><b>記録の書き出し／読み込み</b>: 打った手と盤面を1局分まるごとファイル（.txt）に保存・復元できます。</li>
+    <li><b>リセット</b>: 盤面をすべて「?」に戻し、記録を消去します（設定と目標MAX布陣は残ります）。</li>
   </ul>
 `));
 document.getElementById('btnPatternHelp').addEventListener('click', () => openInfoModal(`
   <h2>目標MAX布陣</h2>
-  <p>いま作ろうとしているMAX布陣を登録します。登録しなくても、シミュレーターと「連鎖を探す」は使えます。</p>
-  <p style="margin-top:10px;font-weight:700;">登録すると使えるもの</p>
+  <p>いま作ろうとしている最終的な盤面の形（目標MAX布陣）を登録します。</p>
+  <p style="margin-top:10px;font-weight:700;">■ 登録するメリット</p>
+  <p>登録は任意ですが、登録することで以下の機能が使えるようになります。</p>
+  <ol>
+    <li>効率の良い手順をツールが導き出す「🔄 盤面を進める手を探す」が使えるようになります。</li>
+    <li>必要な素材が勝手に揃って消えてしまう「事故」の確率を事前に警告してくれます。</li>
+    <li>起爆する手と、できるMAXの数がカードに表示されるようになります。</li>
+    <li>「🔗 連鎖を探す」が、必要な素材が減る連鎖を除外してくれます。</li>
+  </ol>
+  <p style="margin-top:10px;font-weight:700;">■ はじめての方は「プリセット」がおすすめ</p>
+  <p>よく使われるMAX布陣が用意されています（斜め移動なし: 3・4・7・8・10MAX ／ 斜め移動あり: 3・4・6・12・18MAX）。まずはここから選んでみてください。（ご自身で作った布陣をプリセットとして保存することも可能です）</p>
+  <p style="margin-top:10px;font-weight:700;">■ 複数の目標を登録した場合</p>
+  <p>上から順番に目指して計算します（順番は ↑↓ ボタンで入れ替え可能）。<br>1つ目が起爆（完成）すると、自動的に次の目標に切り替わります。また、2番目以降の目標に使う素材を誤って消してしまわないよう、ツールが裏で守ってくれます。</p>
+  <p style="margin-top:10px;font-weight:700;">■ ボタンの機能</p>
   <ul>
-    <li><b>連鎖を探す</b>: 補充される駒に関係なく、必要な素材が減る手順と、使わないレベルの駒ができる手順を表示しません。駒の配置ではなく、素材の個数で判断します。</li>
-    <li><b>連鎖を探す</b>: カードに、目標MAX布陣の素材の個数（手順の前 → 後）を表示します。</li>
-    <li><b>盤面を進める手を探す</b>: 目標MAX布陣に必要な素材が増える手順を探します（登録しないと使えません）。</li>
-    <li><b>事故の警告</b>: 補充される駒しだいで、必要な素材が減るか、使わないレベルの駒ができることを「事故」と呼びます。事故の確率が5%以上の手と、必ず事故になる手は、打つ前に確認します。</li>
-    <li><b>起爆の確認</b>: MAX布陣のカードに、起爆する手とできるMAXの数を表示します。</li>
-  </ul>
-  <p style="margin-top:10px;font-weight:700;">複数登録したとき</p>
-  <ul>
-    <li>上から順に目指します。順番は ↑↓ で変えられます。</li>
-    <li>起爆すると、自動で次のMAX布陣に切り替わります（「1手戻す」で戻ります）。</li>
-    <li>「これを目指す」で、目指すMAX布陣を変えられます。</li>
-    <li>2番目以降のMAX布陣に必要な素材も守ります。その素材が減る手順は、連鎖を探すでは表示せず、事故の警告でも確認します（例: 3MAX（B）のあとに10MAX（A）を目指すなら、準備してあるA3をA4にしてしまう手順）。</li>
-    <li>連鎖を探すのカードに、2番目以降のMAX布陣の素材の数も表示します。</li>
-  </ul>
-  <p style="margin-top:10px;font-weight:700;">プリセット</p>
-  <ul>
-    <li>よく使うMAX布陣を選べます（斜め移動なし / 斜め移動あり）。</li>
-    <li>MAX布陣のカードの「プリセットに保存」で追加、プリセットの一覧の「削除」で削除できます。</li>
-    <li>「もとの一覧に戻す」で、最初からある10個を戻せます。</li>
-    <li>プリセットは、このブラウザにだけ保存されます。</li>
-  </ul>
-  <p style="margin-top:10px;font-weight:700;">MAX布陣のカードのボタン</p>
-  <ul>
-    <li><b>左右反転</b>: 盤面の中央線で左右を反転します。反転するとMAXの数が減るMAX布陣もあるので、起爆の確認を見てください。</li>
-    <li><b>レベル+1 / レベル−1</b>: 全部のマスのレベルを1つ上げる / 下げる</li>
+    <li><b>左右反転</b>: 盤面を左右反転します（反転でMAX数が減る場合があるので、起爆の確認に注意してください）。</li>
+    <li><b>レベル+1 / −1</b>: 盤面全体のレベルを一括で上げ下げします。</li>
   </ul>
 `));
 
