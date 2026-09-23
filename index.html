@@ -34,6 +34,7 @@
   header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:8px; }
   header .sub { color: var(--text-dim); font-size: 12px; }
   header .sign { color: var(--text-dim); font-size: 11px; font-weight: normal; margin-left: 6px; }
+  header .ver { color: var(--text-dim); font-size: 11px; margin-top: 2px; }
   .layout { display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; }
   .col-left { flex: 1 1 460px; min-width: 320px; display:flex; flex-direction:column; gap:16px; }
   .col-right { flex: 1 1 380px; min-width: 300px; display:flex; flex-direction:column; gap:16px; }
@@ -71,6 +72,7 @@
   .brush-row .sw.on { border-color:#fff; }
   .brush-row .lv { min-width:28px; padding:4px 0; }
   .brush-row .lv.on { border-color: var(--accent); color: var(--accent); font-weight:700; }
+  .brush-row .row-break { display:none; }
   /* まだ何も入力されていないマス */
   .cell.empty {
     background: #202228;
@@ -203,7 +205,8 @@
     #simPanel #gameControls { order: 3; }
     .board { width: min(calc(100vw - 64px), 360px); max-width: none; }
     .brush-row .sw { width:36px; height:34px; }
-    .brush-row .lv { min-width:34px; padding:7px 0; }
+    .brush-row .lv { min-width:30px; padding:7px 0; }
+    .brush-row .row-break { display:block; flex-basis:100%; height:0; }
     .mini-board.chain { width: 128px; }
     /* 手順の小さい盤面は2つずつ並べる(矢印は隠す。各盤面の見出しの①②で順番が分かる) */
     .chain-arrow { display: none; }
@@ -221,6 +224,7 @@
   <header>
     <div>
       <h1>スラだんパズルナビゲーター <span class="sign">created by シナっぷ</span></h1>
+      <div class="ver">版 2026-09-23</div>
       <div class="sub">ゲームと同じ盤面を入力して1手ずつ進められるシミュレーターです。MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖も探せます。</div>
     </div>
     <div class="toolbar">
@@ -228,7 +232,7 @@
       <button id="btnExportGame" class="dim" title="1手以上打つと押せます。">📝 記録を書き出す</button>
       <button id="btnImportGame" title="書き出した記録を読み込んで、最初の盤面から1手ずつ再現します。">📂 記録を読み込む</button>
       <input type="file" id="importFile" accept=".txt,.json,text/plain,application/json" style="display:none">
-      <button id="btnResetGame" class="danger" title="盤面を全部未入力に戻し、打った手の記録も消します。目標MAX布陣と設定は残ります。">リセット</button>
+      <button id="btnResetGame" class="danger" title="盤面を全部「?」に戻し、打った手の記録も消します。目標MAX布陣と設定は残ります。">リセット</button>
     </div>
   </header>
 
@@ -323,7 +327,7 @@
     </div>
   </div>
 
-  <footer>ブラウザ内で完結・データはこのブラウザだけに自動保存されます（ブラウザのデータを消すと消えます。残しておきたい対局は「📝 記録を書き出す」で書き出してください）。<br>版 2026-09-22</footer>
+  <footer>ブラウザ内で完結・データはこのブラウザだけに自動保存されます（ブラウザのデータを消すと消えます。残しておきたい対局は「📝 記録を書き出す」で書き出してください）。</footer>
 </div>
 
 <div id="modalRoot"></div>
@@ -635,8 +639,9 @@ function levelValue(level, coefficient) {
 
 /* ============================== 盤面の準備・布陣の見本・起爆の確認 ============================== */
 function defaultBoard() {
+  // 最初の盤面は全部「?」(入力を省いたマス)。入力したマスだけが決まる
   const g = [];
-  for (let y = 0; y < SIZE; y++) g.push(new Array(SIZE).fill(null));
+  for (let y = 0; y < SIZE; y++) g.push(Array.from({ length: SIZE }, () => ({ species: '?', level: 1 })));
   return g;
 }
 // 中身が決まっていないマスを数える。未入力(まだ何も入れていない)と「?」(入力を省いたマス)の2種類
@@ -861,7 +866,7 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const s = JSON.parse(raw);
-      if (s && s.board) return normalizeState(s);
+      if (s && s.board) { const st = normalizeState(s); fillEmptyAsUnknown(st.board); return st; }   // 昔の保存の「未入力」のマスは「?」にする
     }
   } catch (e) { /* 読めなければ最初から */ }
   return defaultState();
@@ -2397,7 +2402,7 @@ function renderBrushRow() {
   for (const sp of SPECIES) {
     h += `<button class="sw ${brush.species === sp && !brush.erase ? 'on' : ''}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}" data-sp="${sp}">${sp}</button>`;
   }
-  h += '<span class="note" style="margin:0 2px;">Lv</span>';
+  h += '<span class="row-break"></span><span class="note" style="margin:0 2px;">Lv</span>';
   fixBrushLevel();
   // ボタンはいちばん大きい最大レベルまで並べ(素材を変えても並びが動かないように)、選んでいる素材で入力できないレベルは押せなくする
   const spMax = state.maxLevels[brush.species] || 7, spMin = minBoardLevelOf(brush.species);
@@ -2421,8 +2426,7 @@ function renderBoard() {
     const cell = state.board[y][x];
     const div = document.createElement('div');
     div.className = 'cell';
-    if (!cell) { div.classList.add('empty'); div.textContent = '未入力'; }
-    else if (cell.species === '?') { div.classList.add('unknown'); div.textContent = '?'; }
+    if (!cell || cell.species === '?') { div.classList.add('unknown'); div.textContent = '?'; }
     else {
       div.style.background = levelShade(cell.species, cell.level, state.maxLevels[cell.species]);
       div.style.color = textOn(div.style.background);
@@ -2455,11 +2459,11 @@ function renderGameControls() {
   if (g.phase === 'setup') {
     const u = countUnresolvedCells(state.board);
     gameControlsEl.innerHTML = `
-      <div class="game-status"><b>最初の盤面を入力</b>: 素材とレベルを選んで、36マスをゲーム画面どおりに入力してください。<br>気になる所だけ入力して始めることもできます（残りは「?」になります）。</div>
+      <div class="game-status"><b>最初の盤面を入力</b>: 素材とレベルを選んで、36マスをゲーム画面どおりに入力してください。<br>気になる所だけ入力して始めることもできます（入力しなかったマスは「?」のままです）。</div>
       <div class="toolbar" style="margin-top:0;margin-bottom:8px;align-items:center;">
         <label class="small">ゲーム画面の残り手数 <input type="number" id="startMovesInput" min="1" max="999" value="${g.start}" style="width:5em;"></label>
         <button id="btnStartGame" class="primary">この盤面で始める</button>
-        <span class="note">${u.total ? `未入力の${u.total}マスは「?」として始めます。` : '入力できました。'}</span>
+        <span class="note">${u.total ? `「?」の${u.total}マスは、そのまま「?」として始めます。` : '入力できました。'}</span>
       </div>`;
     document.getElementById('startMovesInput').addEventListener('input', (e) => { const v = parseInt(e.target.value, 10); if (v > 0) { g.start = v; saveState(); } });
     document.getElementById('btnStartGame').addEventListener('click', startGame);
@@ -2512,7 +2516,7 @@ function renderGameControls() {
     <div class="moves-left">残り手数 <span class="num">${currentLeft() - 1 + p.chain}</span>
       <span class="note">（この手: ${describeMove(p.move)} / いまのところ連鎖で増加 ${p.chain}）</span></div>
     <div class="game-status"><b>${p.wave}回目の補充</b>: ${n
-      ? `「?」か未入力のマスが${n}マスあります。ゲーム画面を見て、素材とレベルを選んで入力してください。ほかのマスも入力し直せます。`
+      ? `「?」のマスが${n}マスあります。ゲーム画面を見て、素材とレベルを選んで入力してください。ほかのマスも入力し直せます。`
       : '「次へ」を押すと、マッチを1回ぶん進めます。もうマッチが起きなければ、この手が確定します。'}</div>
     <div class="toolbar" style="margin-top:0;margin-bottom:8px;">
       <button id="btnFixNext" class="primary" ${n ? 'disabled' : ''}>次へ<span class="key"> （Enter）</span></button>
@@ -2571,13 +2575,6 @@ function paintCell(x, y) {
 function onBoardCellClick(x, y) {
   const g = state.game;
   if (g.phase === 'setup' || g.phase === 'fix' || moveMode === 'edit') { paintCell(x, y); return; }
-  // 未入力のマスが残っていると手を打たせない。「?」のマスは「どの駒ともマッチしない駒」として、そのまま打てる(「?」のマス自体の削除・入替も可)
-  if (countUnresolvedCells(state.board).empty > 0) {
-    moveNotice = '未入力のマスがあります。「盤面を直す」で入力してから手を打ってください。';
-    picked = null;
-    refresh();
-    return;
-  }
   if (moveMode === 'delete') {
     // MAXの駒を削除するときは、打ち間違いでないか一度確かめる
     const c = state.board[y][x];
@@ -3181,14 +3178,14 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
   <p>ゲームと同じ盤面をこの画面に入力して、ゲームと同じ手を1手ずつ打っていきます。残り手数はツールが数えてくれます。</p>
   <p style="margin-top:10px;font-weight:700;">使い方の流れ</p>
   <ol>
-    <li>最初の盤面をゲーム画面どおりに入力し、ゲーム画面の残り手数を入れて「この盤面で始める」を押します。気になる所だけ入力して始めることもできます（残りは「?」になります）。</li>
+    <li>最初の盤面をゲーム画面どおりに入力し、ゲーム画面の残り手数を入れて「この盤面で始める」を押します。気になる所だけ入力して始めることもできます（入力しなかったマスは「?」のままです）。</li>
     <li>「入替<span class="key"> （S）</span>」か「削除<span class="key"> （D）</span>」を選んで、ゲームと同じ手を打ちます。</li>
     <li>補充されたマスが「?」になります。ゲーム画面のマッチが止まったら、その盤面どおりに入力します。補充された駒でマッチが起きたときは、「?」以外の変わったマスも入力し直します。</li>
     <li>ゲーム画面の残り手数を確かめて「確定」を押します。</li>
   </ol>
   <p style="margin-top:10px;font-weight:700;">「?」のマス</p>
   <ul>
-    <li>「?」は、入力を省いたマスです。素材とレベルを選ぶ欄の「?」<span class="key">（キー X）</span>で置けます。入力しなかったマスも、始めると「?」になります。</li>
+    <li>「?」は、入力を省いたマスです。素材とレベルを選ぶ欄の「?」<span class="key">（キー X）</span>で置けます。最初の盤面は全部「?」で、入力したマスだけが決まります。間違えて入力したマスも、「?」に戻せます。</li>
     <li>「?」のマスも削除・入替できます。「?」はどの駒ともマッチしない駒として計算するので、実際のゲームとは結果が違うことがあります。</li>
   </ul>
   <p style="margin-top:10px;font-weight:700;">入力間違いの確認</p>
@@ -3217,7 +3214,7 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
     <li><b>補充される駒がLv2の素材</b>: 設定の「補充される駒のレベル」でLv2にした素材は、Lv1を選べません。</li>
     <li><b>📝 記録を書き出す</b>: 打った手と盤面を、ファイル（.txt）に書き出します。1手以上打つと押せます（補充の入力中は押せません）。</li>
     <li><b>📂 記録を読み込む</b>: 書き出した記録を読み込んで、最初の盤面から「1手進める」で1手ずつ再現できます。設定と目標MAX布陣は、記録のものに置き換わります。</li>
-    <li><b>リセット</b>: 盤面を全部未入力に戻し、打った手の記録も消します。目標MAX布陣と設定は残ります。</li>
+    <li><b>リセット</b>: 盤面を全部「?」に戻し、打った手の記録も消します。目標MAX布陣と設定は残ります。</li>
   </ul>
 `));
 document.getElementById('btnPatternHelp').addEventListener('click', () => openInfoModal(`
@@ -3277,13 +3274,13 @@ document.getElementById('btnConfig').addEventListener('click', () => {
   h += '</div><div class="note" id="cfgColorWarn" style="color:var(--danger);"></div>';
   h += '<h3 class="cfg-h">素材ごとの最大レベル</h3><div class="note">このレベルに達した駒は、それ以上マッチしません。</div><div class="config-grid">';
   for (const sp of SPECIES) {
-    h += `<div class="config-item"><label><span class="species-pill" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${sp}</span> 最大Lv</label>` +
+    h += `<div class="config-item"><label><span class="species-pill" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${sp}</span> 最大Lv</label>` +
       `<input type="number" min="2" max="15" data-max="${sp}" value="${state.maxLevels[sp]}"></div>`;
   }
   h += '</div><h3 class="cfg-h">補充される駒のレベル</h3><div class="note">駒が消えたあと補充される駒のレベルです。「補充される駒がLv2になる」ゲームモードでは、その素材をLv2にしてください。</div><div class="config-grid">';
   for (const sp of SPECIES) {
     const v = state.refillLevels[sp] || 1;
-    h += `<div class="config-item"><label><span class="species-pill" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${sp}</span> 補充</label>` +
+    h += `<div class="config-item"><label><span class="species-pill" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${sp}</span> 補充</label>` +
       `<select data-refill="${sp}"><option value="1" ${v === 1 ? 'selected' : ''}>Lv1</option><option value="2" ${v === 2 ? 'selected' : ''}>Lv2</option></select></div>`;
   }
   h += '</div><h3 class="cfg-h">斜め入替</h3>' +
@@ -3294,10 +3291,10 @@ document.getElementById('btnConfig').addEventListener('click', () => {
     `<div class="note">打った手と残り手数の合計が${PVP_MOVE_CAP}手に届くと、連鎖が起きても手数が増えなくなります（PvPで確かめた上限です。ほかのゲームモードにも上限があるかは確かめていません）。残り手数の計算と「盤面を進める手を探す」「連鎖を探す」に反映します。</div>`;
   h += '<h3 class="cfg-h">補充の入力のしかた</h3>' +
     `<label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="cfgRefillInput" value="final" ${state.refillInputMode === 'waves' ? '' : 'checked'}> 最後の盤面だけ: マッチが止まったあとの盤面を入力し、ゲーム画面の残り手数を確かめて確定する</label>` +
-    `<label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="cfgRefillInput" value="waves" ${state.refillInputMode === 'waves' ? 'checked' : ''}> 補充の回ごと: 補充されるたびに、補充されたマスを入力する</label>`;
+    `<label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="cfgRefillInput" value="waves" ${state.refillInputMode === 'waves' ? 'checked' : ''}> 補充の回ごと: 補充されるたびに、補充されたマスを入力する（通常プレイでは非推奨。他人の手を動画などで追うとき用）</label>`;
   h += '<h3 class="cfg-h">連鎖による手数の増加</h3>' +
     `<label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="cfgRecovery" value="normal" ${state.increasingRecovery ? '' : 'checked'}> 通常（魔神とーばつ・PvPなど）: ラウンド2以降のマッチ1回につき、手数が1増える</label>` +
-    `<label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="cfgRecovery" value="increasing" ${state.increasingRecovery ? 'checked' : ''}> ラウンドごとに増える: ラウンドが進むほど、マッチ1回で増える手数が大きくなる（ラウンド2は+1、ラウンド3は+2、ラウンド4は+3 …）</label>` +
+    `<label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="cfgRecovery" value="increasing" ${state.increasingRecovery ? 'checked' : ''}> ラウンドごとに増える（勇者しゅーらいなど）: ラウンドが進むほど、マッチ1回で増える手数が大きくなる（ラウンド2は+1、ラウンド3は+2、ラウンド4は+3 …）</label>` +
     '<div class="note">例: ラウンド2で1回、ラウンド3で2回マッチしたとき、通常は+3、ラウンドごとに増えるは+5です。</div>' +
     '<div class="note">「ラウンド」は、1手の中でマッチが起きる回ごとの数え方です。入替で直接そろったマッチと、削除のあと最初のマッチがラウンド1で、手数は増えません。</div>';
   h += '<div class="note" style="margin-top:12px;">「初期設定に戻す」を押すと、この画面の項目が初期の設定に戻ります。「保存」を押すまでは決まりません。</div>';
@@ -3323,6 +3320,9 @@ document.getElementById('btnConfig').addEventListener('click', () => {
     const chosen = {};
     modal.querySelectorAll('[data-color]').forEach(sel => {
       modal.querySelector(`[data-color-preview="${sel.dataset.color}"]`).innerHTML = famPreview(sel.value);
+      // 「素材ごとの最大レベル」「補充される駒のレベル」に付いている印も、選んだ色にその場で変える(決まるのは「保存」を押したとき)
+      const hex = (COLOR_FAMILIES[sel.value] || COLOR_FAMILIES.blue).stops[1];
+      modal.querySelectorAll(`.species-pill[data-pill="${sel.dataset.color}"]`).forEach(pill => { pill.style.background = hex; pill.style.color = textOn(hex); });
       (chosen[sel.value] = chosen[sel.value] || []).push(sel.dataset.color);
     });
     const dup = Object.keys(chosen).filter(k => chosen[k].length > 1).map(k => `${chosen[k].join('と')}が同じ色（${COLOR_FAMILIES[k].name}）です`);
