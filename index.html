@@ -111,6 +111,9 @@
   button.primary:hover { filter: brightness(1.08); }
   button.danger { color: var(--danger); border-color: var(--danger); background:transparent; }
   button.small { padding: 4px 8px; font-size:12px; }
+  /* 記録の書き出し・読み込みは、ふだんは使わないので目立たせない */
+  button.quiet { color: var(--text-dim); border-color: transparent; background: transparent; font-size:12px; padding: 6px 8px; }
+  button.quiet:hover { border-color: var(--border); color: var(--text); }
   button:disabled, button.dim { opacity:.4; cursor:default; }
   .toolbar button.on { border-color: var(--accent); color: var(--accent); font-weight:700; }
 
@@ -219,15 +222,15 @@
   <header>
     <div>
       <h1>スラだんパズルナビゲーター <span class="sign">created by シナっぷ</span></h1>
-      <div class="ver">version 2026-09-23</div>
+      <div class="ver">version 1.1.0（2026-09-24）</div>
       <div class="sub">ゲームと同じ盤面を入力して1手ずつ進められるシミュレーターです。MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖も探せます。</div>
     </div>
     <div class="toolbar">
       <button id="btnConfig">⚙ 設定</button>
-      <button id="btnExportGame" class="dim" title="1手以上打つと押せます。">📝 記録を書き出す</button>
-      <button id="btnImportGame" title="書き出した記録を読み込んで、最初の盤面から1手ずつ再現します。">📂 記録を読み込む</button>
-      <input type="file" id="importFile" accept=".txt,.json,text/plain,application/json" style="display:none">
       <button id="btnResetGame" class="danger" title="盤面を全部「?」に戻し、打った手の記録も消します。目標MAX布陣と設定は残ります。">リセット</button>
+      <button id="btnExportGame" class="quiet dim" title="1手以上打つと押せます。">📝 記録を書き出す</button>
+      <button id="btnImportGame" class="quiet" title="書き出した記録を読み込んで、最初の盤面から1手ずつ再現します。">📂 記録を読み込む</button>
+      <input type="file" id="importFile" accept=".txt,.json,text/plain,application/json" style="display:none">
     </div>
   </header>
 
@@ -244,8 +247,8 @@
     <ol>
       <li>⚙ 設定でゲームモードを合わせ、「目標MAX布陣」を選びます。</li>
       <li>手を相談したい盤面・残り手数を入力し、「この盤面で始める」を押します。</li>
-      <li>状況に合わせて「🔄 盤面を進める手を探す」か「🔗 連鎖を探す」を選び、ツールに手順を探させます。</li>
-      <li>良い手が見つかったら実際のゲームで打ち、新しく降ってきた駒をツールに入力して「確定」を押して進めます。</li>
+      <li>「🔍 次の手を探す」を押して、ツールに手順を探させます。目標MAX布陣に必要な素材が増える手順が期待値順に出てきます。</li>
+      <li>良い手が見つかったら実際のゲームで打ち、新しく補充された駒をツールに入力して「確定」を押して進めます。</li>
     </ol>
     <p class="note">※盤面が少しずれたら「盤面を直す<span class="key"> （E）</span>」で修正し、大きく変わった時は「リセット」して最初から入力し直してください。</p>
   </details>
@@ -266,8 +269,7 @@
           <div class="panel-title"><h2>手順を探す</h2><button id="btnHowItWorks" class="small help-btn">ⓘ 説明</button></div>
         </div>
         <div class="toolbar" style="margin-top:0;margin-bottom:6px;">
-          <button id="btnAdvanceSearch" class="primary">🔄 盤面を進める手を探す</button>
-          <button id="btnChainSearch">🔗 連鎖を探す</button>
+          <button id="btnSearch" class="primary">🔍 次の手を探す</button>
           <button id="btnChainCancel" class="danger" style="display:none;">中断</button>
           <label class="small" style="display:flex;align-items:center;gap:4px;">探す手数
             <select id="chainDepth"><option value="3" selected>3手まで（1秒ほど）</option><option value="4">4手まで（数十秒）</option></select>
@@ -289,7 +291,7 @@
           </div>
         </div>
         <div id="patternList"></div>
-        <div class="note" id="patternEmptyNote" style="display:none;">登録されているMAX布陣はありません。登録しなくても「シミュレーター」と「🔗 連鎖を探す」は使えます。登録すると、「🔗 連鎖を探す」が目標MAX布陣に必要な素材が減る連鎖を表示しなくなり、「🔄 盤面を進める手を探す」も使えるようになります。</div>
+        <div class="note" id="patternEmptyNote" style="display:none;">登録されているMAX布陣はありません。登録しなくても「シミュレーター」と「🔍 次の手を探す」は使えます（手数が増える連鎖を探します）。登録すると、「🔍 次の手を探す」が目標MAX布陣に必要な素材が増える手順を探すようになります。</div>
       </div>
     </div>
   </div>
@@ -1027,7 +1029,7 @@ const CHAIN_REFINE_SAMPLES = 32;
 const CHAIN_SEARCH_SHOW = 3;
 const chainListEl = document.getElementById('chainList');
 const chainProgressEl = document.getElementById('chainProgress');
-const btnChainSearch = document.getElementById('btnChainSearch');
+const btnSearch = document.getElementById('btnSearch');
 const btnChainCancel = document.getElementById('btnChainCancel');
 let chainAbortRequested = false;
 // 1手を打つ(盤面の配列は壊さない)。rng で補充する。events を渡すとマッチの内訳を積む。
@@ -1269,14 +1271,17 @@ function setChainCollapse(show, onCollapse) {
 }
 // 盤面に「?」があるときに結果の上に出す一言
 let chainUnknownNote = '';
+// 盤面を進める手が0件で、かわりに連鎖を出したときに結果の上に出す一言
+let chainFallbackNote = '';
 function renderChainOptions(list, sec, showAll) {
   renderChainOptionsInner(list, sec, showAll);
   setChainCollapse(!!showAll && chainShown.length > CHAIN_SEARCH_SHOW, () => renderChainOptions(list, sec, false));
   if (chainUnknownNote) chainListEl.insertAdjacentHTML('afterbegin', chainUnknownNote);
+  if (chainFallbackNote) chainListEl.insertAdjacentHTML('afterbegin', chainFallbackNote);
   // 布陣を登録しているときは、布陣を崩す連鎖を除いていることを見出しに出す
   const guarded = currentTargetPattern() ? [currentTargetPattern()].concat(laterTargetPatterns()) : [];
   const guardNote = guarded.length ? `<span style="font-weight:400;color:var(--text-dim);margin-left:8px;">MAX布陣${guarded.map(p => `「${esc(p.name)}」`).join('')}に必要な素材が減る連鎖は除いています</span>` : '';
-  chainListEl.insertAdjacentHTML('afterbegin', `<div class="chain-meta" style="font-weight:700;color:var(--text);margin-bottom:6px;">🔗 連鎖を探すの結果（${chainSearchDepth}手まで）${guardNote}</div>`);
+  chainListEl.insertAdjacentHTML('afterbegin', `<div class="chain-meta" style="font-weight:700;color:var(--text);margin-bottom:6px;">🔗 手数が増える連鎖（${chainSearchDepth}手まで）${guardNote}</div>`);
 }
 // 事故の確率が 5% 以上なら、カードの見出しのすぐ下に赤い帯で大きく出す(5%未満は見出しの横に小さく)
 function riskBand(risk) {
@@ -1339,50 +1344,56 @@ function renderChainOptionsInner(list, sec, showAll) {
   const more = document.getElementById('btnChainMore');
   if (more) more.addEventListener('click', () => renderChainOptions(list, sec, true));
 }
-// kind: 'chain'(連鎖を探す)/ 'advance'(盤面を進める手を探す)。結果はどちらも同じ欄に出し、押したほうの一覧だけを表示する
-async function runChainSearch(kind = 'chain') {
+// 「次の手を探す」。目標MAX布陣があれば盤面を進める手('advance')を探し、なければ連鎖('chain')を探す。
+// 盤面を進める手が0件なら(素材がもうそろっている場面など)、続けて連鎖を探して、その結果を出す。
+function unknownNoteFor(kind, unknownN) {
+  if (!unknownN) return '';
+  return kind === 'advance'
+    ? `<div class="note"><b>盤面に「?」が${unknownN}マスあります。</b>「?」はどの駒ともマッチしない駒として計算し、目標MAX布陣に必要な素材にも数えません。出てきた手順はそのまま打てます。</div>`
+    : `<div class="note"><b>盤面に「?」が${unknownN}マスあります。</b>「?」はどの駒ともマッチしない駒として計算するので、そこを通る連鎖は見つかりません。出てきた手順はそのまま打てます。</div>`;
+}
+async function runChainSearch() {
   if (state.game.phase === 'fix') {
     chainListEl.innerHTML = `<div class="note">補充されたマスの入力が終わってから探してください。</div>`;
-    return;
-  }
-  if (kind === 'advance' && !currentTargetPattern()) {
-    clearChainResults();
-    chainListEl.innerHTML = `<div class="note">「盤面を進める手を探す」は、目標MAX布陣を登録すると使えます（目標MAX布陣に必要な素材の増加で手順を選ぶため）。</div>`;
     return;
   }
   // 未入力のマスは「?」(どの駒ともマッチしない駒)として探す。入れたい所だけ入れて使えるように
   if (fillEmptyAsUnknown(state.board)) { saveState(); renderBoard(); }
   const unknownN = countUnknown(state.board);
-  chainUnknownNote = !unknownN ? ''
-    : kind === 'advance'
-      ? `<div class="note"><b>盤面に「?」が${unknownN}マスあります。</b>「?」はどの駒ともマッチしない駒として計算し、目標MAX布陣に必要な素材にも数えません。出てきた手順はそのまま打てます。</div>`
-      : `<div class="note"><b>盤面に「?」が${unknownN}マスあります。</b>「?」はどの駒ともマッチしない駒として計算するので、そこを通る連鎖は見つかりません。出てきた手順はそのまま打てます。</div>`;
+  let kind = currentTargetPattern() ? 'advance' : 'chain';
+  chainUnknownNote = unknownNoteFor(kind, unknownN);
+  chainFallbackNote = '';
   chainAbortRequested = false;
   chainSearchDepth = Number(document.getElementById('chainDepth').value) === 4 ? 4 : 3;
-  btnChainSearch.disabled = true;
-  btnAdvanceSearch.disabled = true;
+  btnSearch.disabled = true;
   btnChainCancel.style.display = '';
   chainListEl.innerHTML = '';
   const t0 = performance.now();
   const ctxAtStart = searchContextKey();
-  const find = kind === 'advance' ? findAdvanceOptions : findChainOptions;
-  const render = kind === 'advance' ? renderAdvanceOptions : renderChainOptions;
+  let lead = '';
+  const onProgress = (k, done, total) => {
+    const sec = ((performance.now() - t0) / 1000).toFixed(0);
+    chainProgressEl.textContent = lead + (k <= chainSearchDepth
+      ? `探しています: ${k}手目 ${Math.round(done / Math.max(1, total) * 100)}%（${sec}秒）`
+      : `選んだ手順をシミュレーションしています: ${done}/${total}（${sec}秒）`);
+  };
   try {
-    const list = await find(state.board, (k, done, total) => {
-      const sec = ((performance.now() - t0) / 1000).toFixed(0);
-      chainProgressEl.textContent = k <= chainSearchDepth
-        ? `探しています: ${k}手目 ${Math.round(done / Math.max(1, total) * 100)}%（${sec}秒）`
-        : `選んだ手順をシミュレーションしています: ${done}/${total}（${sec}秒）`;
-    });
+    let list = await (kind === 'advance' ? findAdvanceOptions : findChainOptions)(state.board, onProgress);
+    if (list && !list.length && kind === 'advance' && searchContextKey() === ctxAtStart) {
+      chainFallbackNote = `<div class="note">${advanceEmptyReason()}<br>かわりに、手数が増える連鎖を表示しています。</div>`;
+      kind = 'chain';
+      chainUnknownNote = unknownNoteFor(kind, unknownN);
+      lead = '素材が増える手が見つからなかったので、連鎖を探しています。';
+      list = await findChainOptions(state.board, onProgress);
+    }
     if (!list) { chainProgressEl.textContent = '中断しました。'; return; }
     if (searchContextKey() !== ctxAtStart) { chainProgressEl.textContent = '計算中に盤面・残り手数・設定・目標MAX布陣のどれかが変わったので、結果を表示しませんでした。'; return; }
     chainProgressEl.textContent = '';
     const sec = ((performance.now() - t0) / 1000).toFixed(1);
-    render(list, sec);
-    lastSearch = { kind, list, sec, depth: chainSearchDepth, unknownNote: chainUnknownNote, key: ctxAtStart };
+    (kind === 'advance' ? renderAdvanceOptions : renderChainOptions)(list, sec);
+    lastSearch = { kind, list, sec, depth: chainSearchDepth, unknownNote: chainUnknownNote, fallbackNote: chainFallbackNote, key: ctxAtStart };
   } finally {
-    btnChainSearch.disabled = false;
-    btnAdvanceSearch.disabled = false;
+    btnSearch.disabled = false;
     btnChainCancel.style.display = 'none';
   }
 }
@@ -1434,7 +1445,6 @@ function breakPenaltyOf(aligned, sp, lv, target) {
   for (const a of aligned) if (!(sp[a.i] === si && lv[a.i] === a.level)) { pen += a.value; cells.push(a.i); }
   return { pen, cells };
 }
-const btnAdvanceSearch = document.getElementById('btnAdvanceSearch');
 async function findAdvanceOptions(grid, onProgress) {
   const N = SIZE * SIZE;
   const moveList = chainAllMoves();
@@ -1631,25 +1641,26 @@ function renderAdvanceOptions(list, sec, showAll) {
   renderAdvanceOptionsInner(list, sec, showAll);
   setChainCollapse(!!showAll && chainShown.length > CHAIN_SEARCH_SHOW, () => renderAdvanceOptions(list, sec, false));
   if (chainUnknownNote) chainListEl.insertAdjacentHTML('afterbegin', chainUnknownNote);
-  chainListEl.insertAdjacentHTML('afterbegin', `<div class="chain-meta" style="font-weight:700;color:var(--text);margin-bottom:6px;">🔄 盤面を進める手を探すの結果（${chainSearchDepth}手まで）</div>`);
+  chainListEl.insertAdjacentHTML('afterbegin', `<div class="chain-meta" style="font-weight:700;color:var(--text);margin-bottom:6px;">🔄 MAX布陣「${esc(currentTargetPattern().name)}」に必要な素材が増える手（${chainSearchDepth}手まで）</div>`);
+}
+// 盤面を進める手が0件だった理由の文
+function advanceEmptyReason() {
+  const pattern = currentTargetPattern();
+  // 布陣に要る素材が盤面にもうそろっている(足りない素材が0)ときは、増える手はありえない。終盤によくあるので理由を出す
+  const fsp = new Int8Array(SIZE * SIZE), flv = new Int8Array(SIZE * SIZE);
+  flatFromGrid(state.board, fsp, flv);
+  if (patternCountsFlat(fsp, flv, pattern).deficit === 0) return `MAX布陣「${esc(pattern.name)}」に必要な素材は、盤面にもうそろっています。`;
+  // 補充がLv2なのに布陣にLv1のマスがあると、Lv1の不足はどうやっても埋まらないので、0件になりやすい
+  let low = 99;
+  for (const row of pattern.cells) for (const t of row) if (t !== 'X' && t < low) low = t;
+  const refillLv = state.refillLevels[pattern.species] || 1;
+  const lowNote = low < refillLv ? `<br>MAX布陣に${pattern.species}${low}のマスがありますが、${pattern.species}の補充はLv${refillLv}なので、${pattern.species}${low}は増えません。MAX布陣のカードの「レベル+1」で合わせてください。` : '';
+  return `MAX布陣「${esc(pattern.name)}」に必要な素材が増える手順は見つかりませんでした。${lowNote}`;
 }
 function renderAdvanceOptionsInner(list, sec, showAll) {
   const pattern = currentTargetPattern();
   if (!list.length) {
-    // 補充がLv2なのに布陣にLv1のマスがあると、Lv1の不足はどうやっても埋まらないので、0件になりやすい
-    let low = 99;
-    for (const row of pattern.cells) for (const t of row) if (t !== 'X' && t < low) low = t;
-    const refillLv = state.refillLevels[pattern.species] || 1;
-    const lowNote = low < refillLv ? `<br>MAX布陣に${pattern.species}${low}のマスがありますが、${pattern.species}の補充はLv${refillLv}なので、${pattern.species}${low}は増えません。MAX布陣のカードの「レベル+1」で合わせてください。` : '';
-    // 布陣に要る素材が盤面にもうそろっている(足りない素材が0)ときは、増える手はありえない。終盤によくあるので理由を出す
-    const fsp = new Int8Array(SIZE * SIZE), flv = new Int8Array(SIZE * SIZE);
-    flatFromGrid(state.board, fsp, flv);
-    if (patternCountsFlat(fsp, flv, pattern).deficit === 0) {
-      chainListEl.innerHTML = `<div class="note">MAX布陣「${esc(pattern.name)}」に必要な素材は、盤面にもうそろっています。（${sec}秒）</div>`;
-      chainShown = [];
-      return;
-    }
-    chainListEl.innerHTML = `<div class="note">MAX布陣「${esc(pattern.name)}」に必要な素材が増える手順は見つかりませんでした。（${sec}秒）${lowNote}</div>`;
+    chainListEl.innerHTML = `<div class="note">${advanceEmptyReason()}（${sec}秒）</div>`;
     chainShown = [];
     return;
   }
@@ -2351,6 +2362,7 @@ function restoreSearchResults() {
   if (!lastSearch || searchContextKey() !== lastSearch.key) return false;
   chainSearchDepth = lastSearch.depth;
   chainUnknownNote = lastSearch.unknownNote;
+  chainFallbackNote = lastSearch.fallbackNote || '';
   (lastSearch.kind === 'advance' ? renderAdvanceOptions : renderChainOptions)(lastSearch.list, lastSearch.sec);
   return true;
 }
@@ -3077,29 +3089,31 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
   <p>今の盤面から数手先までをすべて計算し、次に打つとよいおすすめの手順を探します。</p>
   <p style="margin-top:10px;font-weight:700;">💡【重要】ツールを使いこなすコツ（配置はご自身のセンスで）</p>
   <p>ツールは「素材の数」と「手数」の計算は得意ですが、駒の配置（位置関係）までは計算に入れていません。表示された手順を参考に、最終的に「どこに配置するか」はご自身の判断で組み立ててください。</p>
-  <p style="margin-top:10px;font-weight:700;">■ 2つの探し方の違い</p>
+  <p style="margin-top:10px;font-weight:700;">■ 何を探すか（目標MAX布陣の登録で変わります）</p>
   <ul>
-    <li><b>🔄 盤面を進める手を探す</b>: 目標に必要な素材が増える手順を探します（目標MAX布陣の登録が必要）。特定のMAX布陣を作りたいときに。</li>
-    <li><b>🔗 連鎖を探す</b>: 連鎖で手数が増える手順を探します（登録なしでも使用可。登録すると、目標に必要な素材が減る連鎖は除外します）。とにかく手数を増やしたい・大連鎖を狙いたいときに。</li>
+    <li><b>登録しているとき</b>: 目標に必要な素材が増える手順を探します。大きな連鎖は、消えたマスにたくさん補充されるので必要な素材が増えやすく、手数も増えるので、「手数を使わずに」の手順として上位に並びます。</li>
+    <li><b>素材が増える手順が1つもないとき</b>: 必要な素材がもう盤面にそろっている場面などです。自動で、手数が増える連鎖を探して表示します（目標に必要な素材が減る連鎖は除きます）。</li>
+    <li><b>登録していないとき</b>: 連鎖で手数が増える手順を探します。</li>
   </ul>
   <p style="margin-top:10px;font-weight:700;">■ 検索結果（カード）の見方</p>
   <ul>
-    <li><b>1手あたり／手数を使わずに ＋◯個</b>: 手順を打った結果、素材がどれくらい増えるかの「期待値」です（Lv1の駒に換算した個数。Lv2＝3個分）。</li>
+    <li><b>手数を使わずに ＋◯個</b>: 使った手数以上に連鎖で手数が増える手順で、素材がどれくらい増えるかの「期待値」です（Lv1の駒に換算した個数。Lv2＝3個分）。</li>
+    <li><b>1手あたり ＋◯個</b>: 素材の増加の期待値を、正味の手数（使う手数 − 連鎖で増える手数）で割った数です。</li>
     <li><b>差し引き ＋◯手</b>: 手順を打ち終わったあと、手数が何手増えるかの期待値です。</li>
-    <li><b>⚠ 事故の確率</b>: 降ってきた駒が勝手に揃ってしまい、必要な素材が減ってしまう（事故）確率です。5%以上の時は赤く警告します。</li>
+    <li><b>⚠ 事故の確率</b>: 補充された駒が勝手に揃ってしまい、必要な素材が減ってしまう（事故）確率です。5%以上の時は赤く警告します。</li>
     <li><b>⚠ そろえたマスを動かします</b>: 目標の配置にすでにある駒を動かしてしまう手順です（それでも上位に出る場合は、それを上回る素材増加が見込める手順です）。</li>
-    <li><b>「この手順を打つ」ボタン</b>: 1手目から順に打てます。途中で探し直すこともできるので、降ってきた駒を見てから続きを決められます。</li>
+    <li><b>「この手順を打つ」ボタン</b>: 1手目から順に打てます。途中で探し直すこともできるので、補充された駒を見てから続きを決められます。</li>
   </ul>
   <p style="margin-top:10px;font-weight:700;">■ 検索結果の並び順</p>
   <ul>
-    <li><b>盤面を進める手を探す</b>: 「手数を使わずに」の手順を優先し、その中で素材の増加の期待値が大きい順に並びます。そのあとに、「1手あたり」の期待値が大きい順で続きます。</li>
-    <li><b>連鎖を探す</b>: 「差し引き」の期待値が大きい順に並びます。</li>
+    <li><b>素材が増える手順</b>: 「手数を使わずに」の手順を優先し、その中で素材の増加の期待値が大きい順に並びます。そのあとに、「1手あたり」の期待値が大きい順で続きます。</li>
+    <li><b>手数が増える連鎖</b>: 「差し引き」の期待値が大きい順に並びます。</li>
   </ul>
   <p class="note">※必ず事故になる手順、MAXの駒を削除する手順、途中で手数が尽きる手順などは表示しません。</p>
   <details class="warn-why" style="margin-top:12px;"><summary style="font-size:14px;font-weight:700;color:var(--text);">詳しくアルゴリズムを知りたい方へ</summary>
     <p style="margin-top:10px;">ツール内部で行っている計算や独自のルールの詳細です。</p>
     <p style="margin-top:10px;font-weight:700;">探索と期待値計算の流れ</p>
-    <p>打てる手順をすべて候補にします（3手で約90万通り）。すべてを厳密に計算すると時間がかかりすぎるため、2段階で計算しています。まず1段階目で「補充される駒の確率は1/4」として簡便な期待値を出し、上位150件を抽出します。続く2段階目で、その150件に対しランダムな補充を加えたシミュレーションを32回（上位20件は256回）行い、その平均値から最終的な結果を算出しています。</p>
+    <p>打てる手順をすべて候補にします（3手で約90万通り）。補充される駒の全パターンを厳密に計算すると時間がかかりすぎるため、2段階で計算しています。<br>まず1段階目では、補充された駒による連鎖までは計算しない大まかな見積もりで、上位150件を抽出します。<br>続く2段階目で、その150件に対しランダムな補充を加えたシミュレーションを各32回（上位20件は各256回）行い、その平均値から最終的な結果を算出しています。<br>手数が増える連鎖を探すときは、1段階目で最後の1手の補充だけを各4回（「4手まで」の4手目は各2回）シミュレーションして大まかな期待値を出し、差し引きが−1手以上の手順をすべて、2段階目で各32回シミュレーションします。</p>
     <p style="margin-top:10px;font-weight:700;">素材の数え方（Lv1換算）と多重マッチの評価</p>
     <p>最も多く駒を消費する「3個マッチ」を基準とし、不足分を少なく見積もらないよう Lv2＝Lv1の3個分（Lv3＝9個分）として換算します。4個・5個マッチが起きた場合は、換算倍率を変えるのではなく「素材の増加分」として直接上乗せ（4個なら+2個分、5個なら+4個分）するため、多重マッチを含む手順ほど上位に評価されます。</p>
     <p style="margin-top:10px;font-weight:700;">表示順や評価の補正</p>
@@ -3112,7 +3126,7 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
       <li>そこでこのツールは、コンピューターが得意な「素材の数を数えること」と「補充の運の平均を出すこと」を受け持ち、駒の相対的な位置の判断は人に任せる形にしました。</li>
     </ul>
     <p style="margin-top:10px;font-weight:700;">数字の確かさと限界</p>
-    <p>表示する数字はシミュレーションの平均なので、0.05個程度の誤差があります。見ているのは3手先（「4手まで」なら4手先）までです。</p>
+    <p>表示する数字はシミュレーションの平均なので、素材の増加は厳密に計算した期待値と0.05個程度の誤差があります。手数の増加の数字も各32回の平均なので、ぶれがあります。見ているのは3手先（「4手まで」なら4手先）までです。</p>
   </details>
 `));
 document.getElementById('btnSimHelp').addEventListener('click', () => openInfoModal(`
@@ -3122,13 +3136,14 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
   <ol>
     <li><b>はじめの盤面を入力する</b><br>ゲーム画面どおりに盤面と残り手数を入力し、「この盤面で始める」を押します。<br>（※入力を省いたマスは「?」になります。「?」はどの駒ともマッチしない仮のマスとして扱われます）</li>
     <li><b>ゲームと同じ手を打つ</b><br>「入替<span class="key"> （S）</span>」か「削除<span class="key"> （D）</span>」を選んで、シミュレーター上で手を打ちます。</li>
-    <li><b>補充されたマスを確定する</b><br>新しく降ってきた駒（「?」になったマス）を入力し、「確定<span class="key"> （Enter）</span>」を押します。</li>
+    <li><b>補充されたマスを確定する</b><br>新しく補充された駒（「?」になったマス）を入力し、「確定<span class="key"> （Enter）</span>」を押します。</li>
   </ol>
   <p style="margin-top:10px;font-weight:700;">■ ゲームとずれたり、間違えたときは？</p>
   <ul>
     <li>入力間違いを直したい → 「盤面を直す<span class="key"> （E）</span>」で修正できます。</li>
     <li>1手前の状態に戻したい → 「1手戻す<span class="key"> （U）</span>」で戻れます。</li>
     <li>赤い点線の枠が出た → 「確定」を押した際、ツールが「ありえない盤面（入力ミス）」を検知しました。赤枠のマスを確認し、入力し直してください。そのままもう一度「確定」を押せば、無視して進めることもできます。</li>
+    <li>赤枠は「ここを直せば辻褄が合う」という候補で、間違えた場所そのものとは限りません。枠のマスが合っていても、盤面のどこかがゲームとずれていることがあります。</li>
   </ul>
   <p style="margin-top:10px;font-weight:700;">■ その他の機能</p>
   <ul>
@@ -3143,10 +3158,9 @@ document.getElementById('btnPatternHelp').addEventListener('click', () => openIn
   <p style="margin-top:10px;font-weight:700;">■ 登録するメリット</p>
   <p>登録は任意ですが、登録することで以下の機能が使えるようになります。</p>
   <ol>
-    <li>効率の良い手順をツールが導き出す「🔄 盤面を進める手を探す」が使えるようになります。</li>
+    <li>「🔍 次の手を探す」が、目標に必要な素材が効率よく増える手順を探すようになります。</li>
     <li>必要な素材が勝手に揃って消えてしまう「事故」の確率を事前に警告してくれます。</li>
-    <li>起爆する手と、できるMAXの数がカードに表示されるようになります。</li>
-    <li>「🔗 連鎖を探す」が、必要な素材が減る連鎖を除外してくれます。</li>
+    <li>必要な素材が減る手順や連鎖を除外してくれます。</li>
   </ol>
   <p style="margin-top:10px;font-weight:700;">■ はじめての方は「プリセット」がおすすめ</p>
   <p>よく使われるMAX布陣が用意されています（斜め移動なし: 3・4・7・8・10MAX ／ 斜め移動あり: 3・4・6・12・18MAX）。まずはここから選んでみてください。（ご自身で作った布陣をプリセットとして保存することも可能です）</p>
@@ -3194,10 +3208,10 @@ document.getElementById('btnConfig').addEventListener('click', () => {
   }
   h += '</div><h3 class="cfg-h">斜め入替</h3>' +
     `<label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="cfgDiagonal" ${state.diagonal ? 'checked' : ''}> 斜めに隣り合うマスとも入れ替えられる（斜め入替が可能なゲームモード）</label>` +
-    '<div class="note">オンにすると「盤面を進める手を探す」「連鎖を探す」で調べる手が増えるので、計算に時間がかかります。</div>';
+    '<div class="note">オンにすると「次の手を探す」で調べる手が増えるので、計算に時間がかかります。</div>';
   h += '<h3 class="cfg-h">PvPモード</h3>' +
     `<label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="cfgPvp" ${state.pvp ? 'checked' : ''}> PvPモード</label>` +
-    `<div class="note">打った手と残り手数の合計が${PVP_MOVE_CAP}手に届くと、連鎖が起きても手数が増えなくなります（PvPで確かめた上限です。ほかのゲームモードにも上限があるかは確かめていません）。残り手数の計算と「盤面を進める手を探す」「連鎖を探す」に反映します。</div>`;
+    `<div class="note">打った手と残り手数の合計が${PVP_MOVE_CAP}手に届くと、連鎖が起きても手数が増えなくなります（PvPで確かめた上限です。ほかのゲームモードにも上限があるかは確かめていません）。残り手数の計算と「次の手を探す」に反映します。</div>`;
   h += '<h3 class="cfg-h">補充の入力のしかた</h3>' +
     `<label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="cfgRefillInput" value="final" ${state.refillInputMode === 'waves' ? '' : 'checked'}> 最後の盤面だけ: マッチが止まったあとの盤面を入力し、ゲーム画面の残り手数を確かめて確定する</label>` +
     `<label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="cfgRefillInput" value="waves" ${state.refillInputMode === 'waves' ? 'checked' : ''}> 補充の回ごと: 補充されるたびに、補充されたマスを入力する（通常プレイでは非推奨。他人の手を動画などで追うとき用）</label>`;
@@ -3369,14 +3383,7 @@ function importGameRecord(text, skipAsk) {
   if (!rec) { openNotice('記録を読み込めませんでした。「📝 記録を書き出す」で書き出したファイルを選んでください。'); return; }
   const load = () => applyRecord(rec);
   if (skipAsk) { load(); return; }
-  const askLoad = () => openAsk(`記録（${rec.log.length}手）を読み込みます。設定と目標MAX布陣は、記録のものに置き換わります。よろしいですか？`, { okLabel: '読み込む', onOk: load });
-  const g = state.game, n = g.log.length + (g.future || []).length;
-  if (n) askUnsaved(n, '記録を読み込んで', askLoad);
-  else askLoad();
-}
-// 打った手がまだ残っているときに、書き出したかを聞く
-function askUnsaved(n, what, then) {
-  openAsk(`打った手が${n}手残っています。「📝 記録を書き出す」は押しましたか？\n\n書き出さずに${what}よければ「進める」を押してください。`, { okLabel: '進める', danger: true, onOk: then });
+  openAsk(`記録（${rec.log.length}手）を読み込みます。いま打っている対局は消え、設定と目標MAX布陣も記録のものに置き換わります。よろしいですか？`, { okLabel: '読み込む', onOk: load });
 }
 function applyRecord(rec) {
   state.maxLevels = rec.maxLevels;
@@ -3421,16 +3428,11 @@ document.getElementById('btnResetGame').addEventListener('click', () => {
     picked = null;
     onBoardChanged();
   };
-  const askReset = () => openAsk('盤面と対局の記録を消して、最初の盤面の入力からやり直しますか？（目標MAX布陣と設定は残ります）', { okLabel: 'リセットする', danger: true, onOk: reset });
-  // 書き出さずに消してしまわないよう一度聞く
-  const recN = state.game.log.length + (state.game.future || []).length;
-  if (recN) askUnsaved(recN, '消して', askReset);
-  else askReset();
+  openAsk('盤面と対局の記録を消して、最初の盤面の入力からやり直しますか？（目標MAX布陣と設定は残ります）', { okLabel: 'リセットする', danger: true, onOk: reset });
 });
 
 /* ============================== 初期化 ============================== */
-btnChainSearch.addEventListener('click', () => { runChainSearch('chain'); });
-btnAdvanceSearch.addEventListener('click', () => { runChainSearch('advance'); });
+btnSearch.addEventListener('click', () => { runChainSearch(); });
 refresh();
 renderPatternList();
 
