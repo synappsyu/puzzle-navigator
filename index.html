@@ -1462,7 +1462,7 @@ async function findAdvanceOptions(grid, onProgress) {
   const startLeft = (typeof currentLeft === 'function' && state.game && state.game.phase === 'move') ? currentLeft() : Infinity;
   const room = recoveryRoom();
   const finals = new Map();
-  let layer = [{ sp: sp0, lv: lv0, path: [], rec: 0, refills: 0, midRefills: 0, pen: 0, broken: false, left: startLeft }];
+  let layer = [{ sp: sp0, lv: lv0, path: [], rec: 0, refills: 0, midRefills: 0, pen: 0, maxRec: 0, broken: false, left: startLeft }];
   const seen = new Set([placementFlatKey(sp0, lv0)]);
   let lastYield = performance.now();
   for (let k = 1; k <= chainSearchDepth; k++) {
@@ -1494,7 +1494,11 @@ async function findAdvanceOptions(grid, onProgress) {
         // 2手以上の手順で、最後の手がマッチの起きない削除(補充のくじを引くだけ)のものは候補にしない。
         // くじは前の手の補充を見てから引くかどうか決めたほうが得(連鎖を探すと同じ考え方)
         const lotteryTail = move.type === 'delete' && plen >= 2 && ev.length === 0;
-        if (r.changed && !broken && !lotteryTail) {
+        // 最後の手が、その手順で一番多く手数が増える手(連鎖を起こす手)であるものだけを候補にする(連鎖を探すと同じ)。
+        // 大きな連鎖のあとは盤面が補充で大きく変わるので、続きの手はそこで探し直すほうが得。
+        // 連鎖のあとに手を足すと「手数を使わずに」のまま素材の合計だけが増え、上位に来てしまうのを防ぐ
+        const chainTail = r.rec >= node.maxRec;
+        if (r.changed && !broken && !lotteryTail && chainTail) {
           const refills = node.refills + r.refills;
           const dSure = patternCountsFlat(r.sp, r.lv, target).deficit;
           const screenGain = (d0 - dSure) + Math.min(refills * refillUnit / 4, dSure) - pen - breakPenaltyOf(aligned, r.sp, r.lv, target).pen;
@@ -1512,7 +1516,7 @@ async function findAdvanceOptions(grid, onProgress) {
           const key = placementFlatKey(r.sp, r.lv);
           if (!seen.has(key)) {
             seen.add(key);
-            next.push({ sp: r.sp, lv: r.lv, path: node.path.concat([move]), rec, refills: node.refills + r.refills, midRefills: node.midRefills + r.refills, pen, broken, left: startLeft - plen + rec });
+            next.push({ sp: r.sp, lv: r.lv, path: node.path.concat([move]), rec, refills: node.refills + r.refills, midRefills: node.midRefills + r.refills, pen, maxRec: Math.max(node.maxRec, r.rec), broken, left: startLeft - plen + rec });
           }
         }
       }
@@ -2103,7 +2107,7 @@ function runFinalCheck(p, v, keepUnknown, key, onPass) {
     if (rg.region) for (const i of rg.region) marks.add(i);
     p.checkMarks = marks.size ? Array.from(marks) : null;
     p.checkMsg = marks.size
-      ? `この手を打っても、${rec == null ? 'この盤面' : 'この盤面と残り手数'}にはなりません。赤い点線の枠のマス（${marks.size}マス）を、ゲーム画面と見比べてください。このままでよければ、もう一度「確定」を押してください。`
+      ? `この手を打っても、${rec == null ? 'この盤面' : 'この盤面と残り手数'}にはなりません。赤い点線の枠のマス（${marks.size}マス）をゲーム画面と見比べてください。今の盤面がゲーム画面どおりなら、そのまま「確定」を押して進めて大丈夫です（前の手の入力違いが、今になって見つかることがあります）。`
       : 'この盤面の場合、残り手数が合いません。残り手数と盤面を、ゲーム画面と見比べてください。このままでよければ、もう一度「確定」を押してください。';
   }
   p.checkConfirm = true;
