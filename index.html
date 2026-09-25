@@ -91,14 +91,25 @@
     font-size: 11px; font-weight: 800; color: #fff; vertical-align: middle;
   }
   /* 入替の枠と削除の✕(入替と削除は✕の有無で見分ける)。枠は駒から少し離して外側に描く(赤い素材の駒の上でも見えるように) */
-  .cell.highlight, .cell.highlight-del { border-color: transparent; box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--mark); }
+  .cell.highlight, .cell.highlight-del { border-color: transparent; box-shadow: 0 0 0 1px var(--panel), 0 0 0 4px var(--mark); }
   /* 入力間違いの確認で、見比べてほしいマス(入替の枠と見分けるため点線) */
-  .cell.check-mark { border: 3px dashed var(--mark) !important; }
+  .cell.check-mark { border: 4px dashed var(--mark) !important; }
   /* 盤面を進める手を探すで、動かしてしまう「そろえたマス」(手順のあとの小さな盤面) */
-  .cell.mini.break-mark { border: 2px dashed var(--mark) !important; }
-  .cell.mini.highlight, .cell.mini.highlight-del { box-shadow: 0 0 0 1px var(--panel2), 0 0 0 2px var(--mark); }
+  .cell.mini.break-mark { border: 3px dashed var(--mark) !important; }
+  .cell.mini.highlight, .cell.mini.highlight-del { box-shadow: 0 0 0 1px var(--panel2), 0 0 0 3px var(--mark); }
   .cell .delx { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; color: var(--mark); text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 3px #000; }
   .cell.mini .delx { font-size:13px; }
+  /* 目標MAX布陣にそろえたマス(列の上もそろったマス)を、まわりに金色の光がにじむようにゆっくり光らせる。
+     光はとなりの駒の上にも少しかかるので前に出す。入替・削除の枠と入力間違いの点線は、光よりさらに前に出す */
+  @keyframes alignedGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,184,0,0); } 50% { box-shadow: 0 0 13px 6px rgba(255,184,0,1); } }
+  @keyframes alignedGlowRing { 0%, 100% { box-shadow: 0 0 0 1px var(--panel), 0 0 0 4px var(--mark), 0 0 0 0 rgba(255,184,0,0); } 50% { box-shadow: 0 0 0 1px var(--panel), 0 0 0 4px var(--mark), 0 0 15px 8px rgba(255,184,0,1); } }
+  .cell.aligned-glow { z-index: 1; animation: alignedGlow 2s ease-in-out infinite; }
+  .cell.aligned-glow.highlight, .cell.aligned-glow.highlight-del { animation-name: alignedGlowRing; }
+  .cell.highlight, .cell.highlight-del, .cell.check-mark { z-index: 2; }
+  /* 練習モードでマッチの様子を見せる場面: そろったマスは白く強く光って少し小さくなる。消えたマスは暗い空き */
+  .cell.match-flash { filter: brightness(2); box-shadow: inset 0 0 18px 14px #fff, 0 0 12px 5px #fff; transform: scale(.82); transition: transform .15s; z-index: 1; }
+  .cell.gone { background: #202228; }
+  .practice-label { color: var(--accent); font-weight: 700; }
 
   .toolbar { display:flex; gap:8px; margin-top:10px; flex-wrap: wrap; }
   button {
@@ -223,7 +234,7 @@
   <header>
     <div>
       <h1>スラだんパズルナビゲーター <span class="sign">created by シナっぷ</span></h1>
-      <div class="ver">version 1.2.0（2026-09-25）</div>
+      <div class="ver">version 1.2.2（2026-09-26）</div>
       <div class="sub">ゲームと同じ盤面を入力して1手ずつ進められるシミュレーターです。MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖も探せます。</div>
     </div>
     <div class="toolbar">
@@ -237,7 +248,7 @@
 
   <details class="guide" id="quickGuide">
     <summary>はじめての方へ（クイックガイド）</summary>
-    <p class="guide-lead">使い方は、目的に合わせて大きく2通りあります。</p>
+    <p class="guide-lead">使い方は、目的に合わせて大きく3通りあります。</p>
     <p class="guide-h">■ ① シミュレーターとして自由に試す</p>
     <ol>
       <li>試したい盤面と残り手数を入力し、「この盤面で始める」を押します（入力を省いたマスは「?」になります）。</li>
@@ -252,6 +263,11 @@
       <li>良い手が見つかったら実際のゲームで打ち、新しく補充された駒をツールに入力して「確定」を押して進めます。</li>
     </ol>
     <p class="note">※盤面が少しずれたら「盤面を直す<span class="key"> （E）</span>」で修正し、大きく変わった時は「リセット」して最初から入力し直してください。</p>
+    <p class="guide-h">■ ③ 練習モードで練習する</p>
+    <ol>
+      <li>最初の盤面を入力する画面で、残り手数の欄にゲームモードの最初の手数を入れ、「ランダムな盤面で練習する」を押します。</li>
+      <li>あとは①と同じように、1手ずつ打てます。補充はツールがランダムに決めるので、入力はいりません。</li>
+    </ol>
   </details>
 
   <div class="layout">
@@ -803,6 +819,7 @@ function defaultState() {
     increasingRecovery: false,                    // 連鎖で増える手数がラウンドごとに大きくなるゲームモード
     refillInputMode: 'final',                     // 補充の入力: final=最後の盤面だけ(残り手数を確かめて確定) / waves=補充の回ごと
     advanceSort: 'gain',                          // 「次の手を探す」の並び順: gain=素材の増加の順 / net=差し引きの手数の順
+    alignedGlow: true,                            // 目標MAX布陣にそろえたマスを盤面で光らせる
     board: defaultBoard(),
     patterns: [],                                 // 最初は何も登録しない(登録すると連鎖を探すの結果が絞られるため)
     currentPatternId: null,                       // いま目指している目標MAX布陣(null なら一覧の1番目)
@@ -821,6 +838,7 @@ function normalizeState(s) {
   s.increasingRecovery = !!s.increasingRecovery;
   if (s.refillInputMode !== 'waves') s.refillInputMode = 'final';
   if (s.advanceSort !== 'net') s.advanceSort = 'gain';
+  s.alignedGlow = s.alignedGlow !== false;
   s.patterns = Array.isArray(s.patterns) ? keepClean(s.patterns, cleanPattern) : [];
   if (typeof s.currentPatternId !== 'string') s.currentPatternId = null;
   s.speciesColors = Object.assign({}, DEFAULT_SPECIES_COLORS, s.speciesColors || {});
@@ -1902,6 +1920,7 @@ function playMove(move, riskChecked) {
   const before = cloneGrid(state.board);
   picked = null;
   clearChainResults();
+  if (g.practice) { playPracticeMove(move, before, queueBefore); return; }
   if (state.refillInputMode === 'final') {
     // 最後の盤面だけ入力する: 補充された駒が絡まないマッチを最後まで計算し、「?」付きの盤面を出す
     const s = resolveSure(before, move);
@@ -2413,6 +2432,165 @@ function startGame() {
   picked = null;
   refresh();
 }
+/* ---------- 練習モード ---------- */
+// 最初の盤面と補充をツールがランダムに決める(4種類の素材が同じ確率)。手を打つと、その場で最後まで計算して確定し、
+// マッチの様子(そろったマスに印 → 消える → 詰まって補充)を1ラウンドずつ見せる。打ち直すたびに補充は変わる。
+const ANIM_MS = 400;   // 1場面の長さ
+const ANIM_HINT = '盤面を押すと、途中を省いて、マッチが止まったあとの盤面を表示します。';
+let anim = null;       // マッチの様子を見せている間: { frames, k, timer, finalKey }
+function practiceRng() { return makeRng(Math.floor(Math.random() * 4294967296)); }
+// 平坦な盤面を、見せるための盤面に(消えたマス・空きは null)
+function frameGrid(sp, lv) {
+  const g = [];
+  for (let y = 0; y < SIZE; y++) {
+    const row = [];
+    for (let x = 0; x < SIZE; x++) { const i = y * SIZE + x; row.push(sp[i] < 0 || lv[i] === -1 ? null : { species: SPECIES_NAME[sp[i]], level: lv[i] }); }
+    g.push(row);
+  }
+  return g;
+}
+// マッチをラウンドごとに進める(resolveFlat と同じ進め方)。1ラウンドにつき3場面を frames に足す。
+// firstRound … このループの最初のマッチが何ラウンド目か(入替は2、削除と最初の盤面は1)。返り値は増えた手数
+function practiceRounds(sp, lv, fl, ml, rng, firstRound, frames, events) {
+  const ov = new Uint8Array(SIZE * SIZE);
+  let inc = 0;
+  for (let i = 0; i < 13; i++) {
+    const runs = detectRuns(sp, lv, ml);
+    if (!runs.length) break;
+    const round = firstRound + i;
+    inc += runs.length * recoveryWeight(round);
+    pushEvents(runs, events);
+    const marks = [];
+    runs.forEach(r => r.cells.forEach(c => marks.push(c)));
+    frames.push({ grid: frameGrid(sp, lv), marks, round, inc });
+    if (runs.length > 1) runs.sort((a, b) => (b.len - a.len) || (a.ord - b.ord));
+    ov.fill(0);
+    for (const r of runs) mergeRunStandard(r, lv, ov);
+    frames.push({ grid: frameGrid(sp, lv), marks: [], round, inc });
+    compactFlat(sp, lv);
+    fl.fill(0);
+    refillFlat(sp, lv, fl, rng);
+    frames.push({ grid: frameGrid(sp, lv), marks: [], round, inc });
+  }
+  return inc;
+}
+// 入替で直接そろったマッチ(ラウンド1)の、消えたマスが空いた場面。applySwapFlat の詰める前までと同じ処理(見せるためだけ)
+function swapMergedFrame(sp0, lv0, ia, ib, ml) {
+  const sp = Int8Array.from(sp0), lv = Int8Array.from(lv0);
+  const t = sp[ia]; sp[ia] = sp[ib]; sp[ib] = t;
+  const u = lv[ia]; lv[ia] = lv[ib]; lv[ib] = u;
+  const runs = detectRuns(sp, lv, ml);
+  if (runs.length > 1) runs.sort((a, b) => (b.len - a.len) || (a.ord - b.ord));
+  const special = [], standard = [], ov = new Uint8Array(SIZE * SIZE);
+  for (const r of runs) {
+    const hasA = r.cells.indexOf(ia) >= 0, hasB = r.cells.indexOf(ib) >= 0;
+    if (hasA !== hasB && r.len === 3) special.push({ r, landing: hasA ? ia : ib }); else standard.push(r);
+  }
+  for (const { r, landing } of special) {
+    let put = landing;
+    if (ov[put]) { put = r.cells.find(id => !ov[id]); if (put === undefined) continue; }
+    lv[put] = r.level + 1; ov[put] = 1;
+    for (const id of r.cells) { if (id === put) continue; if (!ov[id]) { lv[id] = -1; ov[id] = 1; } }
+  }
+  for (const r of standard) mergeRunStandard(r, lv, ov);
+  return frameGrid(sp, lv);
+}
+function playPracticeMove(move, before, queueBefore) {
+  const g = state.game, N = SIZE * SIZE;
+  const sp = new Int8Array(N), lv = new Int8Array(N), fl = new Uint8Array(N);
+  flatFromGrid(before, sp, lv);
+  const ml = maxLevelsToIdx(state.maxLevels), rng = practiceRng(), events = [], frames = [];
+  const left0 = currentLeft() - 1, room = recoveryRoom();
+  let inc = 0;
+  if (move.type === 'swap') {
+    const ia = move.a.y * SIZE + move.a.x, ib = move.b.y * SIZE + move.b.x;
+    const ssp = Int8Array.from(sp), slv = Int8Array.from(lv);
+    [ssp[ia], ssp[ib]] = [ssp[ib], ssp[ia]]; [slv[ia], slv[ib]] = [slv[ib], slv[ia]];
+    frames.push({ grid: frameGrid(ssp, slv), marks: [], round: 0, inc: 0 });   // 入れ替えた直後
+    const runs1 = detectRuns(ssp, slv, ml);
+    if (runs1.length) {
+      const marks = [];
+      runs1.forEach(r => r.cells.forEach(c => marks.push(c)));
+      frames.push({ grid: frameGrid(ssp, slv), marks, round: 1, inc: 0 });
+      frames.push({ grid: swapMergedFrame(sp, lv, ia, ib, ml), marks: [], round: 1, inc: 0 });
+    }
+    const r = applySwapFlat(sp, lv, ia, ib, ml, COEF, events);
+    if (r.hadMatches) {
+      refillFlat(sp, lv, fl, rng);
+      frames.push({ grid: frameGrid(sp, lv), marks: [], round: 1, inc: 0 });
+      inc = practiceRounds(sp, lv, fl, ml, rng, 2, frames, events);
+    }
+  } else {
+    const i = move.pos.y * SIZE + move.pos.x;
+    sp[i] = -1; lv[i] = 0;
+    frames.push({ grid: frameGrid(sp, lv), marks: [], round: 0, inc: 0 });   // 削除したマスが空く
+    compactFlat(sp, lv);
+    refillFlat(sp, lv, fl, rng);
+    frames.push({ grid: frameGrid(sp, lv), marks: [], round: 0, inc: 0 });   // 詰まって補充
+    inc = practiceRounds(sp, lv, fl, ml, rng, 1, frames, events);
+  }
+  frames.forEach(f => { f.left = left0 + Math.min(f.inc, room); });
+  const after = frameGrid(sp, lv);
+  g.log.push({ move, before, after: cloneGrid(after), refills: [], chain: Math.min(inc, room), events, inputMode: 'final', queueBefore });
+  state.board = after;
+  advanceTargetAfterMove(g.log[g.log.length - 1]);
+  startAnim(frames);
+  refresh();
+}
+// 「ランダムな盤面で練習する」: 欄の数字をゲームモードの最初の手数として、ランダムに並べた駒のマッチを進めてから始める
+function startPractice() {
+  const input = document.getElementById('startMovesInput');
+  const v = input ? parseInt(input.value, 10) : 50;
+  const base = v > 0 ? v : 50, N = SIZE * SIZE;
+  const sp = new Int8Array(N).fill(-1), lv = new Int8Array(N), fl = new Uint8Array(N);
+  const ml = maxLevelsToIdx(state.maxLevels), rng = practiceRng();
+  refillFlat(sp, lv, fl, rng);
+  const frames = [{ grid: frameGrid(sp, lv), marks: [], round: 0, inc: 0 }];
+  const inc = practiceRounds(sp, lv, fl, ml, rng, 1, frames, []);
+  const room = state.pvp ? Math.max(0, PVP_MOVE_CAP - base) : Infinity;
+  frames.forEach(f => { f.left = base + Math.min(f.inc, room); });
+  state.game = defaultGame();
+  state.game.start = base + Math.min(inc, room);
+  state.game.phase = 'move';
+  state.game.practice = true;
+  state.board = frameGrid(sp, lv);
+  picked = null; lastSearch = null; moveMode = 'swap';
+  startAnim(frames);
+  onBoardChanged();
+}
+function startAnim(frames) {
+  stopAnim();
+  if (frames.length <= 1) return;
+  anim = { frames, k: 0, timer: null, finalKey: JSON.stringify(state.board) };
+  const step = () => {
+    if (!anim) return;
+    if (anim.k >= anim.frames.length - 1) { finishAnim(); return; }
+    anim.k++;
+    renderAnimFrame();
+    anim.timer = setTimeout(step, ANIM_MS);
+  };
+  anim.timer = setTimeout(step, ANIM_MS);
+}
+function stopAnim() { if (anim) clearTimeout(anim.timer); anim = null; }
+// 最後の盤面にして、残り手数の行と案内をふだんの表示に戻す
+function finishAnim() { stopAnim(); renderAnimFrame(); }
+// 盤面と残り手数の行と案内だけを描き直す(起爆のお知らせなど、ほかの表示は消さない)
+function renderAnimFrame() {
+  renderBoard();
+  const line = document.getElementById('movesLeftLine'), hint = document.getElementById('moveHint');
+  if (line) line.innerHTML = movesLeftHtml();
+  if (hint) hint.textContent = anim ? ANIM_HINT : moveHintText();
+}
+// 残り手数の行。マッチの様子を見せている間は、その場面の残り手数と、ラウンド・この手の連鎖で増えた手数(累計)
+function movesLeftHtml() {
+  const g = state.game;
+  if (anim) {
+    const f = anim.frames[anim.k];
+    return `残り手数 <span class="num">${f.left}</span><span class="practice-label">${f.round ? `ラウンド${f.round}` : ''}${f.inc ? `　連鎖で増加 +${f.inc}` : ''}</span>`;
+  }
+  return `残り手数 <span class="num">${currentLeft()}</span>${g.practice ? '<span class="practice-label">練習モード</span>' : ''}
+        <span class="note">（始め ${g.start} / 打った手 ${g.log.length} / 連鎖で増加 ${recoveredTotal()}${adjustTotal() ? ` / 手数の直し ${adjustTotal() > 0 ? '+' : ''}${adjustTotal()}` : ''}）</span>`;
+}
 // 連鎖の手順のカードの「この手順を打つ」。まだ打たずに、1手目を盤面に印で示す。
 // 「①を打つ」ボタンか、盤面で同じ手を打つと1手ずつ進む。
 function startChainSequence(idx, riskChecked) {
@@ -2523,8 +2701,33 @@ function renderBrushRow() {
 function renderBoard() {
   boardEl.innerHTML = '';
   const g = state.game;
+  if (anim) {
+    const f = anim.frames[anim.k];
+    for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
+      const c = f.grid[y][x], div = document.createElement('div');
+      div.className = 'cell';
+      if (!c) div.classList.add('gone');
+      else {
+        div.style.background = levelShade(c.species, c.level, state.maxLevels[c.species]);
+        div.style.color = textOn(div.style.background);
+        div.textContent = `${c.species}${c.level}`;
+      }
+      if (f.marks.includes(y * SIZE + x)) div.classList.add('match-flash');
+      div.addEventListener('click', () => onBoardCellClick(x, y));
+      boardEl.appendChild(div);
+    }
+    return;
+  }
   const next = (g.phase === 'move' && g.queue.length) ? g.queue[0] : null;
   const checkMarks = (g.phase === 'fix' && g.pending && g.pending.checkMarks) || null;   // 入力間違いの確認で違うと出たマス
+  // 目標MAX布陣にそろえたマス(「次の手を探す」の「そろえたマスを動かします」と同じマス)。「この盤面で始める」のあとだけ光らせる
+  const target = currentTargetPattern();
+  let glow = null;
+  if (state.alignedGlow && g.phase !== 'setup' && target) {
+    const sp = new Int8Array(SIZE * SIZE), lv = new Int8Array(SIZE * SIZE);
+    flatFromGrid(state.board, sp, lv);
+    glow = new Set(alignedCellsOf(sp, lv, target).map(a => a.i));
+  }
   for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
     const cell = state.board[y][x];
     const div = document.createElement('div');
@@ -2535,6 +2738,7 @@ function renderBoard() {
       div.style.color = textOn(div.style.background);
       div.textContent = `${cell.species}${cell.level}`;
     }
+    if (glow && glow.has(y * SIZE + x)) div.classList.add('aligned-glow');
     if (picked && picked.x === x && picked.y === y) div.classList.add('highlight');
     if (checkMarks && checkMarks.includes(y * SIZE + x)) div.classList.add('check-mark');
     if (next && next.type === 'swap' && ((next.a.x === x && next.a.y === y) || (next.b.x === x && next.b.y === y))) div.classList.add('highlight');
@@ -2546,6 +2750,12 @@ function renderBoard() {
     div.addEventListener('click', () => onBoardCellClick(x, y));
     boardEl.appendChild(div);
   }
+}
+function moveHintText() {
+  return moveMode === 'swap'
+    ? (picked ? `入れ替える相手のマスをクリック（隣り合うマス${state.diagonal ? '・斜めも可' : ''}）` : '入れ替える2マスを順にクリック')
+    : moveMode === 'delete' ? '削除するマスをクリック'
+      : 'ゲーム画面と違うマスを、素材とレベルを選んで入力し直してください。残り手数が違うときは、下の欄で直せます。';
 }
 function ruleText() {
   const parts = [];
@@ -2562,43 +2772,49 @@ function renderGameControls() {
   if (g.phase === 'setup') {
     const u = countUnresolvedCells(state.board);
     gameControlsEl.innerHTML = `
-      <div class="game-status"><b>最初の盤面を入力</b>: 素材とレベルを選んで、36マスをゲーム画面どおりに入力してください。<br>気になる所だけ入力して始めることもできます（入力しなかったマスは「?」のままです）。</div>
+      <div class="game-status"><b>最初の盤面を入力</b>: 素材とレベルを選んで、36マスをゲーム画面どおりに入力してください。<br>気になる所だけ入力して始めることもできます（入力しなかったマスは「?」のままです）。<br>「ランダムな盤面で練習する」を押すと、ツールが最初の盤面をランダムに決めて、入力なしで練習できます。そのときは、残り手数の欄にゲームモードの最初の手数を入れてください。</div>
       <div class="toolbar" style="margin-top:0;margin-bottom:8px;align-items:center;">
         <label class="small">ゲーム画面の残り手数 <input type="number" id="startMovesInput" min="1" max="999" value="${g.start}" style="width:5em;"></label>
         <button id="btnStartGame" class="primary">この盤面で始める</button>
+        <button id="btnStartPractice">ランダムな盤面で練習する</button>
         <span class="note">${u.total ? `「?」の${u.total}マスは、そのまま「?」として始めます。` : '入力できました。'}</span>
       </div>`;
     document.getElementById('startMovesInput').addEventListener('input', (e) => { const v = parseInt(e.target.value, 10); if (v > 0) { g.start = v; saveState(); } });
     document.getElementById('btnStartGame').addEventListener('click', startGame);
+    document.getElementById('btnStartPractice').addEventListener('click', startPractice);
     return;
   }
   if (g.phase === 'move') {
-    const hint = moveMode === 'swap'
-      ? (picked ? `入れ替える相手のマスをクリック（隣り合うマス${state.diagonal ? '・斜めも可' : ''}）` : '入れ替える2マスを順にクリック')
-      : moveMode === 'delete' ? '削除するマスをクリック'
-        : 'ゲーム画面と違うマスを、素材とレベルを選んで入力し直してください。残り手数が違うときは、下の欄で直せます。';
+    if (g.practice && moveMode === 'edit') moveMode = 'swap';   // 練習モードには「盤面を直す」が無い
+    const hint = moveHintText();
     const q = g.queue.length ? g.queue[0] : null;
     gameControlsEl.innerHTML = `
-      <div class="moves-left">残り手数 <span class="num">${currentLeft()}</span>
-        <span class="note">（始め ${g.start} / 打った手 ${g.log.length} / 連鎖で増加 ${recoveredTotal()}${adjustTotal() ? ` / 手数の直し ${adjustTotal() > 0 ? '+' : ''}${adjustTotal()}` : ''}）</span></div>
+      <div class="moves-left" id="movesLeftLine">${movesLeftHtml()}</div>
       <div class="toolbar" style="margin-top:0;margin-bottom:6px;">
         <button id="modeSwap" class="${moveMode === 'swap' ? 'on' : ''}">入替<span class="key"> （S）</span></button>
         <button id="modeDelete" class="${moveMode === 'delete' ? 'on' : ''}">削除<span class="key"> （D）</span></button>
-        <button id="modeEdit" class="${moveMode === 'edit' ? 'on' : ''}">盤面を直す<span class="key"> （E）</span></button>
+        ${g.practice ? '' : `<button id="modeEdit" class="${moveMode === 'edit' ? 'on' : ''}">盤面を直す<span class="key"> （E）</span></button>`}
         <button id="btnUndo" ${g.log.length ? '' : 'disabled'}>1手戻す<span class="key"> （U）</span></button>
         <button id="btnRedo" ${g.future.length ? '' : 'disabled'}>1手進める<span class="key"> （R）</span></button>
       </div>
-      <div class="game-status">${targetNotice ? `<b style="color:var(--accent)">${targetNotice}</b><br>` : ''}${moveNotice ? `<b style="color:var(--danger)">${moveNotice}</b><br>` : ''}${hint}</div>
-      ${moveMode === 'edit' ? `<div class="toolbar" style="margin-top:0;margin-bottom:8px;align-items:center;"><label class="small">残り手数 <input type="number" id="editLeftInput" min="0" max="999" value="${currentLeft()}" style="width:5em;"></label><button id="btnEditLeft" class="small">この数字に直す</button></div>` : ''}
+      <div class="game-status">${targetNotice ? `<b style="color:var(--accent)">${targetNotice}</b><br>` : ''}${moveNotice ? `<b style="color:var(--danger)">${moveNotice}</b><br>` : ''}<span id="moveHint">${anim ? ANIM_HINT : hint}</span></div>
+      ${moveMode === 'edit' ? `<div class="toolbar" style="margin-top:0;margin-bottom:8px;align-items:center;"><label class="small">残り手数 <input type="number" id="editLeftInput" min="0" max="999" value="${currentLeft()}" style="width:5em;"></label><button id="btnEditLeft" class="small">この数字に直す</button><button id="btnClearBoard" class="small danger">盤面をクリア</button></div>` : ''}
       ${q ? `<div class="toolbar" style="margin-top:0;margin-bottom:8px;">
         <button id="btnQueueNext" class="primary">${['①', '②', '③', '④'][(g.queueTotal || g.queue.length) - g.queue.length] || ''} を打つ（${(g.queueTotal || g.queue.length) - g.queue.length + 1}/${g.queueTotal || g.queue.length}手目）: ${describeMove(q)}</button>
         <button id="btnQueueStop" class="small">手順をやめる</button></div>` : ''}`;
     const setMode = (m) => { moveMode = m; picked = null; refresh(); };
     document.getElementById('modeSwap').addEventListener('click', () => setMode('swap'));
     document.getElementById('modeDelete').addEventListener('click', () => setMode('delete'));
-    document.getElementById('modeEdit').addEventListener('click', () => setMode('edit'));
+    if (!g.practice) document.getElementById('modeEdit').addEventListener('click', () => setMode('edit'));
     document.getElementById('btnUndo').addEventListener('click', undoLast);
     document.getElementById('btnRedo').addEventListener('click', redoNext);
+    const clearBtn = document.getElementById('btnClearBoard');
+    if (clearBtn) clearBtn.addEventListener('click', () => {
+      openAsk('盤面の36マスをすべて「?」にします。残り手数と打った手の記録は残ります。よろしいですか？', {
+        okLabel: 'クリアする', cancelLabel: 'キャンセル', danger: true,
+        onOk: () => withFutureDropped(() => { state.board = defaultBoard(); fillEmptyAsUnknown(state.board); g.queue = []; onBoardChanged(); }),
+      });
+    });
     const editLeftBtn = document.getElementById('btnEditLeft');
     if (editLeftBtn) editLeftBtn.addEventListener('click', () => {
       const v = parseInt(document.getElementById('editLeftInput').value, 10);
@@ -2640,6 +2856,7 @@ function updateDepthLabels() {
   sel.options[1].textContent = state.diagonal ? '4手まで（数分）' : '4手まで（数十秒）';
 }
 function refresh() {
+  if (anim && (state.game.phase !== 'move' || JSON.stringify(state.board) !== anim.finalKey)) stopAnim();
   updateDepthLabels();
   const exportBtn = document.getElementById('btnExportGame');
   const recordN = state.game.log.length + (state.game.future || []).length;
@@ -2677,6 +2894,7 @@ function paintCell(x, y) {
 }
 function onBoardCellClick(x, y) {
   const g = state.game;
+  if (anim) { finishAnim(); return; }
   if (g.phase === 'setup' || g.phase === 'fix' || moveMode === 'edit') { paintCell(x, y); return; }
   if (moveMode === 'delete') {
     // MAXの駒を削除するときは、打ち間違いでないか一度確かめる
@@ -2721,7 +2939,7 @@ document.addEventListener('keydown', (e) => {
   const g = state.game;
   if (g.phase === 'move' && k === 's') { moveMode = 'swap'; picked = null; refresh(); }
   else if (g.phase === 'move' && k === 'd') { moveMode = 'delete'; picked = null; refresh(); }
-  else if (g.phase === 'move' && k === 'e') { moveMode = 'edit'; picked = null; refresh(); }
+  else if (g.phase === 'move' && k === 'e' && !g.practice) { moveMode = 'edit'; picked = null; refresh(); }
   else if (k === 'u') undoLast();
   else if (k === 'r') redoNext();
   else if (k === 'enter' && g.phase === 'fix' && pendingInputCount(g.pending) === 0) {
@@ -3297,9 +3515,12 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
     <li><b>ゲームと同じ手を打つ</b><br>「入替<span class="key"> （S）</span>」か「削除<span class="key"> （D）</span>」を選んで、シミュレーター上で手を打ちます。</li>
     <li><b>補充されたマスを確定する</b><br>新しく補充された駒（「?」になったマス）を入力し、「確定<span class="key"> （Enter）</span>」を押します。</li>
   </ol>
+  <p style="margin-top:10px;font-weight:700;">■ 盤面で光っている駒は？</p>
+  <p>目標MAX布陣の形どおりに置いた駒のうち、その列の上がすべてMAX布陣どおりの駒です。「次の手を探す」で「⚠ そろえたマスを動かします」と出るのは、この駒を動かす手順です。光らせたくないときは、「⚙ 設定」の「素材の色」でチェックを外してください。</p>
   <p style="margin-top:10px;font-weight:700;">■ ゲームとずれたり、間違えたときは？</p>
   <ul>
     <li>入力間違いを直したい → 「盤面を直す<span class="key"> （E）</span>」で修正できます。</li>
+    <li>盤面を全部入れ直したい → 「盤面を直す<span class="key"> （E）</span>」の中の「盤面をクリア」で、盤面をすべて「?」にできます（残り手数と打った手の記録は残ります）。</li>
     <li>1手前の状態に戻したい → 「1手戻す<span class="key"> （U）</span>」で戻れます。</li>
     <li>赤い点線の枠が出た → 「確定」を押した際、ツールが「ありえない盤面（入力ミス）」を検知しました。赤枠のマスを確認し、入力し直してください。そのままもう一度「確定」を押せば、無視して進めることもできます。</li>
     <li>赤枠は「ここを直せば辻褄が合う」という候補で、間違えた場所そのものとは限りません。枠のマスが合っていても、盤面のどこかがゲームとずれていることがあります。</li>
@@ -3309,6 +3530,7 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
     <li><b>⚙ 設定</b>: ゲームモード（補充のレベル・斜め入替・PvPなど）をゲームに合わせてください。残り手数の計算や手順の探し方が変わります。ほかのゲームモードを試したいときも、ここで切り替えます。</li>
     <li><b>記録の書き出し／読み込み</b>: 打った手と盤面を1局分まるごとファイル（.txt）に保存・復元できます。</li>
     <li><b>リセット</b>: 盤面をすべて「?」に戻し、記録を消去します（設定と目標MAX布陣は残ります）。</li>
+    <li><b>練習モード</b>: 最初の盤面を入力する画面で「ランダムな盤面で練習する」を押すと、入力なしで、実際のゲームと同じ流れで練習できます。最初の盤面のマッチ、補充、連鎖、手数の増え方も、実際のゲームと同じように進みます。マッチの様子を見せている途中で盤面を押すと、途中を省いて、マッチが止まったあとの盤面を表示します。やめるときは「リセット」を押してください。</li>
   </ul>
 `));
 document.getElementById('btnPatternHelp').addEventListener('click', () => openInfoModal(`
@@ -3354,6 +3576,8 @@ document.getElementById('btnConfig').addEventListener('click', () => {
     h += `<div class="config-item"><label>${sp} の色</label><select data-color="${sp}">${famOptions(cur)}</select> <span data-color-preview="${sp}">${famPreview(cur)}</span></div>`;
   }
   h += '</div><div class="note" id="cfgColorWarn" style="color:var(--danger);"></div>';
+  h += `<label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="cfgAlignedGlow" ${state.alignedGlow ? 'checked' : ''}> 目標MAX布陣にそろえたマスをゆっくり光らせる</label>` +
+    '<div class="note">いま目指しているMAX布陣の形どおりに置いた駒のうち、その列の上がすべてMAX布陣どおりの駒を、盤面で光らせます。「この盤面で始める」を押したあとに適用されます。</div>';
   h += '<h3 class="cfg-h">素材ごとの最大レベル</h3><div class="note">このレベルに達した駒は、それ以上マッチしません。</div><div class="config-grid">';
   for (const sp of SPECIES) {
     h += `<div class="config-item"><label><span class="species-pill" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${sp}</span> 最大Lv</label>` +
@@ -3391,6 +3615,7 @@ document.getElementById('btnConfig').addEventListener('click', () => {
     modal.querySelectorAll('[data-color]').forEach(sel => { sel.value = d.speciesColors[sel.dataset.color]; });
     modal.querySelectorAll('[data-max]').forEach(inp => { inp.value = d.maxLevels[inp.dataset.max]; });
     modal.querySelectorAll('[data-refill]').forEach(sel => { sel.value = String(d.refillLevels[sel.dataset.refill]); });
+    document.getElementById('cfgAlignedGlow').checked = d.alignedGlow;
     document.getElementById('cfgDiagonal').checked = d.diagonal;
     document.getElementById('cfgPvp').checked = d.pvp;
     modal.querySelector(`input[name="cfgRecovery"][value="${d.increasingRecovery ? 'increasing' : 'normal'}"]`).checked = true;
@@ -3422,6 +3647,7 @@ document.getElementById('btnConfig').addEventListener('click', () => {
       state.maxLevels[inp.dataset.max] = v;
     });
     modal.querySelectorAll('[data-refill]').forEach(sel => { state.refillLevels[sel.dataset.refill] = Number(sel.value) === 2 ? 2 : 1; });
+    state.alignedGlow = document.getElementById('cfgAlignedGlow').checked;
     state.diagonal = document.getElementById('cfgDiagonal').checked;
     state.pvp = document.getElementById('cfgPvp').checked;
     state.increasingRecovery = modal.querySelector('input[name="cfgRecovery"]:checked').value === 'increasing';
@@ -3461,6 +3687,7 @@ function exportGameRecord() {
   const record = {
     meta: {
       source: 'simulator',
+      practice: !!g.practice,
       exportedAt: d.toISOString(),
       start: g.start,
       memo: '',
@@ -3486,6 +3713,7 @@ function exportGameRecord() {
   const lines = [
     'スラだんパズルナビゲーター 1局の記録',
     `書き出した日時: ${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`,
+    ...(g.practice ? ['練習モード: 最初の盤面と補充は、ツールがランダムに決めました。'] : []),
     `始めの残り手数: ${g.start} / 打った手: ${log.length}手 / 連鎖で増加: ${chainAll}手${adjustAll ? ` / 手数の直し: ${adjustAll > 0 ? '+' : ''}${adjustAll}手` : ''} / 最後の残り手数: ${left}`,
     `設定: 最大レベル A${state.maxLevels.A} B${state.maxLevels.B} C${state.maxLevels.C} D${state.maxLevels.D}` +
       ` / 補充レベル A${state.refillLevels.A} B${state.refillLevels.B} C${state.refillLevels.C} D${state.refillLevels.D}` +
@@ -3533,6 +3761,7 @@ function parseRecordText(text) {
       log, init, patterns, maxLevels, refillLevels,
       diagonal: !!st.diagonal, pvp: !!st.pvp, increasingRecovery: !!st.increasingRecovery,
       start: cleanInt(meta.start, 1, 999, 50),
+      practice: !!meta.practice,
     };
   } catch (e) { return null; }
 }
@@ -3560,6 +3789,7 @@ function applyRecord(rec) {
   state.game = defaultGame();
   state.game.start = rec.start;
   state.game.phase = 'move';
+  state.game.practice = rec.practice;
   state.game.future = rec.log.map(e => { const c = Object.assign({}, e); delete c.targetBefore; return c; });
   state.board = cloneGrid(rec.init);
   picked = null; lastSearch = null;
