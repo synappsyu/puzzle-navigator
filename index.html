@@ -234,7 +234,7 @@
   <header>
     <div>
       <h1>スラだんパズルナビゲーター <span class="sign">created by シナっぷ</span></h1>
-      <div class="ver">version 1.2.2（2026-09-26）</div>
+      <div class="ver">version 1.2.3（2026-09-26）</div>
       <div class="sub">ゲームと同じ盤面を入力して1手ずつ進められるシミュレーターです。MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖も探せます。</div>
     </div>
     <div class="toolbar">
@@ -2772,7 +2772,7 @@ function renderGameControls() {
   if (g.phase === 'setup') {
     const u = countUnresolvedCells(state.board);
     gameControlsEl.innerHTML = `
-      <div class="game-status"><b>最初の盤面を入力</b>: 素材とレベルを選んで、36マスをゲーム画面どおりに入力してください。<br>気になる所だけ入力して始めることもできます（入力しなかったマスは「?」のままです）。<br>「ランダムな盤面で練習する」を押すと、ツールが最初の盤面をランダムに決めて、入力なしで練習できます。そのときは、残り手数の欄にゲームモードの最初の手数を入れてください。</div>
+      <div class="game-status">ゲーム画面どおりに盤面を入力してください（入力を省いたマスは「?」になります）。練習するときは、残り手数にゲームモードの最初の手数を入れて、「ランダムな盤面で練習する」を押してください。</div>
       <div class="toolbar" style="margin-top:0;margin-bottom:8px;align-items:center;">
         <label class="small">ゲーム画面の残り手数 <input type="number" id="startMovesInput" min="1" max="999" value="${g.start}" style="width:5em;"></label>
         <button id="btnStartGame" class="primary">この盤面で始める</button>
