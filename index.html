@@ -134,7 +134,8 @@
   .chain-chips { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:6px; font-size:12px; color: var(--text-dim); }
   .chain-chip { display:inline-flex; align-items:center; gap:3px; }
   /* 事故の確率(5%以上) */
-  .risk-high { margin:0 0 8px; padding:5px 10px; border:1px solid var(--danger); border-radius:6px; background: rgba(224,87,76,.14); color: var(--danger); font-weight:800; font-size:15px; }
+  .card-warns { margin:0 0 8px; }
+  .card-warn { color: var(--danger); font-size:13px; font-weight:700; margin:2px 0; }
 
   .pattern-card { border:1px solid var(--border); border-radius:8px; padding:10px; margin-bottom:8px; background: var(--panel2); }
   .pattern-order { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:6px; }
@@ -222,7 +223,7 @@
   <header>
     <div>
       <h1>スラだんパズルナビゲーター <span class="sign">created by シナっぷ</span></h1>
-      <div class="ver">version 1.1.0（2026-09-24）</div>
+      <div class="ver">version 1.2.0（2026-09-25）</div>
       <div class="sub">ゲームと同じ盤面を入力して1手ずつ進められるシミュレーターです。MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖も探せます。</div>
     </div>
     <div class="toolbar">
@@ -247,7 +248,7 @@
     <ol>
       <li>⚙ 設定でゲームモードを合わせ、「目標MAX布陣」を選びます。</li>
       <li>手を相談したい盤面・残り手数を入力し、「この盤面で始める」を押します。</li>
-      <li>「🔍 次の手を探す」を押して、ツールに手順を探させます。目標MAX布陣に必要な素材が増える手順が期待値順に出てきます。</li>
+      <li>「🔍 次の手を探す」を押すと、MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖を探せます。</li>
       <li>良い手が見つかったら実際のゲームで打ち、新しく補充された駒をツールに入力して「確定」を押して進めます。</li>
     </ol>
     <p class="note">※盤面が少しずれたら「盤面を直す<span class="key"> （E）</span>」で修正し、大きく変わった時は「リセット」して最初から入力し直してください。</p>
@@ -275,7 +276,7 @@
             <select id="chainDepth"><option value="3" selected>3手まで（1秒ほど）</option><option value="4">4手まで（数十秒）</option></select>
           </label>
         </div>
-        <div class="warn-note"><b>⚠ ツールは「必要な素材を、手数をなるべく使わずに集めること」だけを考えています。</b>示された手を打ち続けてもMAX布陣は完成しません。MAX布陣の形に配置する手は、ご自身で判断して打ってください。</div>
+        <div class="warn-note"><b>⚠ ツールは駒の配置を考えていません。</b>MAX布陣の形に配置する手は、ご自身で判断して打ってください。</div>
         <div class="chain-meta" id="chainProgress" style="margin-bottom:8px;"></div>
         <div id="chainList" style="margin:0 0 10px;"></div>
       </div>
@@ -291,7 +292,7 @@
           </div>
         </div>
         <div id="patternList"></div>
-        <div class="note" id="patternEmptyNote" style="display:none;">登録されているMAX布陣はありません。登録しなくても「シミュレーター」と「🔍 次の手を探す」は使えます（手数が増える連鎖を探します）。登録すると、「🔍 次の手を探す」が目標MAX布陣に必要な素材が増える手順を探すようになります。</div>
+        <div class="note" id="patternEmptyNote" style="display:none;">登録されているMAX布陣はありません。登録しなくても「シミュレーター」と「🔍 次の手を探す」は使えます（手数が増える連鎖を探します）。登録すると、「🔍 次の手を探す」が目標MAX布陣に必要な素材が増える手順と、手数を使わずに済む手順を探すようになります。</div>
       </div>
     </div>
   </div>
@@ -801,6 +802,7 @@ function defaultState() {
     pvp: false,                                   // PvPモード: 1局の手数(打った手+残り手数)は PVP_MOVE_CAP 手まで
     increasingRecovery: false,                    // 連鎖で増える手数がラウンドごとに大きくなるゲームモード
     refillInputMode: 'final',                     // 補充の入力: final=最後の盤面だけ(残り手数を確かめて確定) / waves=補充の回ごと
+    advanceSort: 'gain',                          // 「次の手を探す」の並び順: gain=素材の増加の順 / net=差し引きの手数の順
     board: defaultBoard(),
     patterns: [],                                 // 最初は何も登録しない(登録すると連鎖を探すの結果が絞られるため)
     currentPatternId: null,                       // いま目指している目標MAX布陣(null なら一覧の1番目)
@@ -818,6 +820,7 @@ function normalizeState(s) {
   s.pvp = !!s.pvp;
   s.increasingRecovery = !!s.increasingRecovery;
   if (s.refillInputMode !== 'waves') s.refillInputMode = 'final';
+  if (s.advanceSort !== 'net') s.advanceSort = 'gain';
   s.patterns = Array.isArray(s.patterns) ? keepClean(s.patterns, cleanPattern) : [];
   if (typeof s.currentPatternId !== 'string') s.currentPatternId = null;
   s.speciesColors = Object.assign({}, DEFAULT_SPECIES_COLORS, s.speciesColors || {});
@@ -954,27 +957,23 @@ function patternCountsFlat(sp, lv, pattern, minLevel = 1) {
   }
   return { over, max, deficit };
 }
-// 2番目以降の布陣で大事にするレベル: 補充のレベル + 2 以上(補充が Lv1 なら Lv3 以上)。減る手順も表示するが、カードに赤い印を付ける。
-// 事故の確率もこのレベルが減るときだけ数える。布陣で使う一番上のレベルより上を作る手順は、候補から外す
+// 2番目以降の布陣で大事にするレベル: 補充のレベル + 2 以上(補充が Lv1 なら Lv3 以上)。減る手順も表示するが、カードに⚠の注意を出す。
+// 事故の確率もこのレベルが減るときだけ数える。布陣で使う一番上のレベルより上を作る手順も表示して、カードに⚠の注意を出す
 function laterMinLevel(pattern) { return refillLevelOf(SPECIES_INDEX[pattern.species]) + 2; }
 function laterCounts(sp, lv, pattern) { return patternCountsFlat(sp, lv, pattern, laterMinLevel(pattern)); }
-// 候補から外すかの判定用: 素材の量は数えず(減る手順も表示してカードに印を付ける)、使わないレベルの駒ができるかだけを見る
-function laterGuardCounts(sp, lv, pattern) { return patternCountsFlat(sp, lv, pattern, 99); }
 // 布陣が崩れたか(base → c): 布陣に不要なレベルの駒が増えた、または足りない素材の量が増えた。
 // later = true(2番目以降の布陣)のときは、MAXも「不要なレベル」に含める
 function patternWorse(c, base, later) {
   return (later ? c.over > base.over : c.over - c.max > base.over - base.max) || c.deficit > base.deficit;
 }
-// 布陣を壊す連鎖か: 布陣で使う最高レベルより上の駒が増える(ただし起爆でMAXが増えるなら壊すとは見なさない)
-function makePatternGuard(pattern, sp0, lv0, later) {
+// 布陣を壊す連鎖か: 布陣で使う最高レベルより上の駒が増える(ただし起爆でMAXが増えるなら壊すとは見なさない)。
+// 見るのはいま目指している布陣だけ。2番目以降の布陣は候補から外す理由にせず、カードの注意で知らせる(laterLossLines)
+function makePatternGuard(pattern, sp0, lv0) {
   const base = patternCountsFlat(sp0, lv0, pattern);
-  const laterBase = (later || []).map(p => laterGuardCounts(sp0, lv0, p));
   return (sp, lv) => {
     const c = patternCountsFlat(sp, lv, pattern);
-    if (c.max > base.max) return true;                  // いまの布陣の起爆は、ほかの布陣の素材がどうなっても表示する
-    if (patternWorse(c, base, false)) return false;     // いまの布陣が崩れる
-    // 2番目以降の布陣も同じ(準備した A3 を A4 にしてしまう手順など)
-    return (later || []).every((p, k) => !patternWorse(laterGuardCounts(sp, lv, p), laterBase[k], true));
+    if (c.max > base.max) return true;                  // いまの布陣の起爆は表示する
+    return !patternWorse(c, base, false);               // いまの布陣が崩れる手順は外す
   };
 }
 // 事故の確率: 手順を補充ありで ACCIDENT_SAMPLES 通り打ち、補充を「?」としたとき(狙いどおり)より
@@ -1094,7 +1093,7 @@ async function findChainOptions(grid, onProgress) {
   const seed = hashString(JSON.stringify(grid));
   // 目標MAX布陣があれば、布陣で使う最高レベルより上の駒を作る手順は出さない(起爆でMAXができる手順は出す)
   const target = currentTargetPattern();
-  const guard = target ? makePatternGuard(target, sp0, lv0, laterTargetPatterns()) : null;
+  const guard = target ? makePatternGuard(target, sp0, lv0) : null;
   // 最後の手ごとに、差し引きの見込みが一番良い手順だけ残す。
   // 盤面ごとに残すと、同じ最後の手の前にマッチしない入替を足しただけの手順で上位が埋まり、違う場所の連鎖が確かめの対象に入らなかった。
   const finals = new Map();
@@ -1251,28 +1250,34 @@ function chainChip(species, level, label) {
 }
 // 布陣が登録されていれば、布陣の素材の個数を「手順の前→あと」で出す(補充は考慮外)。
 // 布陣で使うレベルは変化がなくても出し、それ以外のレベルは増減したときだけ出す。
-// 2番目以降の布陣の素材(Lv1換算)が、手順のあと(補充は ?)で減るなら、カードに出す印(個数はカードの下の「素材の数」の行で分かる)。
-// 守るレベル(補充のレベル + 2 以上。補充が Lv1 なら A3 以上)が減るときは赤で、減るレベルを書く
-function laterLossTag(finalGrid) {
+// 2番目以降の布陣について、手順のあと(補充は ?)を見てカードに出す⚠の注意(個数はカードの下の「素材の数」の行で分かる)。
+// ・大事なレベル(補充のレベル + 2 以上。補充が Lv1 なら A3 以上)の素材が減る → 減るレベルを書く
+// ・布陣で使う一番上のレベルより上の駒(使わないレベル)ができる → できるレベルを書く
+function laterLossLines(finalGrid) {
   const toFlat = g => { const sp = new Int8Array(SIZE * SIZE), lv = new Int8Array(SIZE * SIZE); flatFromGrid(g, sp, lv); return [sp, lv]; };
   const [sp0, lv0] = toFlat(state.board), [sp1, lv1] = toFlat(finalGrid);
-  let html = '';
+  const out = [];
   for (const p of laterTargetPatterns()) {
     if (p.species === (currentTargetPattern() || {}).species) continue;
+    const si = SPECIES_INDEX[p.species];
+    // レベル L の駒の数の変化(手順のあと − 前)
+    const diffAt = L => { let d = 0; for (let i = 0; i < SIZE * SIZE; i++) { if (sp1[i] === si && lv1[i] === L) d++; if (sp0[i] === si && lv0[i] === L) d--; } return d; };
     if (laterCounts(sp1, lv1, p).deficit > laterCounts(sp0, lv0, p).deficit) {
-      const si = SPECIES_INDEX[p.species], lows = [];
-      for (let L = laterMinLevel(p); L <= patternNeedLevel(p); L++) {
-        let d = 0;
-        for (let i = 0; i < SIZE * SIZE; i++) { if (sp1[i] === si && lv1[i] === L) d++; if (sp0[i] === si && lv0[i] === L) d--; }
-        if (d < 0) lows.push(`${p.species}${L}`);
-      }
-      html += ` <span class="tag" style="color:var(--danger);border:1px solid var(--danger);">⚠「${esc(p.name)}」の${lows.length ? lows.join('・') : '素材'}が減ります</span>`;
-      continue;
+      const lows = [];
+      for (let L = laterMinLevel(p); L <= patternNeedLevel(p); L++) if (diffAt(L) < 0) lows.push(`${p.species}${L}`);
+      out.push(`「${esc(p.name)}」の${lows.length ? lows.join('・') : '素材'}が減ります`);
     }
-    if (patternCountsFlat(sp1, lv1, p).deficit <= patternCountsFlat(sp0, lv0, p).deficit) continue;
-    html += ` <span class="tag" style="color:var(--accent);border:1px solid var(--accent);">⚠「${esc(p.name)}」の素材が減ります</span>`;
+    if (patternCountsFlat(sp1, lv1, p).over > patternCountsFlat(sp0, lv0, p).over) {
+      const highs = [];
+      for (let L = patternNeedLevel(p) + 1; L <= (state.maxLevels[p.species] || 7); L++) if (diffAt(L) > 0) highs.push(`${p.species}${L}`);
+      out.push(`「${esc(p.name)}」で使わない${highs.length ? highs.join('・') : '駒'}ができます`);
+    }
   }
-  return html;
+  return out;
+}
+// カードの注意(⚠付きの赤字の行)を、見出しのすぐ下にまとめて出す
+function cardWarnsHtml(lines) {
+  return lines.length ? `<div class="card-warns">${lines.map(t => `<div class="card-warn">⚠ ${t}</div>`).join('')}</div>` : '';
 }
 function formationLinesHtml(finalGrid) {
   let html = '';
@@ -1307,20 +1312,27 @@ function renderChainOptions(list, sec, showAll) {
   renderChainOptionsInner(list, sec, showAll);
   setChainCollapse(!!showAll && chainShown.length > CHAIN_SEARCH_SHOW, () => renderChainOptions(list, sec, false));
   if (chainUnknownNote) chainListEl.insertAdjacentHTML('afterbegin', chainUnknownNote);
-  if (chainFallbackNote) chainListEl.insertAdjacentHTML('afterbegin', chainFallbackNote);
-  // 布陣を登録しているときは、布陣を崩す連鎖を除いていることを見出しに出す
-  const guarded = currentTargetPattern() ? [currentTargetPattern()].concat(laterTargetPatterns()) : [];
+  // 連鎖も0件のときは「かわりに表示しています」と出さない(1文にまとめた文を renderChainOptionsInner が出す)
+  if (chainFallbackNote && list.length) chainListEl.insertAdjacentHTML('afterbegin', chainFallbackNote);
+  // 布陣を登録しているときは、いま目指している布陣を崩す連鎖を除いていることを見出しに出す(2番目以降の布陣はカードの⚠の注意で知らせる)
+  const guarded = currentTargetPattern() ? [currentTargetPattern()] : [];
   const guardNote = guarded.length ? `<span style="font-weight:400;color:var(--text-dim);margin-left:8px;">MAX布陣${guarded.map(p => `「${esc(p.name)}」`).join('')}に必要な素材が減る連鎖は除いています</span>` : '';
   chainListEl.insertAdjacentHTML('afterbegin', `<div class="chain-meta" style="font-weight:700;color:var(--text);margin-bottom:6px;">🔗 手数が増える連鎖（${chainSearchDepth}手まで）${guardNote}</div>`);
 }
-// 事故の確率が 5% 以上なら、カードの見出しのすぐ下に赤い帯で大きく出す(5%未満は見出しの横に小さく)
-function riskBand(risk) {
-  return risk != null && risk >= ACCIDENT_WARN ? `<div class="risk-high">⚠ 事故の確率 ${Math.round(risk * 100)}%（補充される駒しだいで、必要な素材が減ることがあります）</div>` : '';
+// 事故の確率が 5% 以上なら、カードの見出しのすぐ下の⚠の注意に出す(5%未満は見出しの横に小さく)
+function riskLine(risk) {
+  return risk != null && risk >= ACCIDENT_WARN ? [`事故の確率 ${Math.round(risk * 100)}%（補充される駒しだいで、必要な素材が減ることがあります）`] : [];
 }
 function renderChainOptionsInner(list, sec, showAll) {
   const pattern = currentTargetPattern();
   if (!list.length && recoveryRoom() <= 0) {
     chainListEl.innerHTML = `<div class="note"><b>PvPモードの上限（打った手と残り手数の合計${PVP_MOVE_CAP}手）に届いているので、これ以上、手数は増えません。</b></div>`;
+    chainShown = [];
+    return;
+  }
+  if (!list.length && pattern && chainFallbackNote) {
+    // 盤面を進める手も連鎖も見つからなかった
+    chainListEl.innerHTML = `<div class="note"><b>MAX布陣「${esc(pattern.name)}」に必要な素材が増える手順も、手数が増える連鎖も見つかりませんでした。</b>（入替と削除を${chainSearchDepth}手まで組み合わせて調べました。${sec}秒）${advanceLowNote(pattern)}</div>`;
     chainShown = [];
     return;
   }
@@ -1341,7 +1353,7 @@ function renderChainOptionsInner(list, sec, showAll) {
     const riskHtml = risk == null ? '' : risk >= ACCIDENT_WARN
       ? ''
       : ` <span class="chain-meta">事故の確率 ${Math.round(risk * 100)}%</span>`;
-    const mid = o.midRefills > 0 ? ` <span class="tag" style="color:var(--danger);border:1px solid var(--danger);">途中で補充あり ${o.midRefills}マス</span>` : '';
+    const mid = o.midRefills > 0 ? [`途中で補充あり ${o.midRefills}マス`] : [];
     // 打つ手を文でも書く(盤面の絵と見比べて、打ち間違いを減らすため)
     const movesHtml = o.steps.map((st, i) => `<div>${NUM[i] || `${i + 1}.`} ${describeMove(st.move)}</div>`).join('');
     const stepsHtml = o.steps.map((st, i) =>
@@ -1359,8 +1371,8 @@ function renderChainOptionsInner(list, sec, showAll) {
     const maxHtml = maxChips.length ? `<div class="chain-chips"><b style="color:var(--accent)">MAXができる:</b> ${maxChips.join('')}</div>` : '';
     return `<div class="chain-card">
       <div class="chain-head"><span class="chain-gain">差し引き ${sign}${o.gain.toFixed(1)}手</span>
-        <span class="chain-meta">使う手数 ${o.path.length} / 手数の増加 平均${o.avg.toFixed(1)}手（補充がマッチしない場合 ${o.sureRec}手・最高${o.bestRec}手）</span>${riskHtml}${mid}${laterLossTag(o.final)}</div>
-      ${riskBand(risk)}
+        <span class="chain-meta">使う手数 ${o.path.length} / 手数の増加 平均${o.avg.toFixed(1)}手（補充がマッチしない場合 ${o.sureRec}手・最高${o.bestRec}手）</span>${riskHtml}</div>
+      ${cardWarnsHtml([...mid, ...laterLossLines(o.final), ...riskLine(risk)])}
       <div class="chain-moves">${movesHtml}</div>
       <div class="chain-steps">${stepsHtml}<div class="chain-step"><h4>手順のあと（補充は ?）</h4>${chainMiniBoard(o.final)}</div></div>
       ${maxHtml}
@@ -1375,7 +1387,7 @@ function renderChainOptionsInner(list, sec, showAll) {
   if (more) more.addEventListener('click', () => renderChainOptions(list, sec, true));
 }
 // 「次の手を探す」。目標MAX布陣があれば盤面を進める手('advance')を探し、なければ連鎖('chain')を探す。
-// 盤面を進める手が0件なら(素材がもうそろっている場面など)、続けて連鎖を探して、その結果を出す。
+// 盤面を進める手が0件なら(素材がもうそろっている場面など)、続けて連鎖を探して、その結果を出す(起爆の手と増える手数もここに出る)。
 function unknownNoteFor(kind, unknownN) {
   if (!unknownN) return '';
   return kind === 'advance'
@@ -1438,7 +1450,8 @@ async function runChainSearch() {
  *   ・荒い見積り: 補充が '?' のときの deficit の減り + 補充されるマス × 布陣の色が来る確率 × 補充の駒のLv1換算(足りない分まで)
  *   ・1手あたり = 素材の増え ÷ 正味の手数(使う手数 − 連鎖で増える手数。1より小さいときは1)
  *   ・見積りの上位 ADVANCE_REFINE_TOP 件を、最初から補充ありで CHAIN_REFINE_SAMPLES 通り打ち直した平均で並べ直す。
- * 表示しない手順: 布陣を崩す手順(途中の1手ごとにも見る。連鎖を探すと同じ)、素材が増えない手順、途中で残り手数が尽きる手順。 */
+ * 表示しない手順: 布陣を崩す手順(途中の1手ごとにも見る。連鎖を探すと同じ)、素材が増えず手数も使ってしまう手順、途中で残り手数が尽きる手順。
+ * 手数を使わずに済む手順は、素材が増えなくても表示する(連鎖の道。前の「連鎖を探す」と同じ選び方で選ぶ)。 */
 const ADVANCE_REFINE_TOP = 150;
 const ADVANCE_EXTRA_TOP = 20;        // 32通りで上位だった手順は
 const ADVANCE_EXTRA_SAMPLES = 256;   // 合わせてこの回数まで試し直す
@@ -1483,7 +1496,7 @@ async function findAdvanceOptions(grid, onProgress) {
   flatFromGrid(grid, sp0, lv0);
   const seed = hashString(JSON.stringify(grid) + '|advance');
   const target = currentTargetPattern();
-  const guard = makePatternGuard(target, sp0, lv0, laterTargetPatterns());
+  const guard = makePatternGuard(target, sp0, lv0);
   const d0 = patternCountsFlat(sp0, lv0, target).deficit;
   const aligned = alignedCellsOf(sp0, lv0, target);
   const si = SPECIES_INDEX[target.species];
@@ -1492,7 +1505,9 @@ async function findAdvanceOptions(grid, onProgress) {
   const refillUnit = Math.pow(3, refillLevelOf(si) - 1);   // 補充される布陣の色の駒1個が、Lv1 何個分か
   const startLeft = (typeof currentLeft === 'function' && state.game && state.game.phase === 'move') ? currentLeft() : Infinity;
   const room = recoveryRoom();
-  const finals = new Map();
+  const max0 = patternCountsFlat(sp0, lv0, target).max;
+  const finals = new Map();        // 素材の道
+  const chainFinals = new Map();   // 連鎖の道
   let layer = [{ sp: sp0, lv: lv0, path: [], rec: 0, refills: 0, midRefills: 0, pen: 0, maxRec: 0, broken: false, left: startLeft }];
   const seen = new Set([placementFlatKey(sp0, lv0)]);
   let lastYield = performance.now();
@@ -1531,16 +1546,25 @@ async function findAdvanceOptions(grid, onProgress) {
         const chainTail = r.rec >= node.maxRec;
         if (r.changed && !broken && !lotteryTail && chainTail) {
           const refills = node.refills + r.refills;
-          const dSure = patternCountsFlat(r.sp, r.lv, target).deficit;
+          const cSure = patternCountsFlat(r.sp, r.lv, target), dSure = cSure.deficit;
           const screenGain = (d0 - dSure) + Math.min(refills * refillUnit / 4, dSure) - pen - breakPenaltyOf(aligned, r.sp, r.lv, target).pen;
           const perMove = screenGain / Math.max(1, plen - rec);
           const free = plen - rec <= 0;   // 手数を減らさない(使った手数以上に連鎖で増える)
+          const path = node.path.concat([move]);
+          const lastKey = move.type === 'swap' ? `s${move.a.x}${move.a.y}${move.b.x}${move.b.y}` : `d${move.pos.x}${move.pos.y}`;
+          // 最後の手と手数が同じ手順は、道ごとに1件だけ残す(同じ連鎖の前に意味の薄い入替を足した手順で上位が埋まるのを防ぐ)
+          const fk = lastKey + '|' + plen;
+          // 素材の道: 素材が増える見込みの手順。最後の手と手数が同じなら、見込みが一番良いもの
           if (screenGain > 0) {
-            const path = node.path.concat([move]);
-            const lastKey = move.type === 'swap' ? `s${move.a.x}${move.a.y}${move.b.x}${move.b.y}` : `d${move.pos.x}${move.pos.y}`;
-            const fk = lastKey + '|' + plen;
             const prev = finals.get(fk);
             if (!prev || advanceBetter({ free, gain: screenGain, perMove }, { free: prev.screenFree, gain: prev.screenGain, perMove: prev.screenPerMove }) < 0) finals.set(fk, { path, sureRec: rec, refills, screenPerMove: perMove, screenGain, screenFree: free, midRefills: node.midRefills });
+          }
+          // 連鎖の道: 手数を使わずに済む手順(素材の見込みは問わない)。最後の手と手数が同じなら、手数が一番増えるもの(前の「連鎖を探す」と同じ選び方)。
+          // 大連鎖の前に駒を並べる入替は素材を増やさないので、素材の道では落ちてしまうため。
+          // 起爆(MAXが増える)の手順は入れない(素材を使い切るので素材の数字が大きくマイナスになる。0件のときの自動の連鎖で表示する)
+          if (free && cSure.max <= max0) {
+            const prev = chainFinals.get(fk);
+            if (!prev || rec > prev.sureRec) chainFinals.set(fk, { path, sureRec: rec, refills, screenPerMove: perMove, screenGain, screenFree: free, midRefills: node.midRefills, viaChain: true });
           }
         }
         if (!lastLayer) {
@@ -1554,7 +1578,13 @@ async function findAdvanceOptions(grid, onProgress) {
     }
     layer = next;
   }
-  const cands = Array.from(finals.values()).sort((p, q) => advanceBetter({ free: p.screenFree, gain: p.screenGain, perMove: p.screenPerMove }, { free: q.screenFree, gain: q.screenGain, perMove: q.screenPerMove }) || (p.path.length - q.path.length)).slice(0, ADVANCE_REFINE_TOP);
+  const gainCands = Array.from(finals.values()).sort((p, q) => advanceBetter({ free: p.screenFree, gain: p.screenGain, perMove: p.screenPerMove }, { free: q.screenFree, gain: q.screenGain, perMove: q.screenPerMove }) || (p.path.length - q.path.length)).slice(0, ADVANCE_REFINE_TOP);
+  // 連鎖の道の手順(素材の道で選んだ手順と同じものは除く)。差し引き(連鎖で増える手数 − 使う手数)の大きい順に ADVANCE_REFINE_TOP 件まで
+  const pathKey = c => c.path.map(m => m.type === 'swap' ? `s${m.a.x}${m.a.y}${m.b.x}${m.b.y}` : `d${m.pos.x}${m.pos.y}`).join(',');
+  const gainKeys = new Set(gainCands.map(pathKey));
+  const chainCands = Array.from(chainFinals.values()).filter(c => !gainKeys.has(pathKey(c)))
+    .sort((p, q) => (q.sureRec - q.path.length) - (p.sureRec - p.path.length) || (p.path.length - q.path.length)).slice(0, ADVANCE_REFINE_TOP);
+  const cands = gainCands.concat(chainCands);
   // 手順を補充ありで n 回打ち直して足し込む。t 回目の試しは、何回目に呼んでも同じ補充になる
   const sampleAdvance = (c, n) => {
     for (let k = 0; k < n; k++) {
@@ -1563,13 +1593,16 @@ async function findAdvanceOptions(grid, onProgress) {
       let sp = sp0, lv = lv0, rec = 0;
       const ev = [];
       for (const m of c.path) { const r = chainApply(sp, lv, m, ml, COEF, rng, ev); sp = r.sp; lv = r.lv; rec += r.rec; }
-      c.gainSum += d0 - patternCountsFlat(sp, lv, target).deficit - advancePenalty(ev, target, need);
+      const pen = advancePenalty(ev, target, need);
+      c.gainSum += d0 - patternCountsFlat(sp, lv, target).deficit - pen;
+      c.penSum += pen;
       c.recSum += Math.min(rec, room);
     }
   };
   const setAdvanceStats = c => {
     c.avgRec = c.recSum / c.samples;
     c.gainAvg = c.gainSum / c.samples - c.breakPen;
+    c.penAvg = c.penSum / c.samples;   // 3個マッチの減点の平均(カードに内訳を出す)
     c.perMove = c.gainAvg / Math.max(1, c.path.length - c.avgRec);
     c.free = c.path.length - c.avgRec <= 0;
   };
@@ -1581,7 +1614,7 @@ async function findAdvanceOptions(grid, onProgress) {
       if (chainAbortRequested) return null;
     }
     const c = cands[ci];
-    c.gainSum = 0; c.recSum = 0; c.samples = 0;
+    c.gainSum = 0; c.recSum = 0; c.penSum = 0; c.samples = 0;
     sampleAdvance(c, CHAIN_REFINE_SAMPLES);
     let bsp = sp0, blv = lv0;
     // 削除する駒の点: 目標でない素材の駒は「レベル − 1.5」(Lv2以上は +、Lv1 は −。高いレベルの駒ほどマッチしにくく、消すのがセオリー)。
@@ -1607,7 +1640,7 @@ async function findAdvanceOptions(grid, onProgress) {
   // 上位の手順は試す回数を増やして確かめ直す。2手以上の手順は補充のマスが多く、32通りでは見込みがぶれて、
   // 多めに出た手順が1位に来やすいため
   const byStats = (p, q) => advanceBetter({ free: p.free, gain: p.gainAvg, perMove: p.perMove }, { free: q.free, gain: q.gainAvg, perMove: q.perMove }) || (p.path.length - q.path.length);
-  for (const c of cands.slice().sort(byStats).slice(0, ADVANCE_EXTRA_TOP)) {
+  for (const c of gainCands.slice().sort(byStats).slice(0, ADVANCE_EXTRA_TOP)) {
     if (performance.now() - lastYield > 60) {
       await new Promise(resolve => setTimeout(resolve, 0));
       lastYield = performance.now();
@@ -1660,25 +1693,54 @@ async function findAdvanceOptions(grid, onProgress) {
     }
     return true;
   };
-  // 1手あたりの素材の増えが大きい順(同じなら短い手順が先)。結果の盤面が同じ手順は1件だけ出す
-  // 素材の増加がほとんど同じ(0.05個刻みで同じ)手順どうしは、目標でない素材の高いレベルの駒を消す手順を先にする(高いレベルの駒はマッチしにくいので消すのがセオリー)
-  const bucket = c => Math.round((c.free ? c.gainAvg : c.perMove) / 0.05);
+  // 素材の増加の順に並べ(advanceMaterialOrder)、結果の盤面が同じ手順は1件だけ出す。
+  // 並び順を「差し引きの手数の順」に切り替えても、この一覧を並べ替えるだけ(sortAdvanceList)
   const shown = [];
   const usedBoard = new Set();
-  for (const c of cands.filter(c => c.gainAvg > 0 && beatsParts(c)).sort((p, q) => (p.free !== q.free ? (p.free ? -1 : 1) : (bucket(q) - bucket(p)))
-      || (q.junk - p.junk)
-      || advanceBetter({ free: p.free, gain: p.gainAvg, perMove: p.perMove }, { free: q.free, gain: q.gainAvg, perMove: q.perMove }) || (p.path.length - q.path.length))) {
+  for (const c of cands.filter(c => (c.gainAvg > 0 || c.free) && (c.viaChain || beatsParts(c))).sort(advanceMaterialOrder)) {
     if (usedBoard.has(c.boardKey)) continue;
     usedBoard.add(c.boardKey);
     shown.push(c);
   }
   return shown;
 }
+// 素材の増加の順: 手数を使わずに素材が増える手順(素材の増加の多い順) → それ以外で素材が増える手順(1手あたりの多い順)
+// 手数を使わずに済む手順は、素材が増えなくても(減点でマイナスでも)手数を使わないので、1手あたりの手順より上。どちらの道で選んだ手順も同じ決まりで並べる。
+// 見出しの数字(小数点以下1けた)が同じ手順どうしは、連鎖で増える手数(表示の数字)の多い順、それも同じなら
+// 目標でない素材の高いレベルの駒を消す手順を先にする(高いレベルの駒はマッチしにくいので消すのがセオリー)
+function advanceGroup(c) { return c.free ? 0 : 1; }
+function advanceShownValue(c) { return Number((advanceGroup(c) === 1 ? c.perMove : c.gainAvg).toFixed(1)); }
+function advanceMaterialOrder(p, q) {
+  return (advanceGroup(p) - advanceGroup(q))
+    || (advanceShownValue(q) - advanceShownValue(p))
+    || (Number(q.avgRec.toFixed(1)) - Number(p.avgRec.toFixed(1)))
+    || (q.junk - p.junk)
+    || advanceBetter({ free: p.free, gain: p.gainAvg, perMove: p.perMove }, { free: q.free, gain: q.gainAvg, perMove: q.perMove }) || (p.path.length - q.path.length);
+}
+// 差し引きの手数(連鎖で増える手数 − 使う手数)の順(前の「連鎖を探す」と同じ並び)。同じなら短い手順、それも同じなら素材の増加の順のまま
+function advanceNetOrder(p, q) {
+  return ((q.avgRec - q.path.length) - (p.avgRec - p.path.length)) || (p.path.length - q.path.length);
+}
+// 一覧を並び順('gain' = 素材の増加の順 / 'net' = 差し引きの手数の順)で並べ替えた写しを返す
+function sortAdvanceList(list, mode) {
+  return mode === 'net' ? list.slice().sort(advanceNetOrder) : list.slice().sort(advanceMaterialOrder);
+}
+// list は素材の増加の順(findAdvanceOptions のまま)。選んでいる並び順(state.advanceSort)に並べ替えて出す
 function renderAdvanceOptions(list, sec, showAll) {
-  renderAdvanceOptionsInner(list, sec, showAll);
+  renderAdvanceOptionsInner(sortAdvanceList(list, state.advanceSort), sec, showAll);
   setChainCollapse(!!showAll && chainShown.length > CHAIN_SEARCH_SHOW, () => renderAdvanceOptions(list, sec, false));
   if (chainUnknownNote) chainListEl.insertAdjacentHTML('afterbegin', chainUnknownNote);
-  chainListEl.insertAdjacentHTML('afterbegin', `<div class="chain-meta" style="font-weight:700;color:var(--text);margin-bottom:6px;">🔄 MAX布陣「${esc(currentTargetPattern().name)}」に必要な素材が増える手（${chainSearchDepth}手まで）</div>`);
+  if (list.length) {
+    const sortBtn = (mode, label) => `<button class="small${state.advanceSort === mode ? ' primary' : ''}" data-adv-sort="${mode}">${label}</button>`;
+    chainListEl.insertAdjacentHTML('afterbegin', `<div class="toolbar" style="margin:0 0 8px;align-items:center;"><span class="small">並び順</span>${sortBtn('gain', '素材の増加の順')}${sortBtn('net', '差し引きの手数の順')}</div>`);
+    chainListEl.querySelectorAll('[data-adv-sort]').forEach(btn => btn.addEventListener('click', () => {
+      if (state.advanceSort === btn.dataset.advSort) return;
+      state.advanceSort = btn.dataset.advSort;   // 次に探したときも同じ並び順にする
+      saveState();
+      renderAdvanceOptions(list, sec, false);
+    }));
+  }
+  chainListEl.insertAdjacentHTML('afterbegin', `<div class="chain-meta" style="font-weight:700;color:var(--text);margin-bottom:6px;">🔄 MAX布陣「${esc(currentTargetPattern().name)}」に必要な素材が増える手・手数を使わずに済む手（${chainSearchDepth}手まで）</div>`);
 }
 // 盤面を進める手が0件だった理由の文
 function advanceEmptyReason() {
@@ -1687,12 +1749,14 @@ function advanceEmptyReason() {
   const fsp = new Int8Array(SIZE * SIZE), flv = new Int8Array(SIZE * SIZE);
   flatFromGrid(state.board, fsp, flv);
   if (patternCountsFlat(fsp, flv, pattern).deficit === 0) return `MAX布陣「${esc(pattern.name)}」に必要な素材は、盤面にもうそろっています。`;
-  // 補充がLv2なのに布陣にLv1のマスがあると、Lv1の不足はどうやっても埋まらないので、0件になりやすい
+  return `MAX布陣「${esc(pattern.name)}」に必要な素材が増える手順は見つかりませんでした。${advanceLowNote(pattern)}`;
+}
+// 補充がLv2なのに布陣にLv1のマスがあると、Lv1の不足はどうやっても埋まらないので、0件になりやすい。そのときに足す一言
+function advanceLowNote(pattern) {
   let low = 99;
   for (const row of pattern.cells) for (const t of row) if (t !== 'X' && t < low) low = t;
   const refillLv = state.refillLevels[pattern.species] || 1;
-  const lowNote = low < refillLv ? `<br>MAX布陣に${pattern.species}${low}のマスがありますが、${pattern.species}の補充はLv${refillLv}なので、${pattern.species}${low}は増えません。MAX布陣のカードの「レベル+1」で合わせてください。` : '';
-  return `MAX布陣「${esc(pattern.name)}」に必要な素材が増える手順は見つかりませんでした。${lowNote}`;
+  return low < refillLv ? `<br>MAX布陣に${pattern.species}${low}のマスがありますが、${pattern.species}の補充はLv${refillLv}なので、${pattern.species}${low}は増えません。MAX布陣のカードの「レベル+1」で合わせてください。` : '';
 }
 function renderAdvanceOptionsInner(list, sec, showAll) {
   const pattern = currentTargetPattern();
@@ -1710,19 +1774,31 @@ function renderAdvanceOptionsInner(list, sec, showAll) {
     const riskHtml = risk >= ACCIDENT_WARN
       ? ''
       : ` <span class="chain-meta">事故の確率 ${Math.round(risk * 100)}%</span>`;
-    const mid = o.midRefills > 0 ? ` <span class="tag" style="color:var(--danger);border:1px solid var(--danger);">途中で補充あり ${o.midRefills}マス</span>` : '';
+    const mid = o.midRefills > 0 ? [`途中で補充あり ${o.midRefills}マス`] : [];
     const recText = o.avgRec >= 0.05 ? ` / 連鎖で増える手数 +${o.avgRec.toFixed(1)}手` : '';
+    // 見出しは、どちらの並び順でも「素材の数字 ／ 差し引き」を同じ並びで出し(同じ手だと分かるように)、並び順の基準の数字だけ大きくする
+    const signed = v => (Number(v.toFixed(1)) < 0 ? `−${Math.abs(v).toFixed(1)}` : `+${Math.abs(v).toFixed(1)}`);
+    const small = 'font-size:14px;font-weight:700;';
+    const gainHead = o.free ? `手数を使わずに ${signed(o.gainAvg)}個` : `1手あたり ${signed(o.perMove)}個`;
+    const netHead = `差し引き ${signed(o.avgRec - o.path.length)}手`;
+    const byNet = state.advanceSort === 'net';
+    // ツールが素材の増加から引いた減点の内訳(使う人が判断できるように出す)
+    const penParts = [];
+    if (Number(o.penAvg.toFixed(1)) > 0) penParts.push(`3個マッチ −${o.penAvg.toFixed(1)}個`);
+    if (o.breakPen > 0) penParts.push(`そろえたマスを動かす −${o.breakPen.toFixed(1)}個`);
+    const penLine = penParts.length ? [`減点 −${(o.penAvg + o.breakPen).toFixed(1)}個（${penParts.join(' ／ ')}）`] : [];
+    const breakLine = o.breakPen > 0 ? [`そろえたマスを${o.breakCells.length}マス動かします`] : [];
+    const headHtml = `<span class="chain-gain"${byNet ? ` style="${small}"` : ''}>${gainHead}</span><span class="chain-meta">／</span><span class="chain-gain"${byNet ? '' : ` style="${small}"`}>${netHead}</span>`;
     const movesHtml = o.steps.map((st, i) => `<div>${NUM[i] || `${i + 1}.`} ${describeMove(st.move)}</div>`).join('');
     const stepsHtml = o.steps.map((st, i) =>
       `<div class="chain-step"><h4>${NUM[i] || `${i + 1}.`} ${st.move.type === 'swap' ? '入替' : '削除'}</h4>${chainMiniBoard(st.before, { move: st.move })}</div><div class="chain-arrow">→</div>`
     ).join('');
     return `<div class="chain-card">
-      <div class="chain-head"><span class="chain-gain">${o.free ? `手数を使わずに +${o.gainAvg.toFixed(1)}個` : `1手あたり +${o.perMove.toFixed(1)}個`}</span>
-        <span class="chain-meta">使う手数 ${o.path.length} / 素材の増加 +${o.gainAvg.toFixed(1)}個${recText}</span>${riskHtml}${mid}${laterLossTag(o.final)}</div>
-      ${riskBand(risk)}
+      <div class="chain-head">${headHtml}
+        <span class="chain-meta">使う手数 ${o.path.length} / 素材の増加 ${signed(o.gainAvg)}個${recText}</span>${riskHtml}</div>
+      ${cardWarnsHtml([...mid, ...laterLossLines(o.final), ...riskLine(risk), ...breakLine, ...penLine])}
       <div class="chain-moves">${movesHtml}</div>
       <div class="chain-steps">${stepsHtml}<div class="chain-step"><h4>手順のあと（補充は ?）</h4>${chainMiniBoard(o.final, { marks: o.breakCells })}</div></div>
-      ${o.breakPen > 0 ? `<div class="chain-chips" style="color:var(--danger);">⚠ そろえたマスを${o.breakCells.length}マス動かします</div>` : ''}
       ${formationLinesHtml(o.final)}
       <div class="toolbar" style="margin-top:8px;"><button class="small primary${state.game.phase === 'move' ? '' : ' dim'}" data-chain-apply="${idx}">${o.path.length > 1 ? 'この手順を打つ' : 'この手を打つ'}</button></div>
     </div>`;
@@ -2140,7 +2216,7 @@ function runFinalCheck(p, v, keepUnknown, key, onPass) {
     if (rg.region) for (const i of rg.region) marks.add(i);
     p.checkMarks = marks.size ? Array.from(marks) : null;
     p.checkMsg = marks.size
-      ? `この手を打っても、${rec == null ? 'この盤面' : 'この盤面と残り手数'}にはなりません。赤い点線の枠のマス（${marks.size}マス）をゲーム画面と見比べてください。今の盤面がゲーム画面どおりなら、そのまま「確定」を押して進めて大丈夫です（前の手の入力違いが、今になって見つかることがあります）。`
+      ? `この手を打っても、${rec == null ? 'この盤面' : 'この盤面と残り手数'}にはなりません。赤い点線の枠のマス（${marks.size}マス）をゲーム画面と見比べてください。今の盤面がゲーム画面どおりなら、そのまま「確定」を押して進めて大丈夫です（前の手の入力違いが、影響した可能性があります）。`
       : 'この盤面の場合、残り手数が合いません。残り手数と盤面を、ゲーム画面と見比べてください。このままでよければ、もう一度「確定」を押してください。';
   }
   p.checkConfirm = true;
@@ -3123,49 +3199,93 @@ function openInfoModal(html) {
 }
 document.getElementById('btnHowItWorks').addEventListener('click', () => openInfoModal(`
   <h2>手順を探す</h2>
-  <p>今の盤面から数手先までをすべて計算し、次に打つとよいおすすめの手順を探します。</p>
-  <p style="margin-top:10px;font-weight:700;">💡【重要】ツールを使いこなすコツ（配置はご自身のセンスで）</p>
-  <p>ツールは「素材の数」と「手数」の計算は得意ですが、駒の配置（位置関係）までは計算に入れていません。表示された手順を参考に、最終的に「どこに配置するか」はご自身の判断で組み立ててください。</p>
-  <p style="margin-top:10px;font-weight:700;">■ 何を探すか（目標MAX布陣の登録で変わります）</p>
+  <p>今の盤面から3手先（「4手まで」なら4手先）までの手順をすべて調べて、カードで表示します。</p>
+  <p style="margin-top:10px;font-weight:700;">💡 配置はご自身で</p>
+  <p>ツールは「素材の数」と「手数」だけを計算していて、駒の配置は見ていません。どこに配置するかは、ご自身で判断してください。</p>
+  <p style="margin-top:10px;font-weight:700;">■ 何を探すか</p>
   <ul>
-    <li><b>登録しているとき</b>: 目標に必要な素材が増える手順を探します。大きな連鎖は、消えたマスにたくさん補充されるので必要な素材が増えやすく、手数も増えるので、「手数を使わずに」の手順として上位に並びます。</li>
-    <li><b>素材が増える手順が1つもないとき</b>: 必要な素材がもう盤面にそろっている場面などです。自動で、手数が増える連鎖を探して表示します（目標に必要な素材が減る連鎖は除きます）。</li>
-    <li><b>登録していないとき</b>: 連鎖で手数が増える手順を探します。</li>
+    <li><b>目標MAX布陣を登録しているとき</b>: 目標MAX布陣に必要な素材が増える手順と、手数が増える連鎖を探します。</li>
+    <li><b>登録していないとき</b>: 手数が増える連鎖を探します。</li>
   </ul>
-  <p style="margin-top:10px;font-weight:700;">■ 検索結果（カード）の見方</p>
+  <p style="margin-top:10px;font-weight:700;">■ カードの見方</p>
   <ul>
-    <li><b>手数を使わずに ＋◯個</b>: 使った手数以上に連鎖で手数が増える手順で、素材がどれくらい増えるかの「期待値」です（Lv1の駒に換算した個数。Lv2＝3個分）。</li>
-    <li><b>1手あたり ＋◯個</b>: 素材の増加の期待値を、正味の手数（使う手数 − 連鎖で増える手数）で割った数です。</li>
-    <li><b>差し引き ＋◯手</b>: 手順を打ち終わったあと、手数が何手増えるかの期待値です。</li>
-    <li><b>⚠ 事故の確率</b>: 補充された駒が勝手に揃ってしまい、必要な素材が減ってしまう（事故）確率です（2番目以降の目標はLv3以上の素材だけ数えます）。5%以上の時は赤く警告します。</li>
-    <li><b>⚠ そろえたマスを動かします</b>: 目標の配置にすでにある駒を動かしてしまう手順です（それでも上位に出る場合は、それを上回る素材増加が見込める手順です）。</li>
-    <li><b>⚠「◯」の素材が減ります（黄色）</b>: 2番目以降の目標のLv1・Lv2の素材が減る手順です。</li>
-    <li><b>⚠「◯」のA3が減ります（赤）</b>: 2番目以降の目標のLv3以上の素材が減る手順です。貴重な素材なので、残したいときはほかの手順を選んでください。</li>
-    <li><b>「この手順を打つ」ボタン</b>: 1手目から順に打てます。途中で探し直すこともできるので、補充された駒を見てから続きを決められます。</li>
+    <li><b>手数を使わずに ＋◯個</b>: 連鎖で増える手数が、使う手数以上の手順です。数字は素材の増加の期待値です（Lv1換算。Lv2＝3個分）。</li>
+    <li><b>1手あたり ＋◯個</b>: 素材の増加の期待値を、実質の手数（使う手数 − 連鎖で増える手数。1より少ないときは1）で割った数です。</li>
+    <li><b>差し引き ＋◯手</b>: 連鎖で増える手数から、使う手数を引いた期待値です。</li>
+    <li><b>事故の確率</b>: 補充された駒がマッチして、目標MAX布陣に必要な素材が減るか、使わないレベルの駒ができる確率です。</li>
+    <li><b>⚠ の行</b>: 注意が必要なことです。
+      <ul>
+        <li><b>途中で補充あり</b>: 手順の途中で補充が入ります。補充される駒しだいで、そのあとの結果が変わります。</li>
+        <li><b>「◯」のA3が減ります／「◯」で使わないA4ができます</b>: 次に目指すMAX布陣についての注意です。</li>
+        <li><b>事故の確率 ◯%</b>: 5%以上のときに出ます。</li>
+        <li><b>そろえたマスを動かします</b>: 目標MAX布陣の形どおりに置いた駒を動かす手順です。</li>
+        <li><b>減点</b>: ツールが素材の増加から引いた分です（下の「詳しくアルゴリズムを知りたい方へ」）。</li>
+      </ul>
+    </li>
+    <li><b>「この手順を打つ」</b>: 1手目から順に打てます。途中で探し直すこともできます。</li>
   </ul>
-  <p style="margin-top:10px;font-weight:700;">■ 検索結果の並び順</p>
+  <p style="margin-top:10px;font-weight:700;">■ 並び順（結果の上のボタンで切り替えます）</p>
   <ul>
-    <li><b>素材が増える手順</b>: 「手数を使わずに」の手順を優先し、その中で素材の増加の期待値が大きい順に並びます。そのあとに、「1手あたり」の期待値が大きい順で続きます。</li>
-    <li><b>手数が増える連鎖</b>: 「差し引き」の期待値が大きい順に並びます。</li>
+    <li><b>素材の増加の順</b>: 「手数を使わずに」の手順が先で、素材の多い順です。そのあとに「1手あたり」の多い順で続きます。小数点第1位までが同じなら、連鎖で増える手数の多い順です。</li>
+    <li><b>差し引きの手数の順</b>: 「差し引き」の多い順です。</li>
   </ul>
-  <p class="note">※必ず事故になる手順、MAXの駒を削除する手順、途中で手数が尽きる手順などは表示しません。</p>
+  <p class="note">※いま目指しているMAX布陣で必ず事故になる手順、MAXの駒を削除する手順、途中で手数が尽きる手順などは表示しません。</p>
   <details class="warn-why" style="margin-top:12px;"><summary style="font-size:14px;font-weight:700;color:var(--text);">詳しくアルゴリズムを知りたい方へ</summary>
-    <p style="margin-top:10px;">ツール内部で行っている計算や独自のルールの詳細です。</p>
-    <p style="margin-top:10px;font-weight:700;">探索と期待値計算の流れ</p>
-    <p>打てる手順をすべて候補にします（3手で約90万通り）。補充される駒の全パターンを厳密に計算すると時間がかかりすぎるため、2段階で計算しています。<br>まず1段階目では、補充された駒による連鎖までは計算しない大まかな見積もりで、上位150件を抽出します。<br>続く2段階目で、その150件に対しランダムな補充を加えたシミュレーションを各32回（上位20件は各256回）行い、その平均値から最終的な結果を算出しています。<br>手数が増える連鎖を探すときは、1段階目で最後の1手の補充だけを各4回（「4手まで」の4手目は各2回）シミュレーションして大まかな期待値を出し、差し引きが−1手以上の手順をすべて、2段階目で各32回シミュレーションします。</p>
-    <p style="margin-top:10px;font-weight:700;">素材の数え方（Lv1換算）と多重マッチの評価</p>
-    <p>最も多く駒を消費する「3個マッチ」を基準とし、不足分を少なく見積もらないよう Lv2＝Lv1の3個分（Lv3＝9個分）として換算します。4個・5個マッチが起きた場合は、換算倍率を変えるのではなく「素材の増加分」として直接上乗せ（4個なら+2個分、5個なら+4個分）するため、多重マッチを含む手順ほど上位に評価されます。</p>
-    <p style="margin-top:10px;font-weight:700;">表示順や評価の補正</p>
-    <p>シミュレーションの誤差（0.05個未満の差）で期待値がほぼ同じ手順が並んだ場合は、セオリーに従い「目標でない素材のレベルの高い駒（マッチしにくい駒）を削除する手順」を上位にします（2番目以降の目標の素材を削除する手順は、上位にも下位にもしません）。また、目標の配置にすでにある駒を動かしてしまう手順は、その駒の分だけ素材の増加を少なく数える補正をかけています。2番目以降の目標の素材が減る手順も表示します。補充のレベル＋2以上（補充がLv1ならLv3以上、Lv2ならLv4以上）が減るときは、赤い印を付けます。</p>
-    <p style="margin-top:10px;font-weight:700;">駒の相対的な位置を見ない理由</p>
+    <p style="margin-top:10px;font-weight:700;">■ 計算の流れ</p>
+    <p><b>方法論</b>: 手順の候補は総当たり（全探索）で作り、補充の運はモンテカルロ法で平均を出しています。モンテカルロ法は、乱数を使ったシミュレーションを何回もくり返して、その平均で期待値を求める方法です。</p>
+    <p style="margin-top:8px;">目標MAX布陣を登録しているとき</p>
+    <ul>
+      <li><b>Step1 全部の手順を打つ</b>: 入替と削除を3手まで（「4手まで」を選んだときは4手まで）組み合わせて打ちます（3手で約90万通り）。この段階では、補充される駒はどれともマッチしない駒として扱い、補充による連鎖は計算に入れません。</li>
+      <li><b>Step2 連鎖考慮前の期待値を見積もる</b>: Step1の結果から、手順ごとに素材の増加の期待値と、差し引き（連鎖で増える手数から使う手数を引いた値）を出します。素材の増加には、補充される1マスにつき1/4個を加算します。</li>
+      <li><b>Step3 候補を選ぶ</b>: 素材の増加の見積もり（手数を使う手順は1手あたり）が大きい手順を、手数を使わずに済むものを優先して、計150件選びます。これとは別に、手数を使わずに済む手順を、差し引きの見積もりが大きい順に150件選びます。</li>
+      <li><b>Step4 シミュレーションする</b>: Step3で選んだ各150件の手順を、補充をランダムにして各32回ずつ打ち、平均の期待値を出します（素材の増加の上位20件は、精度を高めるため各256回）。シミュレーションにしているのは、正確に計算すると場合分けが多すぎて時間がかかるためです。たとえば補充されるマスが11マスある手順なら、素材の組み合わせだけで4の11乗（約420万通り）になり、補充による連鎖が起きるとさらに増えてしまいます。</li>
+      <li><b>Step5 結果を表示する</b>: 表示しない手順を除き、似た手順をまとめて、選んだ並び順で表示します（下の「表示する手順」を参照）。</li>
+    </ul>
+    <p style="margin-top:8px;">目標MAX布陣を登録していないとき</p>
+    <p>手数が増える連鎖だけを探します。流れは同じですが、Step2とStep3が違います。Step2では、最後の1手のあとの補充だけをこの段階で4回（「4手まで」の4手目は2回）シミュレーションして、差し引きの期待値を見積もります。Step3では、上位150件ではなく、差し引きの見積もりが−1手以上の手順をすべて選びます。Step5では、差し引きの期待値が0手以上の手順を表示します。</p>
+    <p>目標MAX布陣を登録していても、表示できる手順が1つもないとき（必要な素材がもう盤面にそろっているときなど）は、登録していないときと同じ方法で、手数が増える連鎖を探して表示します。</p>
+    <p style="margin-top:10px;font-weight:700;">■ 期待値の計算方法</p>
+    <p>素材</p>
+    <ul>
+      <li>目標MAX布陣に足りない素材を、Lv1換算で数えます（Lv2＝3個分、Lv3＝9個分）。</li>
+      <li>つまり、Lv1素材の3個マッチは増減なし、4個マッチは＋2個、5個マッチは＋4個になります（4個マッチでは上のレベルの駒が2個できるため）。ただし、できた駒のレベルがもう足りているときは増えません。</li>
+      <li>ただし、以下にはペナルティ（期待値の減点）をつけています。
+        <ul>
+          <li>目標MAX布陣の素材の3個マッチが1回につき、素材の増加から1個分をマイナス（Lv2の3個マッチなら3個分）。4個マッチにできた駒を3個マッチで無駄に使ってしまうことを避けるためです。</li>
+          <li>目標MAX布陣の形どおりに置いた駒を動かすと、その駒の分を素材の増加から引きます（その列の上がすべてMAX布陣どおりのマスだけ）。正しく配置できた駒を動かすことを避けるためです。</li>
+        </ul>
+      </li>
+      <li>事故の確率は、手順を補充をランダムにして200回打ち、補充がどれともマッチしなかった場合と比べて、目標MAX布陣に必要な素材が減るか、使わないレベルの駒ができた回の割合です。次に目指すMAX布陣は、Lv3以上の素材が減るときと、使わないレベルの駒ができるときだけ数えます。</li>
+    </ul>
+    <p>連鎖で増える手数</p>
+    <ul>
+      <li>マッチは、駒が消えて補充が入るたびに1回目、2回目…と数えます。2回目以降に起きたマッチ1つにつき、1手増えます（1回目のマッチでは増えません）。設定で「ラウンドごとに増える」を選んだときは、その数え方です。PvPモードでは、打った手と残り手数の合計が170手までです。</li>
+    </ul>
+    <p>どの数字も補充を試した平均なので、ぶれがあります。見ているのは3手先（「4手まで」なら4手先）までです。</p>
+    <p style="margin-top:10px;font-weight:700;">■ 表示する手順</p>
+    <p>次の手順は表示しません。</p>
+    <ul>
+      <li>いま目指しているMAX布陣で必ず事故になる手順</li>
+      <li>MAXの駒を削除する手順</li>
+      <li>途中で手数が尽きる手順</li>
+      <li>素材が増えず、手数も使う手順</li>
+      <li>連鎖のあとに手を足しただけの手順</li>
+      <li>最後の手でマッチが起きない手順（1手だけの削除は表示します）</li>
+      <li>手順の一部の手だけを打つほうが得な手順（連鎖の準備の手を含むものは除く）</li>
+          </ul>
+    <ul>
+      <li>最後の手と手数が同じ手順は、素材が一番増えるものと、手数が一番増えるものだけを表示します。</li>
+      <li>打ち終わったあとの盤面が同じ手順は、1件だけ表示します。</li>
+      <li>次に目指すMAX布陣は、手順の候補に影響を与えません。ただし、Lv3以上（補充がLv2ならLv4以上）の素材が減るときと、使わないレベルの駒ができるときは、⚠ を付けます（いま目指しているMAX布陣と同じ素材の布陣には付けません）。</li>
+      <li>並び順で数字も連鎖の手数も同じときは、目標でない素材の高いレベルの駒を消す手順を先にします。</li>
+    </ul>
+    <p style="margin-top:10px;font-weight:700;">■ 駒の相対的な位置を見れない理由</p>
     <ul>
       <li>1手の候補は、入替と削除でおよそ100通りあります。3手先まで読むだけで約90万通り、補充される駒の出方まで含めると、さらにその何十万倍にもなります。</li>
       <li>しかも、ゲームの始めから終わりまでは、長いと百手を超えます。いま駒をどこに置くのが良いかは、そのずっと先まで打ってみないと分かりません。</li>
       <li>人は「このあたりに集めておけば、あとで使える」と感覚で判断できます。これをコンピューターにさせるには、大量の対局から盤面の良し悪しを学ばせる、囲碁や将棋のAIと同じような開発が必要になります。</li>
       <li>そこでこのツールは、コンピューターが得意な「素材の数を数えること」と「補充の運の平均を出すこと」を受け持ち、駒の相対的な位置の判断は人に任せる形にしました。</li>
     </ul>
-    <p style="margin-top:10px;font-weight:700;">数字の確かさと限界</p>
-    <p>表示する数字はシミュレーションの平均なので、素材の増加は厳密に計算した期待値と0.05個程度の誤差があります。手数の増加の数字も各32回の平均なので、ぶれがあります。見ているのは3手先（「4手まで」なら4手先）までです。</p>
   </details>
 `));
 document.getElementById('btnSimHelp').addEventListener('click', () => openInfoModal(`
@@ -3199,12 +3319,12 @@ document.getElementById('btnPatternHelp').addEventListener('click', () => openIn
   <ol>
     <li>「🔍 次の手を探す」が、目標に必要な素材が効率よく増える手順を探すようになります。</li>
     <li>必要な素材が勝手に揃って消えてしまう「事故」の確率を事前に警告してくれます。</li>
-    <li>必要な素材が減る手順や連鎖を除外してくれます。</li>
+    <li>いま目指しているMAX布陣に必要な素材が減る手順や連鎖を除外してくれます。</li>
   </ol>
   <p style="margin-top:10px;font-weight:700;">■ はじめての方は「プリセット」がおすすめ</p>
   <p>よく使われるMAX布陣が用意されています（斜め移動なし: 3・4・7・8・10MAX ／ 斜め移動あり: 3・4・6・12・18MAX）。まずはここから選んでみてください。（ご自身で作った布陣をプリセットとして保存することも可能です）</p>
   <p style="margin-top:10px;font-weight:700;">■ 複数の目標を登録した場合</p>
-  <p>上から順番に目指します（順番は ↑↓ ボタンで入れ替え可能）。<br>1つ目が起爆（完成）すると、自動的に次の目標に切り替わります。2番目以降の目標の素材が減る手順も表示し、カードに印を付けます（Lv3以上が減るときは赤い印）。</p>
+  <p>上から順番に目指します（順番は ↑↓ ボタンで入れ替え可能）。<br>1つ目が起爆（完成）すると、自動的に次の目標に切り替わります。次に目指すMAX布陣（2番目以降の布陣）の素材が減る手順や、使わないレベルの駒ができる手順も表示します。Lv3以上の素材が減るときと、使わないレベルの駒ができるときは、カードに⚠を付けて知らせます。</p>
   <p style="margin-top:10px;font-weight:700;">■ ボタンの機能</p>
   <ul>
     <li><b>左右反転</b>: 盤面を左右反転します（反転でMAX数が減る場合があるので、起爆の確認に注意してください）。</li>
