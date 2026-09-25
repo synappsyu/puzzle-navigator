@@ -114,6 +114,8 @@
   /* ドラッグ中: 元のマスは空いたように暗く、駒は指(マウス)に付いて動く */
   .cell.drag-origin { background: #202228 !important; color: transparent !important; }
   .drag-piece { position: fixed; z-index: 50; pointer-events: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; box-shadow: 0 6px 16px rgba(0,0,0,.6); transform: translate(-50%, -50%) scale(1.08); }
+  /* 盤面の外で離すと削除になる間: 長押しの削除と同じ白い光 */
+  .drag-piece.drag-delete { filter: brightness(2); box-shadow: inset 0 0 18px 14px #fff, 0 0 12px 5px #fff; transform: translate(-50%, -50%) scale(.82); }
   /* 長押し: 光り始めてから削除までに、「そろったマスが白く光って少し小さくなる」強さまで強くなる */
   @keyframes pressGlow { 0% { filter: brightness(1); box-shadow: inset 0 0 0 0 rgba(255,255,255,0), 0 0 0 0 rgba(255,255,255,0); transform: scale(1); } 100% { filter: brightness(2); box-shadow: inset 0 0 18px 14px #fff, 0 0 12px 5px #fff; transform: scale(.82); } }
   .cell.press-glow { animation: pressGlow 1333ms ease-in forwards; z-index: 1; }
@@ -242,7 +244,7 @@
   <header>
     <div>
       <h1>スラだんパズルナビゲーター <span class="sign">created by シナっぷ</span></h1>
-      <div class="ver">version 1.3.1（2026-09-26）</div>
+      <div class="ver">version 1.3.2（2026-09-26）</div>
       <div class="sub">ゲームと同じ盤面を入力して1手ずつ進められるシミュレーターです。MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖も探せます。</div>
     </div>
     <div class="toolbar">
@@ -260,7 +262,7 @@
     <p class="guide-h">■ ① シミュレーターとして自由に試す</p>
     <ol>
       <li>試したい盤面と残り手数を入力し、「この盤面で始める」を押します（入力を省いたマスは「?」になります）。</li>
-      <li>「入替<span class="key"> （S）</span>」や「削除<span class="key"> （D）</span>」を1手ずつ打つと、マッチ結果や残り手数が更新されます。駒のドラッグで入替、2秒の長押しで削除もできます。</li>
+      <li>「入替<span class="key"> （S）</span>」や「削除<span class="key"> （D）</span>」を1手ずつ打つと、マッチ結果や残り手数が更新されます。実際のゲームと同じように、ドラッグで入替、長押しまたは盤面の外へのドラッグで削除もできます。</li>
       <li>補充されたマスを入力して進めれば、何手先まででも試せます。「1手戻す<span class="key"> （U）</span>」で何度でもやり直せるので、色々な手順を比べてみてください。</li>
     </ol>
     <p class="guide-h">■ ② MAX布陣づくりのサポートに使う</p>
@@ -2763,7 +2765,7 @@ function renderBoard() {
 function moveHintText() {
   return moveMode === 'swap'
     ? (picked ? `入れ替える相手のマスをクリック（隣り合うマス${state.diagonal ? '・斜めも可' : ''}）` : '入れ替える2マスを順にクリック、または駒をドラッグ')
-    : moveMode === 'delete' ? '削除するマスをクリック、または2秒長押し'
+    : moveMode === 'delete' ? '削除するマスをクリック、または長押し'
       : 'ゲーム画面と違うマスを、素材とレベルを選んで入力し直してください。残り手数が違うときは、下の欄で直せます。';
 }
 function ruleText() {
@@ -2997,7 +2999,12 @@ window.addEventListener('pointermove', (ev) => {
   }
   press.pieceEl.style.left = (press.cx + Math.max(-pitch, Math.min(pitch, dx))) + 'px';
   press.pieceEl.style.top = (press.cy + Math.max(-pitch, Math.min(pitch, dy))) + 'px';
-  const t = dragTargetOf(dx, dy);
+  // 盤面の外で指を離すと: 左端の列・一番上の行・右端の列の駒は削除(下の外は除く)。それ以外は取りやめ(入替もしない)
+  const br = boardEl.getBoundingClientRect();
+  const outside = ev.clientX < br.left || ev.clientX > br.right || ev.clientY < br.top || ev.clientY > br.bottom;
+  press.outDelete = outside && ev.clientY <= br.bottom && (press.x === 0 || press.x === SIZE - 1 || press.y === 0);
+  press.pieceEl.classList.toggle('drag-delete', press.outDelete);
+  const t = outside ? null : dragTargetOf(dx, dy);
   const same = (a, b) => (a && b ? a.x === b.x && a.y === b.y : a === b);
   if (!same(t, press.target)) {
     if (press.target) boardCell(press.target.x, press.target.y).classList.remove('highlight');
@@ -3013,6 +3020,7 @@ function endPress(ev, cancelled) {
   if (p.pieceEl) p.pieceEl.remove();
   if (p.dragging || p.done) suppressClickUntil = Date.now() + 400;
   if (p.dragging) {
+    if (p.outDelete && !cancelled) { renderBoard(); picked = null; deleteAt(p.x, p.y); return; }
     if (p.target && !cancelled) { playMove({ type: 'swap', a: { x: p.x, y: p.y }, b: p.target }); return; }
     renderBoard();   // 取りやめ: 暗くしたマスと赤い枠を戻す
     return;
@@ -3617,7 +3625,7 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
   <p style="margin-top:10px;font-weight:700;">■ 基本の使い方の流れ</p>
   <ol>
     <li><b>はじめの盤面を入力する</b><br>ゲーム画面どおりに盤面と残り手数を入力し、「この盤面で始める」を押します。<br>（※入力を省いたマスは「?」になります。「?」はどの駒ともマッチしない仮のマスとして扱われます）</li>
-    <li><b>ゲームと同じ手を打つ</b><br>「入替<span class="key"> （S）</span>」か「削除<span class="key"> （D）</span>」を選んで、シミュレーター上で手を打ちます。駒をドラッグしてとなりの駒と入れ替えたり、2秒押し続けて削除したりもできます。</li>
+    <li><b>ゲームと同じ手を打つ</b><br>「入替<span class="key"> （S）</span>」か「削除<span class="key"> （D）</span>」を選んで、シミュレーター上で手を打ちます。実際のゲームと同じように、ドラッグで入替、長押しまたは盤面の外へのドラッグで削除もできます。</li>
     <li><b>補充されたマスを確定する</b><br>新しく補充された駒（「?」になったマス）を入力し、「確定<span class="key"> （Enter）</span>」を押します。</li>
   </ol>
   <p style="margin-top:10px;font-weight:700;">■ 盤面で光っている駒は？</p>
