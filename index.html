@@ -213,6 +213,7 @@
   .warn-note b { color: var(--danger); }
   .cfg-h { font-size:14px; margin:16px 0 4px; }
 
+  .toolbar-break { display: none; }   /* ヘッダーのボタンの折り返し(スマホだけ使う) */
   /* スマホなど幅の狭い画面 */
   @media (max-width: 720px) {
     /* 16px より小さい入力欄は、iPhone で押すと画面が拡大されるので大きくする */
@@ -232,6 +233,8 @@
     .chain-arrow { display: none; }
     .chain-steps { gap: 10px; }
     .config-grid { grid-template-columns: 1fr; }
+    /* ヘッダーのボタンは「設定・リセット」と「記録を書き出す・読み込む」の2行に分ける */
+    .toolbar-break { display: block; flex-basis: 100%; height: 0; }
   }
   /* マウスのない画面(スマホなど)では、キー操作の案内を出さない */
   @media (hover: none) and (pointer: coarse) {
@@ -244,12 +247,13 @@
   <header>
     <div>
       <h1>スラだんパズルナビゲーター <span class="sign">created by シナっぷ</span></h1>
-      <div class="ver">version 1.3.2（2026-09-26）</div>
+      <div class="ver">version 2.0.0（2026-09-26）</div>
       <div class="sub">ゲームと同じ盤面を入力して1手ずつ進められるシミュレーターです。MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖も探せます。</div>
     </div>
     <div class="toolbar">
       <button id="btnConfig">⚙ 設定</button>
       <button id="btnResetGame" class="danger" title="盤面を全部「?」に戻し、打った手の記録も消します。目標MAX布陣と設定は残ります。">リセット</button>
+      <span class="toolbar-break"></span>
       <button id="btnExportGame" class="quiet dim" title="1手以上打つと押せます。">📝 記録を書き出す</button>
       <button id="btnImportGame" class="quiet" title="書き出した記録を読み込んで、最初の盤面から1手ずつ再現します。">📂 記録を読み込む</button>
       <input type="file" id="importFile" accept=".txt,.json,text/plain,application/json" style="display:none">
@@ -265,7 +269,12 @@
       <li>「入替<span class="key"> （S）</span>」や「削除<span class="key"> （D）</span>」を1手ずつ打つと、マッチ結果や残り手数が更新されます。実際のゲームと同じように、ドラッグで入替、長押しまたは盤面の外へのドラッグで削除もできます。</li>
       <li>補充されたマスを入力して進めれば、何手先まででも試せます。「1手戻す<span class="key"> （U）</span>」で何度でもやり直せるので、色々な手順を比べてみてください。</li>
     </ol>
-    <p class="guide-h">■ ② MAX布陣づくりのサポートに使う</p>
+    <p class="guide-h">■ ② 練習モードで練習する</p>
+    <ol>
+      <li>最初の盤面を入力する画面で、残り手数の欄にゲームモードの最初の手数を入れ、「ランダムな盤面で練習する」を押します。</li>
+      <li>あとは①と同じように、1手ずつ打てます。補充はツールがランダムに決めるので、入力はいりません。</li>
+    </ol>
+    <p class="guide-h">■ ③ MAX布陣づくりのサポートに使う</p>
     <ol>
       <li>⚙ 設定でゲームモードを合わせ、「目標MAX布陣」を選びます。</li>
       <li>手を相談したい盤面・残り手数を入力し、「この盤面で始める」を押します。</li>
@@ -273,11 +282,6 @@
       <li>良い手が見つかったら実際のゲームで打ち、新しく補充された駒をツールに入力して「確定」を押して進めます。</li>
     </ol>
     <p class="note">※盤面が少しずれたら「盤面を直す<span class="key"> （E）</span>」で修正し、大きく変わった時は「リセット」して最初から入力し直してください。</p>
-    <p class="guide-h">■ ③ 練習モードで練習する</p>
-    <ol>
-      <li>最初の盤面を入力する画面で、残り手数の欄にゲームモードの最初の手数を入れ、「ランダムな盤面で練習する」を押します。</li>
-      <li>あとは①と同じように、1手ずつ打てます。補充はツールがランダムに決めるので、入力はいりません。</li>
-    </ol>
   </details>
 
   <div class="layout">
@@ -3628,6 +3632,7 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
     <li><b>ゲームと同じ手を打つ</b><br>「入替<span class="key"> （S）</span>」か「削除<span class="key"> （D）</span>」を選んで、シミュレーター上で手を打ちます。実際のゲームと同じように、ドラッグで入替、長押しまたは盤面の外へのドラッグで削除もできます。</li>
     <li><b>補充されたマスを確定する</b><br>新しく補充された駒（「?」になったマス）を入力し、「確定<span class="key"> （Enter）</span>」を押します。</li>
   </ol>
+  <p>※練習モード：1で「ランダムな盤面で練習する」を押すと、入力なしで、実際のゲームと同じ流れで練習できます。やめるときは「リセット」を押してください。</p>
   <p style="margin-top:10px;font-weight:700;">■ 盤面で光っている駒は？</p>
   <p>目標MAX布陣の形どおりに置いた駒のうち、その列の上がすべてMAX布陣どおりの駒です。「次の手を探す」で「⚠ そろえたマスを動かします」と出るのは、この駒を動かす手順です。光らせたくないときは、「⚙ 設定」の「素材の色」でチェックを外してください。</p>
   <p style="margin-top:10px;font-weight:700;">■ ゲームとずれたり、間違えたときは？</p>
@@ -3643,7 +3648,6 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
     <li><b>⚙ 設定</b>: ゲームモード（補充のレベル・斜め入替・PvPなど）をゲームに合わせてください。残り手数の計算や手順の探し方が変わります。ほかのゲームモードを試したいときも、ここで切り替えます。</li>
     <li><b>記録の書き出し／読み込み</b>: 打った手と盤面を1局分まるごとファイル（.txt）に保存・復元できます。</li>
     <li><b>リセット</b>: 盤面をすべて「?」に戻し、記録を消去します（設定と目標MAX布陣は残ります）。</li>
-    <li><b>練習モード</b>: 最初の盤面を入力する画面で「ランダムな盤面で練習する」を押すと、入力なしで、実際のゲームと同じ流れで練習できます。最初の盤面のマッチ、補充、連鎖、手数の増え方も、実際のゲームと同じように進みます。マッチの様子を見せている途中で盤面を押すと、途中を省いて、マッチが止まったあとの盤面を表示します。やめるときは「リセット」を押してください。</li>
   </ul>
 `));
 document.getElementById('btnPatternHelp').addEventListener('click', () => openInfoModal(`
