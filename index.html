@@ -109,6 +109,14 @@
   /* 練習モードでマッチの様子を見せる場面: そろったマスは白く強く光って少し小さくなる。消えたマスは暗い空き */
   .cell.match-flash { filter: brightness(2); box-shadow: inset 0 0 18px 14px #fff, 0 0 12px 5px #fff; transform: scale(.82); transition: transform .15s; z-index: 1; }
   .cell.gone { background: #202228; }
+  /* 手を打っている間の盤面: 指でなぞっても画面をスクロールしない(ドラッグの入替・長押しの削除のため)。長押しでメニューや文字選びを出さない */
+  .board.play { touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; }
+  /* ドラッグ中: 元のマスは空いたように暗く、駒は指(マウス)に付いて動く */
+  .cell.drag-origin { background: #202228 !important; color: transparent !important; }
+  .drag-piece { position: fixed; z-index: 50; pointer-events: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; box-shadow: 0 6px 16px rgba(0,0,0,.6); transform: translate(-50%, -50%) scale(1.08); }
+  /* 長押し: 光り始めてから削除までに、「そろったマスが白く光って少し小さくなる」強さまで強くなる */
+  @keyframes pressGlow { 0% { filter: brightness(1); box-shadow: inset 0 0 0 0 rgba(255,255,255,0), 0 0 0 0 rgba(255,255,255,0); transform: scale(1); } 100% { filter: brightness(2); box-shadow: inset 0 0 18px 14px #fff, 0 0 12px 5px #fff; transform: scale(.82); } }
+  .cell.press-glow { animation: pressGlow 1333ms ease-in forwards; z-index: 1; }
   .practice-label { color: var(--accent); font-weight: 700; }
 
   .toolbar { display:flex; gap:8px; margin-top:10px; flex-wrap: wrap; }
@@ -234,7 +242,7 @@
   <header>
     <div>
       <h1>スラだんパズルナビゲーター <span class="sign">created by シナっぷ</span></h1>
-      <div class="ver">version 1.2.3（2026-09-26）</div>
+      <div class="ver">version 1.3.0（2026-09-26）</div>
       <div class="sub">ゲームと同じ盤面を入力して1手ずつ進められるシミュレーターです。MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖も探せます。</div>
     </div>
     <div class="toolbar">
@@ -252,7 +260,7 @@
     <p class="guide-h">■ ① シミュレーターとして自由に試す</p>
     <ol>
       <li>試したい盤面と残り手数を入力し、「この盤面で始める」を押します（入力を省いたマスは「?」になります）。</li>
-      <li>「入替<span class="key"> （S）</span>」や「削除<span class="key"> （D）</span>」を1手ずつ打つと、マッチ結果や残り手数が更新されます。</li>
+      <li>「入替<span class="key"> （S）</span>」や「削除<span class="key"> （D）</span>」を1手ずつ打つと、マッチ結果や残り手数が更新されます。駒のドラッグで入替、2秒の長押しで削除もできます。</li>
       <li>補充されたマスを入力して進めれば、何手先まででも試せます。「1手戻す<span class="key"> （U）</span>」で何度でもやり直せるので、色々な手順を比べてみてください。</li>
     </ol>
     <p class="guide-h">■ ② MAX布陣づくりのサポートに使う</p>
@@ -2701,6 +2709,7 @@ function renderBrushRow() {
 function renderBoard() {
   boardEl.innerHTML = '';
   const g = state.game;
+  boardEl.classList.toggle('play', g.phase === 'move' && moveMode !== 'edit');
   if (anim) {
     const f = anim.frames[anim.k];
     for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
@@ -2753,8 +2762,8 @@ function renderBoard() {
 }
 function moveHintText() {
   return moveMode === 'swap'
-    ? (picked ? `入れ替える相手のマスをクリック（隣り合うマス${state.diagonal ? '・斜めも可' : ''}）` : '入れ替える2マスを順にクリック')
-    : moveMode === 'delete' ? '削除するマスをクリック'
+    ? (picked ? `入れ替える相手のマスをクリック（隣り合うマス${state.diagonal ? '・斜めも可' : ''}）` : '入れ替える2マスを順にクリック、または駒をドラッグ')
+    : moveMode === 'delete' ? '削除するマスをクリック、または2秒長押し'
       : 'ゲーム画面と違うマスを、素材とレベルを選んで入力し直してください。残り手数が違うときは、下の欄で直せます。';
 }
 function ruleText() {
@@ -2894,22 +2903,10 @@ function paintCell(x, y) {
 }
 function onBoardCellClick(x, y) {
   const g = state.game;
+  if (Date.now() < suppressClickUntil) return;   // ドラッグ・長押しで手を打った指を離したときのクリック
   if (anim) { finishAnim(); return; }
   if (g.phase === 'setup' || g.phase === 'fix' || moveMode === 'edit') { paintCell(x, y); return; }
-  if (moveMode === 'delete') {
-    // MAXの駒を削除するときは、打ち間違いでないか一度確かめる
-    const c = state.board[y][x];
-    if (c && SPECIES.includes(c.species) && c.level >= (state.maxLevels[c.species] || 7)) {
-      openAsk(`（列${x + 1}・行${y + 1}）の${c.species}${c.level}はMAXの駒です。削除すると、このMAXはなくなります。削除しますか？`, {
-        okLabel: '削除する', danger: true,
-        onOk: () => playMove({ type: 'delete', pos: { x, y } }),
-        onCancel: () => { picked = null; refresh(); },
-      });
-      return;
-    }
-    playMove({ type: 'delete', pos: { x, y } });
-    return;
-  }
+  if (moveMode === 'delete') { deleteAt(x, y); return; }
   if (!picked) { picked = { x, y }; refresh(); return; }
   if (picked.x === x && picked.y === y) { picked = null; refresh(); return; }
   if (!isNeighbor(picked, { x, y })) { picked = { x, y }; refresh(); return; }
@@ -2917,6 +2914,113 @@ function onBoardCellClick(x, y) {
   picked = null;
   playMove({ type: 'swap', a, b: { x, y } });
 }
+// 削除を打つ(マスを押す・長押し)。MAXの駒を削除するときは、打ち間違いでないか一度確かめる
+function deleteAt(x, y) {
+  const c = state.board[y][x];
+  if (c && SPECIES.includes(c.species) && c.level >= (state.maxLevels[c.species] || 7)) {
+    openAsk(`（列${x + 1}・行${y + 1}）の${c.species}${c.level}はMAXの駒です。削除すると、このMAXはなくなります。削除しますか？`, {
+      okLabel: '削除する', danger: true,
+      onOk: () => playMove({ type: 'delete', pos: { x, y } }),
+      onCancel: () => { picked = null; refresh(); },
+    });
+    return;
+  }
+  playMove({ type: 'delete', pos: { x, y } });
+}
+
+/* ---------- ドラッグで入替・長押しで削除(手を打っている間だけ。「盤面を直す」のときは使わない) ---------- */
+// ドラッグ: 駒が指に付いて動き(となりのマスまで)、動かした向きのとなりと入れ替わる。指を離したときに決まり、元のマスで離せば取りやめ。
+// 長押し: 動かさずに押し続けると、LONG_GLOW で光り始めて LONG_DELETE で削除する(離すのを待たない)。それより前に離せば何も起きない。
+// 打つ手は、マスを押して打つときと同じ(事故の警告・MAXの駒の確認なども同じ)。
+const LONG_DELETE = 2000, LONG_GLOW = Math.round(LONG_DELETE / 3);
+let press = null;              // 押している間: { x, y, x0, y0, id, dragging, done, target, pieceEl, cx, cy, t1, t2 }
+let suppressClickUntil = 0;    // ドラッグ・長押しのあと、指を離したときに起きるクリックを無視する時刻
+const boardCell = (x, y) => boardEl.children[y * SIZE + x];
+function boardPitch() { return boardEl.getBoundingClientRect().width / SIZE; }
+function cellAtPoint(ev) {
+  const r = boardEl.getBoundingClientRect();
+  const x = Math.floor((ev.clientX - r.left) / (r.width / SIZE)), y = Math.floor((ev.clientY - r.top) / (r.height / SIZE));
+  return x >= 0 && x < SIZE && y >= 0 && y < SIZE ? { x, y } : null;
+}
+// 指を動かした向きのとなり(上下左右。斜め入替ありなら斜めも)。動かした量が駒の3分の1より小さければ null
+function dragTargetOf(dx, dy) {
+  if (Math.hypot(dx, dy) < boardPitch() / 3) return null;
+  let sx = 0, sy = 0;
+  if (state.diagonal) {
+    const k = Math.round(Math.atan2(dy, dx) / (Math.PI / 4));
+    sx = Math.round(Math.cos(k * Math.PI / 4)); sy = Math.round(Math.sin(k * Math.PI / 4));
+  } else if (Math.abs(dx) >= Math.abs(dy)) sx = Math.sign(dx); else sy = Math.sign(dy);
+  const x = press.x + sx, y = press.y + sy;
+  return x >= 0 && x < SIZE && y >= 0 && y < SIZE ? { x, y } : null;
+}
+function clearPressTimers() { if (press) { clearTimeout(press.t1); clearTimeout(press.t2); } }
+boardEl.addEventListener('contextmenu', (e) => { if (boardEl.classList.contains('play')) e.preventDefault(); });
+boardEl.addEventListener('pointerdown', (ev) => {
+  if (press) endPress(null, true);   // 前の押し方が終わっていなければ(小窓の上で指を離したなど)、取りやめにする
+  if (anim || !boardEl.classList.contains('play') || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
+  const p = cellAtPoint(ev);
+  if (!p) return;
+  press = { x: p.x, y: p.y, x0: ev.clientX, y0: ev.clientY, id: ev.pointerId, dragging: false, done: false, target: null };
+  press.t1 = setTimeout(() => { if (press && !press.dragging) boardCell(press.x, press.y).classList.add('press-glow'); }, LONG_GLOW);
+  press.t2 = setTimeout(() => {
+    if (!press || press.dragging) return;
+    press.done = true;
+    const { x, y } = press;
+    boardCell(x, y).classList.remove('press-glow');
+    picked = null;
+    deleteAt(x, y);
+  }, LONG_DELETE);
+});
+// 動かす・離すは盤面の外や小窓の上でも起きるので、画面全体で受ける
+window.addEventListener('pointermove', (ev) => {
+  if (!press || press.done || ev.pointerId !== press.id) return;
+  const dx = ev.clientX - press.x0, dy = ev.clientY - press.y0, pitch = boardPitch();
+  if (!press.dragging) {
+    if (Math.hypot(dx, dy) < pitch / 6) return;   // 少しの指のぶれは長押しのまま
+    clearPressTimers();
+    press.dragging = true;
+    try { boardEl.setPointerCapture(ev.pointerId); } catch (e) { /* 取れなくても動く */ }
+    // 押す打ち方で1マス目を選んでいたら、選ぶのをやめる
+    if (picked) { const pc = boardCell(picked.x, picked.y); if (pc) pc.classList.remove('highlight'); picked = null; }
+    const src = boardCell(press.x, press.y), c = state.board[press.y][press.x];
+    src.classList.remove('press-glow');
+    const r = src.getBoundingClientRect();
+    const piece = document.createElement('div');
+    piece.className = 'drag-piece';
+    piece.style.width = r.width + 'px'; piece.style.height = r.height + 'px';
+    piece.style.background = src.style.background || '#3a3d2a'; piece.style.color = src.style.color || 'var(--accent)';
+    piece.textContent = c && c.species !== '?' ? `${c.species}${c.level}` : '?';
+    document.body.appendChild(piece);
+    press.pieceEl = piece; press.cx = r.left + r.width / 2; press.cy = r.top + r.height / 2;
+    src.classList.add('drag-origin');
+  }
+  press.pieceEl.style.left = (press.cx + Math.max(-pitch, Math.min(pitch, dx))) + 'px';
+  press.pieceEl.style.top = (press.cy + Math.max(-pitch, Math.min(pitch, dy))) + 'px';
+  const t = dragTargetOf(dx, dy);
+  const same = (a, b) => (a && b ? a.x === b.x && a.y === b.y : a === b);
+  if (!same(t, press.target)) {
+    if (press.target) boardCell(press.target.x, press.target.y).classList.remove('highlight');
+    press.target = t;
+    if (t) boardCell(t.x, t.y).classList.add('highlight');
+  }
+});
+function endPress(ev, cancelled) {
+  if (!press || (ev && ev.pointerId !== press.id)) return;
+  clearPressTimers();
+  const p = press;
+  press = null;
+  if (p.pieceEl) p.pieceEl.remove();
+  if (p.dragging || p.done) suppressClickUntil = Date.now() + 400;
+  if (p.dragging) {
+    if (p.target && !cancelled) { playMove({ type: 'swap', a: { x: p.x, y: p.y }, b: p.target }); return; }
+    renderBoard();   // 取りやめ: 暗くしたマスと赤い枠を戻す
+    return;
+  }
+  if (!p.done) { const c = boardCell(p.x, p.y); if (c) c.classList.remove('press-glow'); }
+}
+window.addEventListener('pointerup', (ev) => endPress(ev, false));
+window.addEventListener('pointercancel', (ev) => endPress(ev, true));
+
 // 素材とレベルの欄で素材を選ぶ。別の素材に変えたときは、レベルをその素材の最低レベル(補充がLv2の素材はLv2)に戻す
 function selectBrushSpecies(sp) {
   if (brush.species !== sp) brush.level = minBoardLevelOf(sp);
@@ -3512,7 +3616,7 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
   <p style="margin-top:10px;font-weight:700;">■ 基本の使い方の流れ</p>
   <ol>
     <li><b>はじめの盤面を入力する</b><br>ゲーム画面どおりに盤面と残り手数を入力し、「この盤面で始める」を押します。<br>（※入力を省いたマスは「?」になります。「?」はどの駒ともマッチしない仮のマスとして扱われます）</li>
-    <li><b>ゲームと同じ手を打つ</b><br>「入替<span class="key"> （S）</span>」か「削除<span class="key"> （D）</span>」を選んで、シミュレーター上で手を打ちます。</li>
+    <li><b>ゲームと同じ手を打つ</b><br>「入替<span class="key"> （S）</span>」か「削除<span class="key"> （D）</span>」を選んで、シミュレーター上で手を打ちます。駒をドラッグしてとなりの駒と入れ替えたり、2秒押し続けて削除したりもできます。</li>
     <li><b>補充されたマスを確定する</b><br>新しく補充された駒（「?」になったマス）を入力し、「確定<span class="key"> （Enter）</span>」を押します。</li>
   </ol>
   <p style="margin-top:10px;font-weight:700;">■ 盤面で光っている駒は？</p>
