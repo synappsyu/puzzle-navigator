@@ -109,6 +109,8 @@
   /* 練習モードでマッチの様子を見せる場面: そろったマスは白く強く光って少し小さくなる。消えたマスは暗い空き */
   .cell.match-flash { filter: brightness(2); box-shadow: inset 0 0 18px 14px #fff, 0 0 12px 5px #fff; transform: scale(.82); transition: transform .15s; z-index: 1; }
   .cell.gone { background: #202228; }
+  /* 1手戻したときに、その場面で「この手順を打つ」を押したカードに付ける印 */
+  .adopted-mark { display:inline-block; font-size:12px; font-weight:700; color:#1b1d24; background:var(--accent); border-radius:5px; padding:2px 8px; margin-bottom:6px; }
   /* 手を打っている間の盤面: 指でなぞっても画面をスクロールしない(ドラッグの入替・長押しの削除のため)。長押しでメニューや文字選びを出さない */
   .board.play { touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; }
   /* ドラッグ中: 元のマスは空いたように暗く、駒は指(マウス)に付いて動く */
@@ -203,7 +205,7 @@
   .guide ol { margin:4px 0 6px; padding-left:1.4em; line-height:1.7; }
   .guide .guide-lead { margin:8px 0 4px; }
   .guide ol ul { margin:2px 0 4px; padding-left:1.3em; list-style: disc; }
-  .guide .guide-h { margin:8px 0 0; font-weight:700; }
+  .guide .guide-h { margin:12px 0 0; padding-top:10px; border-top:1px solid var(--border); font-weight:700; }
   /* 「手順を探す」の2つのボタンの違い */
   .warn-why { margin-top:4px; }
   .warn-why summary { cursor:pointer; color: var(--text-dim); font-size:12px; }
@@ -211,7 +213,17 @@
   .collapse-bar { position:fixed; left:50%; transform:translateX(-50%); bottom:10px; z-index:60; opacity:.94; box-shadow:0 2px 8px #0008; }
   .warn-note { border:1px solid var(--danger); border-radius:6px; padding:6px 10px; margin:0 0 8px; font-size:12px; color: var(--text); background: rgba(224,87,76,.08); }
   .warn-note b { color: var(--danger); }
-  .cfg-h { font-size:14px; margin:16px 0 4px; }
+  /* 説明と設定の■の見出し。上に細い区切り線(題名のすぐ下と、「詳しく…」を開いたすぐ下の見出しには引かない) */
+  .sec-h { font-weight:700; margin:16px 0 4px; padding-top:12px; border-top:1px solid var(--border); }
+  .modal h2 + .sec-h, .warn-why > summary + .sec-h { margin-top:4px; padding-top:0; border-top:none; }
+  .cfg-h { font-size:14px; margin:16px 0 4px; }   /* プリセットの一覧の見出し(斜め移動なし・あり) */
+  /* 設定のチェック・選択の枠(色・レベルの枠と同じ見た目)。チェックや丸いボタンは文の1行目にそろえる */
+  .cfg-box { background:var(--panel2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin-top:10px; }
+  .cfg-box .cfg-sub { font-weight:700; margin-bottom:6px; }
+  .cfg-box .opt { display:flex; align-items:flex-start; gap:8px; font-weight:700; }
+  .cfg-box .opt + .opt { margin-top:6px; }
+  .cfg-box .opt input { margin:3px 0 0; flex:none; }
+  .cfg-box .note { margin-top:6px; }
 
   .toolbar-break { display: none; }   /* ヘッダーのボタンの折り返し(スマホだけ使う) */
   /* スマホなど幅の狭い画面 */
@@ -263,18 +275,18 @@
   <details class="guide" id="quickGuide">
     <summary>はじめての方へ（クイックガイド）</summary>
     <p class="guide-lead">使い方は、目的に合わせて大きく3通りあります。</p>
-    <p class="guide-h">■ ① シミュレーターとして自由に試す</p>
+    <p class="guide-h">① シミュレーターとして自由に試す</p>
     <ol>
       <li>試したい盤面と残り手数を入力し、「この盤面で始める」を押します（入力を省いたマスは「?」になります）。</li>
       <li>「入替<span class="key"> （S）</span>」や「削除<span class="key"> （D）</span>」を1手ずつ打つと、マッチ結果や残り手数が更新されます。実際のゲームと同じように、ドラッグで入替、長押しまたは盤面の外へのドラッグで削除もできます。</li>
       <li>補充されたマスを入力して進めれば、何手先まででも試せます。「1手戻す<span class="key"> （U）</span>」で何度でもやり直せるので、色々な手順を比べてみてください。</li>
     </ol>
-    <p class="guide-h">■ ② 練習モードで練習する</p>
+    <p class="guide-h">② 練習モードで練習する</p>
     <ol>
       <li>最初の盤面を入力する画面で、残り手数の欄にゲームモードの最初の手数を入れ、「ランダムな盤面で練習する」を押します。</li>
       <li>あとは①と同じように、1手ずつ打てます。補充はツールがランダムに決めるので、入力はいりません。</li>
     </ol>
-    <p class="guide-h">■ ③ MAX布陣づくりのサポートに使う</p>
+    <p class="guide-h">③ MAX布陣づくりのサポートに使う</p>
     <ol>
       <li>⚙ 設定でゲームモードを合わせ、「目標MAX布陣」を選びます。</li>
       <li>手を相談したい盤面・残り手数を入力し、「この盤面で始める」を押します。</li>
@@ -808,7 +820,27 @@ function cleanLogEntry(e) {
   if (e.inputMode === 'final') out.inputMode = 'final';
   const tb = cleanId(e.targetBefore);
   if (tb) out.targetBefore = tb;
+  // カードの手順から打った手か(src: card)、自分で選んだ手か(src: self)。card は手順の1手目にだけ付く「そのとき選んだカード」
+  if (e.src === 'card' || e.src === 'self') {
+    out.src = e.src;
+    if (e.src === 'card') {
+      out.total = cleanInt(e.total, 1, 4, 1);
+      out.step = cleanInt(e.step, 1, out.total, 1);
+      const c = cleanAdoptedCard(e.card);
+      if (c && out.step === 1) out.card = c;
+    }
+  }
   return out;
+}
+// 選んだカード(探したときの種類・探す手数・カードの中身)。カードの表示に使う数字と手順だけを残す
+function cleanAdoptedCard(a) {
+  try {
+    if (!a || (a.kind !== 'advance' && a.kind !== 'chain') || !a.card || !Array.isArray(a.card.path) || !a.card.path.length || a.card.path.length > 4) return null;
+    const c = a.card, card = { path: c.path.map(cleanMove), free: !!c.free };
+    for (const k of ['gainAvg', 'perMove', 'avgRec', 'penAvg', 'breakPen', 'gain', 'avg', 'sureRec', 'bestRec']) card[k] = Number.isFinite(c[k]) ? c[k] : 0;
+    card.breakCells = (Array.isArray(c.breakCells) ? c.breakCells : []).map(v => cleanInt(v, 0, SIZE * SIZE - 1, null)).filter(v => v != null);
+    return { kind: a.kind, depth: cleanInt(a.depth, 3, 4, 3), card };
+  } catch (e) { return null; }
 }
 // 点検に通ったものだけ残す(ブラウザの保存を読むとき用)
 function keepClean(list, fn) { const out = []; for (const v of list) { try { out.push(fn(v)); } catch (e) { /* 読めないものは捨てる */ } } return out; }
@@ -1329,6 +1361,7 @@ function formationLinesHtml(finalGrid) {
   return html;
 }
 let chainShown = [];
+let chainShownKind = 'advance';   // いま出ている一覧の種類(advance: 次の手 / chain: 連鎖)
 // 一覧を全部出している間だけ、画面の下に「上位◯件だけ表示」を貼り付ける(スマホで下までスクロールせずに戻せるように)
 function setChainCollapse(show, onCollapse) {
   const b = document.getElementById('btnChainCollapse');
@@ -1377,6 +1410,7 @@ function renderChainOptionsInner(list, sec, showAll) {
   }
   const NUM = ['①', '②', '③', '④'];
   chainShown = list;
+  chainShownKind = 'chain';
   const visible = showAll ? list : list.slice(0, CHAIN_SEARCH_SHOW);
   chainListEl.innerHTML = visible.map((o0, idx) => {
     const o = Object.assign({}, o0, chainDetail(state.board, o0.path));
@@ -1401,7 +1435,7 @@ function renderChainOptionsInner(list, sec, showAll) {
       if (d > 0) maxChips.push(chainChip(sp, top, `+${d}`));
     }
     const maxHtml = maxChips.length ? `<div class="chain-chips"><b style="color:var(--accent)">MAXができる:</b> ${maxChips.join('')}</div>` : '';
-    return `<div class="chain-card">
+    return `<div class="chain-card">${adoptedMarkHtml(o0)}
       <div class="chain-head"><span class="chain-gain">差し引き ${sign}${o.gain.toFixed(1)}手</span>
         <span class="chain-meta">使う手数 ${o.path.length} / 手数の増加 平均${o.avg.toFixed(1)}手（補充がマッチしない場合 ${o.sureRec}手・最高${o.bestRec}手）</span>${riskHtml}</div>
       ${cardWarnsHtml([...mid, ...laterLossLines(o.final), ...riskLine(risk)])}
@@ -1411,7 +1445,7 @@ function renderChainOptionsInner(list, sec, showAll) {
       ${formationHtml}
       <div class="toolbar" style="margin-top:8px;"><button class="small primary${state.game.phase === 'move' ? '' : ' dim'}" data-chain-apply="${idx}">この手順を打つ</button></div>
     </div>`;
-  }).join('') + (!showAll && list.length > CHAIN_SEARCH_SHOW ? `<div class="toolbar" style="margin:0 0 10px;"><button id="btnChainMore" class="small">残り${list.length - CHAIN_SEARCH_SHOW}件を表示</button></div>` : '') + `<div class="note">数字は期待値です。「補充がマッチしない場合」は、補充された駒がどれともマッチしなかったときの増加です。（${sec}秒）</div>`;
+  }).join('') + (!showAll && list.length > CHAIN_SEARCH_SHOW ? `<div class="toolbar" style="margin:0 0 10px;"><button id="btnChainMore" class="small">残り${list.length - CHAIN_SEARCH_SHOW}件を表示</button></div>` : '') + `<div class="note">数字は期待値です。「補充がマッチしない場合」は、補充された駒がどれともマッチしなかったときの増加です。${sec != null ? `（${sec}秒）` : ''}</div>`;
   chainListEl.querySelectorAll('[data-chain-apply]').forEach(btn => {
     btn.addEventListener('click', () => startChainSequence(Number(btn.dataset.chainApply)));
   });
@@ -1799,6 +1833,7 @@ function renderAdvanceOptionsInner(list, sec, showAll) {
   }
   const NUM = ['①', '②', '③', '④'];
   chainShown = list;
+  chainShownKind = 'advance';
   const visible = showAll ? list : list.slice(0, CHAIN_SEARCH_SHOW);
   chainListEl.innerHTML = visible.map((o0, idx) => {
     const o = Object.assign({}, o0, chainDetail(state.board, o0.path));
@@ -1825,7 +1860,7 @@ function renderAdvanceOptionsInner(list, sec, showAll) {
     const stepsHtml = o.steps.map((st, i) =>
       `<div class="chain-step"><h4>${NUM[i] || `${i + 1}.`} ${st.move.type === 'swap' ? '入替' : '削除'}</h4>${chainMiniBoard(st.before, { move: st.move })}</div><div class="chain-arrow">→</div>`
     ).join('');
-    return `<div class="chain-card">
+    return `<div class="chain-card">${adoptedMarkHtml(o0)}
       <div class="chain-head">${headHtml}
         <span class="chain-meta">使う手数 ${o.path.length} / 素材の増加 ${signed(o.gainAvg)}個${recText}</span>${riskHtml}</div>
       ${cardWarnsHtml([...mid, ...laterLossLines(o.final), ...riskLine(risk), ...breakLine, ...penLine])}
@@ -1834,7 +1869,7 @@ function renderAdvanceOptionsInner(list, sec, showAll) {
       ${formationLinesHtml(o.final)}
       <div class="toolbar" style="margin-top:8px;"><button class="small primary${state.game.phase === 'move' ? '' : ' dim'}" data-chain-apply="${idx}">${o.path.length > 1 ? 'この手順を打つ' : 'この手を打つ'}</button></div>
     </div>`;
-  }).join('') + (!showAll && list.length > CHAIN_SEARCH_SHOW ? `<div class="toolbar" style="margin:0 0 10px;"><button id="btnChainMore" class="small">残り${list.length - CHAIN_SEARCH_SHOW}件を表示</button></div>` : '') + `<div class="note">数字は期待値です。計算のしかたは「ⓘ 説明」にあります。（${sec}秒）</div>`;
+  }).join('') + (!showAll && list.length > CHAIN_SEARCH_SHOW ? `<div class="toolbar" style="margin:0 0 10px;"><button id="btnChainMore" class="small">残り${list.length - CHAIN_SEARCH_SHOW}件を表示</button></div>` : '') + `<div class="note">数字は期待値です。計算のしかたは「ⓘ 説明」にあります。${sec != null ? `（${sec}秒）` : ''}</div>`;
   chainListEl.querySelectorAll('[data-chain-apply]').forEach(btn => {
     btn.addEventListener('click', () => startChainSequence(Number(btn.dataset.chainApply)));
   });
@@ -1927,10 +1962,11 @@ function playMove(move, riskChecked) {
     }
   }
   // 1手戻したときに手順の続きを元に戻せるよう、打つ前の手順を覚えておく
-  const queueBefore = { queue: JSON.parse(JSON.stringify(g.queue)), total: g.queueTotal };
+  const queueBefore = { queue: JSON.parse(JSON.stringify(g.queue)), total: g.queueTotal, card: g.queueCard || null };
   // 盤面で手順と同じ手を打ったときは、手順を続ける。違う手なら手順はやめる。
   if (g.queue.length && sameMove(g.queue[0], move)) g.queue.shift();
   else g.queue = [];
+  if (!g.queue.length) g.queueCard = null;
   const before = cloneGrid(state.board);
   picked = null;
   clearChainResults();
@@ -2216,7 +2252,7 @@ function commitFinal(leftAfter) {
   const g = state.game, p = g.pending;
   let chain = leftAfter - (currentLeft() - 1), adjust = 0;
   if (chain < 0) { adjust = chain; chain = 0; }   // 計算より少ない数字で確定したときは、連鎖による増加ではなく手数の直しとして数える
-  g.log.push({ move: p.move, before: p.before, after: cloneGrid(state.board), refills: [], chain, events: p.events, inputMode: 'final', queueBefore: p.queueBefore });
+  g.log.push(withMoveSrc({ move: p.move, before: p.before, after: cloneGrid(state.board), refills: [], chain, events: p.events, inputMode: 'final', queueBefore: p.queueBefore }));
   if (adjust) g.log[g.log.length - 1].adjust = adjust;
   advanceTargetAfterMove(g.log[g.log.length - 1]);
   g.pending = null;
@@ -2379,7 +2415,7 @@ function advanceTargetAfterMove(entry) {
 }
 function commitMove() {
   const g = state.game, p = g.pending;
-  g.log.push({ move: p.move, before: p.before, after: cloneGrid(state.board), refills: p.refills, chain: Math.min(p.chain, recoveryRoom()), events: p.events, queueBefore: p.queueBefore });
+  g.log.push(withMoveSrc({ move: p.move, before: p.before, after: cloneGrid(state.board), refills: p.refills, chain: Math.min(p.chain, recoveryRoom()), events: p.events, queueBefore: p.queueBefore }));
   advanceTargetAfterMove(g.log[g.log.length - 1]);
   g.pending = null;
   g.phase = 'move';
@@ -2403,10 +2439,11 @@ function undoLast() {
   // 打っていた手順の続きを、戻した手の分だけ元に戻す
   g.queue = qb ? qb.queue : [];
   g.queueTotal = qb ? qb.total : 0;
+  g.queueCard = qb ? qb.card || null : null;
   picked = null;
   clearChainResults();
-  // 探したときと同じ盤面に戻ったら、そのとき出ていた結果をもう一度表示する
-  restoreSearchResults();
+  // 探したときと同じ盤面に戻ったら、そのとき出ていた結果をもう一度表示する(なければ、この場面で選んだカード)
+  if (!restoreSearchResults()) showAdoptedCard();
   refresh();
 }
 // 自分で別の手を打つ・盤面を直すときは、「1手進める」の先を消す(先に確認する)
@@ -2432,7 +2469,7 @@ function redoNext() {
   g.queue = []; g.queueTotal = 0;
   picked = null;
   clearChainResults();
-  restoreSearchResults();
+  if (!restoreSearchResults()) showAdoptedCard();
   refresh();
 }
 function startGame() {
@@ -2545,7 +2582,7 @@ function playPracticeMove(move, before, queueBefore) {
   }
   frames.forEach(f => { f.left = left0 + Math.min(f.inc, room); });
   const after = frameGrid(sp, lv);
-  g.log.push({ move, before, after: cloneGrid(after), refills: [], chain: Math.min(inc, room), events, inputMode: 'final', queueBefore });
+  g.log.push(withMoveSrc({ move, before, after: cloneGrid(after), refills: [], chain: Math.min(inc, room), events, inputMode: 'final', queueBefore }));
   state.board = after;
   advanceTargetAfterMove(g.log[g.log.length - 1]);
   startAnim(frames);
@@ -2622,6 +2659,7 @@ function startChainSequence(idx, riskChecked) {
   }
   state.game.queue = o.path.map(m => JSON.parse(JSON.stringify(m)));
   state.game.queueTotal = o.path.length;
+  state.game.queueCard = cleanAdoptedCard({ kind: chainShownKind, depth: chainSearchDepth, card: o });
   // 手順の各手を打つ前の盤面の予想(補充は ?)。打つときに盤面がこのとおりなら、上で手順全体を確かめ済みなので確かめ直さない
   state.game.queueChecked = queuePredictedKeys(state.board, o.path);
   picked = null;
@@ -2654,6 +2692,35 @@ function sameMove(a, b) {
   const eq = (p, q) => p.x === q.x && p.y === q.y;
   if (a.type === 'delete') return eq(a.pos, b.pos);
   return (eq(a.a, b.a) && eq(a.b, b.b)) || (eq(a.a, b.b) && eq(a.b, b.a));
+}
+// 打った手に、カードの手順から打った手か(src: card。何手目か step / 手順の手数 total)、自分で選んだ手か(src: self)を付ける。
+// 手順の1手目には、そのとき選んだカード(card)も付ける。1手戻したときに、この場面で何を打ったかを見分けるため
+function withMoveSrc(e) {
+  const qb = e.queueBefore;
+  if (qb && qb.queue && qb.queue.length && sameMove(qb.queue[0], e.move)) {
+    const total = qb.total || qb.queue.length;
+    e.src = 'card'; e.total = total; e.step = total - qb.queue.length + 1;
+    if (e.step === 1 && qb.card) e.card = qb.card;
+  } else e.src = 'self';
+  return e;
+}
+// いまの場面で「この手順を打つ」を押して打ったカード(1手戻して、この場面に来たときだけ)
+function adoptedAtHere() {
+  const g = state.game, nx = g.phase === 'move' && g.future && g.future.length ? g.future[0] : null;
+  return nx && nx.card ? nx.card : null;
+}
+function adoptedMarkHtml(o) {
+  const a = adoptedAtHere();
+  const same = a && a.card.path.length === o.path.length && a.card.path.every((m, i) => sameMove(m, o.path[i]));
+  return same ? '<div class="adopted-mark">この手順を打ちました</div>' : '';
+}
+// 1手戻して、「この手順を打つ」を押した場面に来たら、そのとき選んだカードを1枚出す(一覧は「次の手を探す」で出し直せる)
+function showAdoptedCard() {
+  const a = adoptedAtHere();
+  if (!a || (a.kind === 'advance' && !currentTargetPattern())) return;
+  chainSearchDepth = a.depth; chainUnknownNote = ''; chainFallbackNote = '';
+  (a.kind === 'advance' ? renderAdvanceOptionsInner : renderChainOptionsInner)([a.card], null, true);
+  chainListEl.insertAdjacentHTML('afterbegin', `<div class="chain-meta" style="font-weight:700;color:var(--text);margin-bottom:6px;">このときは${a.depth}手までで探しました。</div>`);
 }
 // 最後に探した結果(1手戻して、探したときと同じ盤面に戻ったら、もう一度表示するため)
 let lastSearch = null;
@@ -2766,6 +2833,12 @@ function renderBoard() {
     boardEl.appendChild(div);
   }
 }
+// 1手戻したとき(この場面の先に打った手があるとき)、その手がカードの手順だったか、自分で選んだ手だったか
+function moveSrcLine() {
+  const g = state.game, nx = g.future && g.future.length ? g.future[0] : null;
+  if (!nx || !nx.src) return '';
+  return `この場面で打った手：${nx.src === 'card' ? `カードの手順（${nx.step}/${nx.total}手目）` : '自分で選んだ手'}<br>`;
+}
 function moveHintText() {
   return moveMode === 'swap'
     ? (picked ? `入れ替える相手のマスをクリック（隣り合うマス${state.diagonal ? '・斜めも可' : ''}）` : '入れ替える2マスを順にクリック、または駒をドラッグ')
@@ -2812,7 +2885,7 @@ function renderGameControls() {
         <button id="btnUndo" ${g.log.length ? '' : 'disabled'}>1手戻す<span class="key"> （U）</span></button>
         <button id="btnRedo" ${g.future.length ? '' : 'disabled'}>1手進める<span class="key"> （R）</span></button>
       </div>
-      <div class="game-status">${targetNotice ? `<b style="color:var(--accent)">${targetNotice}</b><br>` : ''}${moveNotice ? `<b style="color:var(--danger)">${moveNotice}</b><br>` : ''}<span id="moveHint">${anim ? ANIM_HINT : hint}</span></div>
+      <div class="game-status">${targetNotice ? `<b style="color:var(--accent)">${targetNotice}</b><br>` : ''}${moveNotice ? `<b style="color:var(--danger)">${moveNotice}</b><br>` : ''}${moveSrcLine()}<span id="moveHint">${anim ? ANIM_HINT : hint}</span></div>
       ${moveMode === 'edit' ? `<div class="toolbar" style="margin-top:0;margin-bottom:8px;align-items:center;"><label class="small">残り手数 <input type="number" id="editLeftInput" min="0" max="999" value="${currentLeft()}" style="width:5em;"></label><button id="btnEditLeft" class="small">この数字に直す</button><button id="btnClearBoard" class="small danger">盤面をクリア</button></div>` : ''}
       ${q ? `<div class="toolbar" style="margin-top:0;margin-bottom:8px;">
         <button id="btnQueueNext" class="primary">${['①', '②', '③', '④'][(g.queueTotal || g.queue.length) - g.queue.length] || ''} を打つ（${(g.queueTotal || g.queue.length) - g.queue.length + 1}/${g.queueTotal || g.queue.length}手目）: ${describeMove(q)}</button>
@@ -3537,12 +3610,12 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
   <p>今の盤面から3手先（「4手まで」なら4手先）までの手順をすべて調べて、カードで表示します。</p>
   <p style="margin-top:10px;font-weight:700;">💡 配置はご自身で</p>
   <p>ツールは「素材の数」と「手数」だけを計算していて、駒の配置は見ていません。どこに配置するかは、ご自身で判断してください。</p>
-  <p style="margin-top:10px;font-weight:700;">■ 何を探すか</p>
+  <p class="sec-h">■ 何を探すか</p>
   <ul>
     <li><b>目標MAX布陣を登録しているとき</b>: 目標MAX布陣に必要な素材が増える手順と、手数が増える連鎖を探します。</li>
     <li><b>登録していないとき</b>: 手数が増える連鎖を探します。</li>
   </ul>
-  <p style="margin-top:10px;font-weight:700;">■ カードの見方</p>
+  <p class="sec-h">■ カードの見方</p>
   <ul>
     <li><b>手数を使わずに ＋◯個</b>: 連鎖で増える手数が、使う手数以上の手順です。数字は素材の増加の期待値です（Lv1換算。Lv2＝3個分）。</li>
     <li><b>1手あたり ＋◯個</b>: 素材の増加の期待値を、実質の手数（使う手数 − 連鎖で増える手数。1より少ないときは1）で割った数です。</li>
@@ -3559,14 +3632,14 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
     </li>
     <li><b>「この手順を打つ」</b>: 1手目から順に打てます。途中で探し直すこともできます。</li>
   </ul>
-  <p style="margin-top:10px;font-weight:700;">■ 並び順（結果の上のボタンで切り替えます）</p>
+  <p class="sec-h">■ 並び順（結果の上のボタンで切り替えます）</p>
   <ul>
     <li><b>素材の増加の順</b>: 「手数を使わずに」の手順が先で、素材の多い順です。そのあとに「1手あたり」の多い順で続きます。小数点第1位までが同じなら、連鎖で増える手数の多い順です。</li>
     <li><b>差し引きの手数の順</b>: 「差し引き」の多い順です。</li>
   </ul>
   <p class="note">※いま目指しているMAX布陣で必ず事故になる手順、MAXの駒を削除する手順、途中で手数が尽きる手順などは表示しません。</p>
-  <details class="warn-why" style="margin-top:12px;"><summary style="font-size:14px;font-weight:700;color:var(--text);">詳しくアルゴリズムを知りたい方へ</summary>
-    <p style="margin-top:10px;font-weight:700;">■ 計算の流れ</p>
+  <details class="warn-why" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);"><summary style="font-size:14px;font-weight:700;color:var(--text);">詳しくアルゴリズムを知りたい方へ</summary>
+    <p class="sec-h">■ 計算の流れ</p>
     <p><b>方法論</b>: 手順の候補は総当たり（全探索）で作り、補充の運はモンテカルロ法で平均を出しています。モンテカルロ法は、乱数を使ったシミュレーションを何回もくり返して、その平均で期待値を求める方法です。</p>
     <p style="margin-top:8px;">目標MAX布陣を登録しているとき</p>
     <ul>
@@ -3579,7 +3652,7 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
     <p style="margin-top:8px;">目標MAX布陣を登録していないとき</p>
     <p>手数が増える連鎖だけを探します。流れは同じですが、Step2とStep3が違います。Step2では、最後の1手のあとの補充だけをこの段階で4回（「4手まで」の4手目は2回）シミュレーションして、差し引きの期待値を見積もります。Step3では、上位150件ではなく、差し引きの見積もりが−1手以上の手順をすべて選びます。Step5では、差し引きの期待値が0手以上の手順を表示します。</p>
     <p>目標MAX布陣を登録していても、表示できる手順が1つもないとき（必要な素材がもう盤面にそろっているときなど）は、登録していないときと同じ方法で、手数が増える連鎖を探して表示します。</p>
-    <p style="margin-top:10px;font-weight:700;">■ 期待値の計算方法</p>
+    <p class="sec-h">■ 期待値の計算方法</p>
     <p>素材</p>
     <ul>
       <li>目標MAX布陣に足りない素材を、Lv1換算で数えます（Lv2＝3個分、Lv3＝9個分）。</li>
@@ -3597,7 +3670,7 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
       <li>マッチは、駒が消えて補充が入るたびに1回目、2回目…と数えます。2回目以降に起きたマッチ1つにつき、1手増えます（1回目のマッチでは増えません）。設定で「ラウンドごとに増える」を選んだときは、その数え方です。PvPモードでは、打った手と残り手数の合計が170手までです。</li>
     </ul>
     <p>どの数字も補充を試した平均なので、ぶれがあります。見ているのは3手先（「4手まで」なら4手先）までです。</p>
-    <p style="margin-top:10px;font-weight:700;">■ 表示する手順</p>
+    <p class="sec-h">■ 表示する手順</p>
     <p>次の手順は表示しません。</p>
     <ul>
       <li>いま目指しているMAX布陣で必ず事故になる手順</li>
@@ -3614,7 +3687,7 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
       <li>次に目指すMAX布陣は、手順の候補に影響を与えません。ただし、Lv3以上（補充がLv2ならLv4以上）の素材が減るときと、使わないレベルの駒ができるときは、⚠ を付けます（いま目指しているMAX布陣と同じ素材の布陣には付けません）。</li>
       <li>並び順で数字も連鎖の手数も同じときは、目標でない素材の高いレベルの駒を消す手順を先にします。</li>
     </ul>
-    <p style="margin-top:10px;font-weight:700;">■ 駒の相対的な位置を見れない理由</p>
+    <p class="sec-h">■ 駒の相対的な位置を見れない理由</p>
     <ul>
       <li>1手の候補は、入替と削除でおよそ100通りあります。3手先まで読むだけで約90万通り、補充される駒の出方まで含めると、さらにその何十万倍にもなります。</li>
       <li>しかも、ゲームの始めから終わりまでは、長いと百手を超えます。いま駒をどこに置くのが良いかは、そのずっと先まで打ってみないと分かりません。</li>
@@ -3626,16 +3699,16 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
 document.getElementById('btnSimHelp').addEventListener('click', () => openInfoModal(`
   <h2>シミュレーター</h2>
   <p>ゲーム画面と全く同じ盤面を入力して、1手ずつ仮想で打つことができるシミュレーターです。</p>
-  <p style="margin-top:10px;font-weight:700;">■ 基本の使い方の流れ</p>
+  <p class="sec-h">■ 基本の使い方の流れ</p>
   <ol>
     <li><b>はじめの盤面を入力する</b><br>ゲーム画面どおりに盤面と残り手数を入力し、「この盤面で始める」を押します。<br>（※入力を省いたマスは「?」になります。「?」はどの駒ともマッチしない仮のマスとして扱われます）</li>
     <li><b>ゲームと同じ手を打つ</b><br>「入替<span class="key"> （S）</span>」か「削除<span class="key"> （D）</span>」を選んで、シミュレーター上で手を打ちます。実際のゲームと同じように、ドラッグで入替、長押しまたは盤面の外へのドラッグで削除もできます。</li>
     <li><b>補充されたマスを確定する</b><br>新しく補充された駒（「?」になったマス）を入力し、「確定<span class="key"> （Enter）</span>」を押します。</li>
   </ol>
   <p>※練習モード：1で「ランダムな盤面で練習する」を押すと、入力なしで、実際のゲームと同じ流れで練習できます。やめるときは「リセット」を押してください。</p>
-  <p style="margin-top:10px;font-weight:700;">■ 盤面で光っている駒は？</p>
+  <p class="sec-h">■ 盤面で光っている駒は？</p>
   <p>目標MAX布陣の形どおりに置いた駒のうち、その列の上がすべてMAX布陣どおりの駒です。「次の手を探す」で「⚠ そろえたマスを動かします」と出るのは、この駒を動かす手順です。光らせたくないときは、「⚙ 設定」の「素材の色」でチェックを外してください。</p>
-  <p style="margin-top:10px;font-weight:700;">■ ゲームとずれたり、間違えたときは？</p>
+  <p class="sec-h">■ ゲームとずれたり、間違えたときは？</p>
   <ul>
     <li>入力間違いを直したい → 「盤面を直す<span class="key"> （E）</span>」で修正できます。</li>
     <li>盤面を全部入れ直したい → 「盤面を直す<span class="key"> （E）</span>」の中の「盤面をクリア」で、盤面をすべて「?」にできます（残り手数と打った手の記録は残ります）。</li>
@@ -3643,7 +3716,7 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
     <li>赤い点線の枠が出た → 「確定」を押した際、ツールが「ありえない盤面（入力ミス）」を検知しました。赤枠のマスを確認し、入力し直してください。そのままもう一度「確定」を押せば、無視して進めることもできます。</li>
     <li>赤枠は「ここを直せば辻褄が合う」という候補で、間違えた場所そのものとは限りません。枠のマスが合っていても、盤面のどこかがゲームとずれていることがあります。</li>
   </ul>
-  <p style="margin-top:10px;font-weight:700;">■ その他の機能</p>
+  <p class="sec-h">■ その他の機能</p>
   <ul>
     <li><b>⚙ 設定</b>: ゲームモード（補充のレベル・斜め入替・PvPなど）をゲームに合わせてください。残り手数の計算や手順の探し方が変わります。ほかのゲームモードを試したいときも、ここで切り替えます。</li>
     <li><b>記録の書き出し／読み込み</b>: 打った手と盤面を1局分まるごとファイル（.txt）に保存・復元できます。</li>
@@ -3653,18 +3726,18 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
 document.getElementById('btnPatternHelp').addEventListener('click', () => openInfoModal(`
   <h2>目標MAX布陣</h2>
   <p>いま作ろうとしている最終的な盤面の形（目標MAX布陣）を登録します。</p>
-  <p style="margin-top:10px;font-weight:700;">■ 登録するメリット</p>
+  <p class="sec-h">■ 登録するメリット</p>
   <p>登録は任意ですが、登録することで以下の機能が使えるようになります。</p>
   <ol>
     <li>「🔍 次の手を探す」が、目標に必要な素材が効率よく増える手順を探すようになります。</li>
     <li>必要な素材が勝手に揃って消えてしまう「事故」の確率を事前に警告してくれます。</li>
     <li>いま目指しているMAX布陣に必要な素材が減る手順や連鎖を除外してくれます。</li>
   </ol>
-  <p style="margin-top:10px;font-weight:700;">■ はじめての方は「プリセット」がおすすめ</p>
+  <p class="sec-h">■ はじめての方は「プリセット」がおすすめ</p>
   <p>よく使われるMAX布陣が用意されています（斜め移動なし: 3・4・7・8・10MAX ／ 斜め移動あり: 3・4・6・12・18MAX）。まずはここから選んでみてください。（ご自身で作った布陣をプリセットとして保存することも可能です）</p>
-  <p style="margin-top:10px;font-weight:700;">■ 複数の目標を登録した場合</p>
+  <p class="sec-h">■ 複数の目標を登録した場合</p>
   <p>上から順番に目指します（順番は ↑↓ ボタンで入れ替え可能）。<br>1つ目が起爆（完成）すると、自動的に次の目標に切り替わります。次に目指すMAX布陣（2番目以降の布陣）の素材が減る手順や、使わないレベルの駒ができる手順も表示します。Lv3以上の素材が減るときと、使わないレベルの駒ができるときは、カードに⚠を付けて知らせます。</p>
-  <p style="margin-top:10px;font-weight:700;">■ ボタンの機能</p>
+  <p class="sec-h">■ ボタンの機能</p>
   <ul>
     <li><b>左右反転</b>: 盤面を左右反転します（反転でMAX数が減る場合があるので、起爆の確認に注意してください）。</li>
     <li><b>レベル+1 / −1</b>: 盤面全体のレベルを一括で上げ下げします。</li>
@@ -3680,7 +3753,7 @@ document.getElementById('btnConfig').addEventListener('click', () => {
   modal.className = 'modal';
   modal.addEventListener('click', (e) => e.stopPropagation());
   let h = '<h2>設定</h2>';
-  h += '<h3 class="cfg-h">素材の色</h3><div class="note">ゲーム画面の素材の色に合わせて変えられます。最大レベルに近づくほど色が濃くなります。</div><div class="config-grid">';
+  h += '<p class="sec-h">■ 素材の色</p><div class="note">ゲーム画面の素材の色に合わせて変えられます。最大レベルに近づくほど色が濃くなります。</div><div class="config-grid">';
   const famOptions = cur => Object.keys(COLOR_FAMILIES).map(k => `<option value="${k}" ${cur === k ? 'selected' : ''}>${COLOR_FAMILIES[k].name}</option>`).join('');
   const famPreview = k => [0, 0.25, 0.5, 0.75, 1].map(t => {
     const st = COLOR_FAMILIES[k].stops.map(hexToRgb);
@@ -3693,33 +3766,33 @@ document.getElementById('btnConfig').addEventListener('click', () => {
     h += `<div class="config-item"><label>${sp} の色</label><select data-color="${sp}">${famOptions(cur)}</select> <span data-color-preview="${sp}">${famPreview(cur)}</span></div>`;
   }
   h += '</div><div class="note" id="cfgColorWarn" style="color:var(--danger);"></div>';
-  h += `<label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="cfgAlignedGlow" ${state.alignedGlow ? 'checked' : ''}> 目標MAX布陣にそろえたマスをゆっくり光らせる</label>` +
-    '<div class="note">いま目指しているMAX布陣の形どおりに置いた駒のうち、その列の上がすべてMAX布陣どおりの駒を、盤面で光らせます。「この盤面で始める」を押したあとに適用されます。</div>';
-  h += '<h3 class="cfg-h">素材ごとの最大レベル</h3><div class="note">このレベルに達した駒は、それ以上マッチしません。</div><div class="config-grid">';
+  h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgAlignedGlow" ${state.alignedGlow ? 'checked' : ''}> 目標MAX布陣にそろえたマスをゆっくり光らせる</label>` +
+    '<div class="note">いま目指しているMAX布陣の形どおりに置いた駒のうち、その列の上がすべてMAX布陣どおりの駒を、盤面で光らせます。「この盤面で始める」を押したあとに適用されます。</div></div>';
+  h += '<p class="sec-h">■ 素材ごとの最大レベル</p><div class="note">このレベルに達した駒は、それ以上マッチしません。</div><div class="config-grid">';
   for (const sp of SPECIES) {
     h += `<div class="config-item"><label><span class="species-pill" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${sp}</span> 最大Lv</label>` +
       `<input type="number" min="2" max="15" data-max="${sp}" value="${state.maxLevels[sp]}"></div>`;
   }
-  h += '</div><h3 class="cfg-h">補充される駒のレベル</h3><div class="note">駒が消えたあと補充される駒のレベルです。「補充される駒がLv2になる」ゲームモードでは、その素材をLv2にしてください。</div><div class="config-grid">';
+  h += '</div><p class="sec-h">■ 補充される駒のレベル</p><div class="note">駒が消えたあと補充される駒のレベルです。「補充される駒がLv2になる」ゲームモードでは、その素材をLv2にしてください。</div><div class="config-grid">';
   for (const sp of SPECIES) {
     const v = state.refillLevels[sp] || 1;
     h += `<div class="config-item"><label><span class="species-pill" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${sp}</span> 補充</label>` +
       `<select data-refill="${sp}"><option value="1" ${v === 1 ? 'selected' : ''}>Lv1</option><option value="2" ${v === 2 ? 'selected' : ''}>Lv2</option></select></div>`;
   }
-  h += '</div><h3 class="cfg-h">斜め入替</h3>' +
-    `<label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="cfgDiagonal" ${state.diagonal ? 'checked' : ''}> 斜めに隣り合うマスとも入れ替えられる（斜め入替が可能なゲームモード）</label>` +
-    '<div class="note">オンにすると「次の手を探す」で調べる手が増えるので、計算に時間がかかります。</div>';
-  h += '<h3 class="cfg-h">PvPモード</h3>' +
-    `<label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="cfgPvp" ${state.pvp ? 'checked' : ''}> PvPモード</label>` +
-    `<div class="note">打った手と残り手数の合計が${PVP_MOVE_CAP}手に届くと、連鎖が起きても手数が増えなくなります（PvPで確かめた上限です。ほかのゲームモードにも上限があるかは確かめていません）。残り手数の計算と「次の手を探す」に反映します。</div>`;
-  h += '<h3 class="cfg-h">補充の入力のしかた</h3>' +
-    `<label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="cfgRefillInput" value="final" ${state.refillInputMode === 'waves' ? '' : 'checked'}> 最後の盤面だけ: マッチが止まったあとの盤面を入力し、ゲーム画面の残り手数を確かめて確定する</label>` +
-    `<label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="cfgRefillInput" value="waves" ${state.refillInputMode === 'waves' ? 'checked' : ''}> 補充の回ごと: 補充されるたびに、補充されたマスを入力する（通常プレイでは非推奨。他人の手を動画などで追うとき用）</label>`;
-  h += '<h3 class="cfg-h">連鎖による手数の増加</h3>' +
-    `<label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="cfgRecovery" value="normal" ${state.increasingRecovery ? '' : 'checked'}> 通常（魔神とーばつ・PvPなど）: ラウンド2以降のマッチ1回につき、手数が1増える</label>` +
-    `<label style="display:flex;align-items:center;gap:6px;"><input type="radio" name="cfgRecovery" value="increasing" ${state.increasingRecovery ? 'checked' : ''}> ラウンドごとに増える（勇者しゅーらいなど）: ラウンドが進むほど、マッチ1回で増える手数が大きくなる（ラウンド2は+1、ラウンド3は+2、ラウンド4は+3 …）</label>` +
-    '<div class="note">例: ラウンド2で1回、ラウンド3で2回マッチしたとき、通常は+3、ラウンドごとに増えるは+5です。</div>' +
-    '<div class="note">「ラウンド」は、1手の中でマッチが起きる回ごとの数え方です。入替で直接そろったマッチと、削除のあと最初のマッチがラウンド1で、手数は増えません。</div>';
+  // ゲームのルールに合わせる設定(連鎖による手数の増加・斜め入替・PvP)は見出し「ゲームモード」1つにまとめ、ツールの入力のしかたは最後に置く
+  h += '</div><p class="sec-h">■ ゲームモード</p>' +
+    '<div class="cfg-box"><div class="cfg-sub">連鎖による手数の増加</div>' +
+    `<label class="opt"><input type="radio" name="cfgRecovery" value="normal" ${state.increasingRecovery ? '' : 'checked'}> 通常（魔神とーばつ・PvPなど）</label>` +
+    `<label class="opt"><input type="radio" name="cfgRecovery" value="increasing" ${state.increasingRecovery ? 'checked' : ''}> ラウンドごとに増える（勇者しゅーらいなど）</label>` +
+    '<div class="note">通常は、ラウンド2以降のマッチ1回につき+1です。ラウンドごとに増えるは、ラウンド2は+1、ラウンド3は+2…と増えます。ラウンドは1手の中でマッチが起きる回ごとの数え方で、入替で直接そろったマッチと、削除のあと最初のマッチがラウンド1です。</div></div>';
+  h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgDiagonal" ${state.diagonal ? 'checked' : ''}> 斜め入替（斜めに隣り合うマスとも入れ替えられる）</label>` +
+    '<div class="note">オンにすると「次の手を探す」で調べる手が増えるので、計算に時間がかかります。</div></div>';
+  h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgPvp" ${state.pvp ? 'checked' : ''}> PvPモード</label>` +
+    `<div class="note">打った手と残り手数の合計が${PVP_MOVE_CAP}手に届くと、連鎖が起きても手数が増えなくなります。</div></div>`;
+  h += '<p class="sec-h">■ 補充の入力のしかた</p>' +
+    `<div class="cfg-box"><label class="opt"><input type="radio" name="cfgRefillInput" value="final" ${state.refillInputMode === 'waves' ? '' : 'checked'}> 最後の盤面だけ</label>` +
+    `<label class="opt"><input type="radio" name="cfgRefillInput" value="waves" ${state.refillInputMode === 'waves' ? 'checked' : ''}> 補充の回ごと</label>` +
+    '<div class="note">最後の盤面だけは、マッチが止まったあとの盤面を入力して、ゲーム画面の残り手数を確かめて確定します。補充の回ごとは、補充されるたびに補充されたマスを入力します（通常プレイでは非推奨。他人の手を動画などで追うとき用）。</div></div>';
   h += '<div class="note" style="margin-top:12px;">「初期設定に戻す」を押すと、この画面の項目が初期の設定に戻ります。「保存」を押すまでは決まりません。</div>';
   h += '<div class="modal-actions"><button id="cfgDefaults" style="margin-right:auto;" title="この画面の項目を初期設定に戻します。「保存」を押すまでは決まりません。">初期設定に戻す</button><button id="cfgCancel">キャンセル</button><button id="cfgSave" class="primary">保存</button></div>';
   modal.innerHTML = h;
@@ -3838,7 +3911,7 @@ function exportGameRecord() {
     `目標MAX布陣: ${state.patterns.length ? state.patterns.map((p, i) => `${i + 1}番目「${p.name}」（${p.species}）${target && target.id === p.id ? '←いま目指している' : ''}`).join(' / ') : 'なし'}`,
     '',
     '手ごとの記録:',
-    ...log.map((e, i) => `  手${i + 1}  ${describeMove(e.move)}  増加${e.chain}${e.adjust ? `  直し${e.adjust > 0 ? '+' : ''}${e.adjust}` : ''}  残り${e.leftAfter}`),
+    ...log.map((e, i) => `  手${i + 1}  ${describeMove(e.move)}  増加${e.chain}${e.adjust ? `  直し${e.adjust > 0 ? '+' : ''}${e.adjust}` : ''}  残り${e.leftAfter}${e.src === 'card' ? `  （カードの手順 ${e.step}/${e.total}手目）` : ''}`),
     '',
     '最初の盤面:',
     boardText(all[0].before),
@@ -3913,6 +3986,7 @@ function applyRecord(rec) {
   renderPatternList();
   moveNotice = '記録を読み込みました。「1手進める」で1手ずつ進められます。';
   onBoardChanged();
+  showAdoptedCard();
 }
 const importFileEl = document.getElementById('importFile');
 document.getElementById('btnImportGame').addEventListener('click', () => {
