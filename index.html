@@ -242,7 +242,7 @@
   <header>
     <div>
       <h1>スラだんパズルナビゲーター <span class="sign">created by シナっぷ</span></h1>
-      <div class="ver">version 1.3.0（2026-09-26）</div>
+      <div class="ver">version 1.3.1（2026-09-26）</div>
       <div class="sub">ゲームと同じ盤面を入力して1手ずつ進められるシミュレーターです。MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖も探せます。</div>
     </div>
     <div class="toolbar">
@@ -2942,9 +2942,10 @@ function cellAtPoint(ev) {
   const x = Math.floor((ev.clientX - r.left) / (r.width / SIZE)), y = Math.floor((ev.clientY - r.top) / (r.height / SIZE));
   return x >= 0 && x < SIZE && y >= 0 && y < SIZE ? { x, y } : null;
 }
-// 指を動かした向きのとなり(上下左右。斜め入替ありなら斜めも)。動かした量が駒の3分の1より小さければ null
+// 指を動かした向きのとなり(上下左右。斜め入替ありなら斜めも)。動かした量が駒の3分の2より小さければ null
+// (2026-09-26 本人: 3分の1では実機より軽すぎる)
 function dragTargetOf(dx, dy) {
-  if (Math.hypot(dx, dy) < boardPitch() / 3) return null;
+  if (Math.hypot(dx, dy) < boardPitch() * 2 / 3) return null;
   let sx = 0, sy = 0;
   if (state.diagonal) {
     const k = Math.round(Math.atan2(dy, dx) / (Math.PI / 4));
@@ -2976,7 +2977,7 @@ window.addEventListener('pointermove', (ev) => {
   if (!press || press.done || ev.pointerId !== press.id) return;
   const dx = ev.clientX - press.x0, dy = ev.clientY - press.y0, pitch = boardPitch();
   if (!press.dragging) {
-    if (Math.hypot(dx, dy) < pitch / 6) return;   // 少しの指のぶれは長押しのまま
+    if (Math.hypot(dx, dy) < pitch / 2) return;   // 駒の半分より小さい指の動きは長押しのまま(駒は動かさない)
     clearPressTimers();
     press.dragging = true;
     try { boardEl.setPointerCapture(ev.pointerId); } catch (e) { /* 取れなくても動く */ }
