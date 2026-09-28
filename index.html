@@ -34,7 +34,7 @@
   header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:8px; }
   header .sub { color: var(--text-dim); font-size: 12px; }
   header .sign { color: var(--text-dim); font-size: 11px; font-weight: normal; margin-left: 6px; }
-  header .ver { color: var(--text-dim); font-size: 11px; margin-top: 2px; }
+  header .ver { color: var(--text-dim); font-size: 11px; font-weight: normal; margin-left: 4px; white-space: nowrap; }   /* 題名の横に小さく */
   /* 作った人と、アイデアをくれた人たち。狭い画面では「／」のあとで折り返す(言葉の途中では切らない) */
   header .credit { color: var(--text-dim); font-size: 11px; margin-top: 1px; }
   header .credit span { white-space: nowrap; }
@@ -271,8 +271,7 @@
 <div class="app">
   <header>
     <div>
-      <h1>スラだんパズルナビゲーター</h1>
-      <div class="ver">version 2.1（2026-09-28）</div>
+      <h1>スラだんパズルナビゲーター <span class="ver">v2.1</span></h1>
       <div class="credit"><span>created by シナっぷ ／</span> <span>thanks to EGGのみんな</span></div>
       <div class="sub">ゲームと同じ盤面を入力して1手ずつ進められるシミュレーターです。MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖も探せます。</div>
     </div>
@@ -4290,7 +4289,7 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
   </ol>
   <p>※練習モード：1で「ランダムな盤面で練習する」を押すと、入力なしで、実際のゲームと同じ流れで練習できます。やめるときは「リセット」を押してください。</p>
   <p class="sec-h">■ 盤面で光っている駒は？</p>
-  <p>目標MAX布陣の形どおりに置いた駒のうち、その列の上がすべてMAX布陣どおりの駒です。「次の手を探す」で「⚠ そろえたマスを動かします」と出るのは、この駒を動かす手順です。光らせたくないときは、「⚙ 設定」の「素材の色」でチェックを外してください。</p>
+  <p>目標MAX布陣の形どおりに置いた駒のうち、その列の上がすべてMAX布陣どおりの駒です。「次の手を探す」で「⚠ そろえたマスを動かします」と出るのは、この駒を動かす手順です。光らせたくないときは、「⚙ 設定」の「画面の表示」でチェックを外してください。</p>
   <p class="sec-h">■ 残り手数の下の「◯◯まで あと: …」は？</p>
   <p>いま目指しているMAX布陣まで、各レベルの素材があと何個足りないかです（盤面で見たままの数。置いた場所と「?」は見ません）。⚙ 設定で消せます。</p>
   <p class="sec-h">■ ゲームとずれたり、間違えたときは？</p>
@@ -4353,10 +4352,6 @@ document.getElementById('btnConfig').addEventListener('click', () => {
     h += `<div class="config-item"><label>${sp} の色</label><select data-color="${sp}">${famOptions(cur)}</select> <span data-color-preview="${sp}">${famPreview(cur)}</span></div>`;
   }
   h += '</div><div class="note" id="cfgColorWarn" style="color:var(--danger);"></div>';
-  h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgAlignedGlow" ${state.alignedGlow ? 'checked' : ''}> 目標MAX布陣にそろえたマスをゆっくり光らせる</label>` +
-    '<div class="note">いま目指しているMAX布陣の形どおりに置いた駒のうち、その列の上がすべてMAX布陣どおりの駒を、盤面で光らせます。「この盤面で始める」を押したあとに適用されます。</div></div>';
-  h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgShowShortage" ${state.showShortage ? 'checked' : ''}> 目標MAX布陣まで足りない素材の数を出す</label>` +
-    '<div class="note">残り手数の下に、いま目指しているMAX布陣まであと何個足りないかを、レベルごとに出します。置いた場所は見ません。「?」は数えません。</div></div>';
   h += '<p class="sec-h">■ 素材ごとの最大レベル</p><div class="note">このレベルに達した駒は、それ以上マッチしません。</div><div class="config-grid">';
   for (const sp of SPECIES) {
     h += `<div class="config-item"><label><span class="species-pill" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${sp}</span> 最大Lv</label>` +
@@ -4368,8 +4363,14 @@ document.getElementById('btnConfig').addEventListener('click', () => {
     h += `<div class="config-item"><label><span class="species-pill" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${sp}</span> 補充</label>` +
       `<select data-refill="${sp}"><option value="1" ${v === 1 ? 'selected' : ''}>Lv1</option><option value="2" ${v === 2 ? 'selected' : ''}>Lv2</option></select></div>`;
   }
+  // 盤面の見え方を変える項目(そろえたマスの光・足りない素材の数)は「画面の表示」にまとめる(2026-09-29 本人)
+  h += '</div><p class="sec-h">■ 画面の表示</p>';
+  h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgAlignedGlow" ${state.alignedGlow ? 'checked' : ''}> 目標MAX布陣にそろえたマスをゆっくり光らせる</label>` +
+    '<div class="note">いま目指しているMAX布陣の形どおりに置いた駒のうち、その列の上がすべてMAX布陣どおりの駒を、盤面で光らせます。「この盤面で始める」を押したあとに適用されます。</div></div>';
+  h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgShowShortage" ${state.showShortage ? 'checked' : ''}> 目標MAX布陣まで足りない素材の数を出す</label>` +
+    '<div class="note">残り手数の下に、いま目指しているMAX布陣まであと何個足りないかを、レベルごとに出します。置いた場所は見ません。「?」は数えません。</div></div>';
   // ゲームのルールに合わせる設定(連鎖による手数の増加・斜め入替・PvP)は見出し「ゲームモード」1つにまとめ、ツールの入力のしかたは最後に置く
-  h += '</div><p class="sec-h">■ ゲームモード</p>' +
+  h += '<p class="sec-h">■ ゲームモード</p>' +
     '<div class="cfg-box"><div class="cfg-sub">連鎖による手数の増加</div>' +
     `<label class="opt"><input type="radio" name="cfgRecovery" value="normal" ${state.increasingRecovery ? '' : 'checked'}> 通常（魔神とーばつ・PvPなど）</label>` +
     `<label class="opt"><input type="radio" name="cfgRecovery" value="increasing" ${state.increasingRecovery ? 'checked' : ''}> ラウンドごとに増える（勇者しゅーらいなど）</label>` +
