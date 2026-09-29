@@ -114,7 +114,7 @@
   .cell.pin-dest { box-shadow: inset 0 0 0 2px #fff; }
   .cell.dest-hover { box-shadow: inset 0 0 0 3px #fff; opacity: .8; }
   /* 目標MAX布陣にそろえたマス(列の上もそろったマス)を、まわりに金色の光がにじむようにゆっくり光らせる。
-     光はとなりの駒の上にも少しかかるので前に出す。入替・削除の枠と入力間違いの点線は、光よりさらに前に出す */
+     光は隣の駒の上にも少しかかるので前に出す。入替・削除の枠と入力間違いの点線は、光より更に前に出す */
   @keyframes alignedGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,184,0,0); } 50% { box-shadow: 0 0 13px 6px rgba(255,184,0,1); } }
   @keyframes alignedGlowRing { 0%, 100% { box-shadow: 0 0 0 1px var(--panel), 0 0 0 4px var(--mark), 0 0 0 0 rgba(255,184,0,0); } 50% { box-shadow: 0 0 0 1px var(--panel), 0 0 0 4px var(--mark), 0 0 15px 8px rgba(255,184,0,1); } }
   .cell.aligned-glow { z-index: 1; animation: alignedGlow 2s ease-in-out infinite; }
@@ -167,7 +167,7 @@
   .chain-steps { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
   .chain-step h4 { font-size:11px; color: var(--text-dim); margin:0 0 3px; font-weight:600; }
   .chain-arrow { color: var(--text-dim); font-size:16px; }
-  .mini-board.chain { width:108px; }   /* 3手の手順でも、各手の前の盤面3つと手順のあとの盤面が1列に並ぶ幅 */
+  .mini-board.chain { width:108px; }   /* 3手の手順でも、各手の前の盤面3つと手順の後の盤面が1列に並ぶ幅 */
   .chain-chips { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:6px; font-size:12px; color: var(--text-dim); }
   .chain-chip { display:inline-flex; align-items:center; gap:3px; }
   /* 事故の確率(5%以上) */
@@ -225,9 +225,11 @@
   .warn-why { margin-top:4px; }
   .warn-why summary { cursor:pointer; color: var(--text-dim); font-size:12px; }
   .warn-why ul { margin:4px 0 0; padding-left:1.4em; line-height:1.7; }
-  /* 画面の下に固定するボタン(「↑ 盤面へ/↓ 結果へ」と「▲ 上位◯件だけ表示」)。両方出るときは横に並べる */
-  .bottom-bar { position:fixed; left:50%; transform:translateX(-50%); bottom:10px; z-index:60; display:flex; gap:8px; }
-  .bottom-bar button { opacity:.94; box-shadow:0 2px 8px #0008; white-space:nowrap; }
+  /* 画面の下に貼り付けるボタン(2026-09-29 本人が見本で選んだ)。「盤面へ／結果へ」は右下の金色の丸、「上位◯件だけ表示」は左下の金色の横長 */
+  .fab-round { position:fixed; right:16px; bottom:14px; z-index:60; width:60px; height:60px; padding:0; border-radius:50%; border:none; background:var(--accent); color:#1b1d24; box-shadow:0 4px 14px #000a; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1; }
+  .fab-round .ar { font-size:22px; font-weight:700; }
+  .fab-round .t { font-size:11px; font-weight:700; margin-top:3px; }
+  .fab-pill { position:fixed; left:16px; bottom:20px; z-index:60; display:flex; align-items:center; height:48px; padding:0 22px; border-radius:24px; border:none; background:var(--accent); color:#1b1d24; font-size:16px; font-weight:700; white-space:nowrap; box-shadow:0 4px 14px #000a; }
   .warn-note { border:1px solid var(--danger); border-radius:6px; padding:6px 10px; margin:0 0 8px; font-size:12px; color: var(--text); background: rgba(224,87,76,.08); }
   .warn-note b { color: var(--danger); }
   /* 説明と設定の■の見出し。上に細い区切り線(題名のすぐ下と、「詳しく…」を開いたすぐ下の見出しには引かない) */
@@ -271,7 +273,7 @@
 <div class="app">
   <header>
     <div>
-      <h1>スラだんパズルナビゲーター <span class="ver">v2.1</span></h1>
+      <h1>スラだんパズルナビゲーター <span class="ver">v2.2</span></h1>
       <div class="credit"><span>created by シナっぷ ／</span> <span>thanks to EGGのみんな</span></div>
       <div class="sub">ゲームと同じ盤面を入力して1手ずつ進められるシミュレーターです。MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖も探せます。</div>
     </div>
@@ -286,7 +288,7 @@
   </header>
 
   <details class="guide" id="quickGuide">
-    <summary>はじめての方へ（クイックガイド）</summary>
+    <summary>初めての方へ（クイックガイド）</summary>
     <p class="guide-lead">使い方は、目的に合わせて大きく3通りあります。</p>
     <p class="guide-h">① シミュレーターとして試す</p>
     <ol>
@@ -301,10 +303,10 @@
     </ol>
     <p class="guide-h">③ MAX布陣づくりのサポートに使う</p>
     <ol>
-      <li>⚙ 設定でゲームモードを合わせ、「目標MAX布陣」を選びます（はじめは「プリセット」がおすすめ）。</li>
+      <li>⚙ 設定でゲームモードを合わせ、「目標MAX布陣」を選びます（初めは「プリセット」がお勧め）。</li>
       <li>盤面と残り手数を入力して、「この盤面で始める」を押します。</li>
       <li>「🔍 次の手を探す」を押します。素材を集める手順は「素材」、手数が増える連鎖は「連鎖」のタブに出ます。</li>
-      <li>よい手をゲームで打ち、補充された駒を入力して「確定」を押します。</li>
+      <li>良い手をゲームで打ち、補充された駒を入力して「確定」を押します。</li>
     </ol>
     <p class="note">※便利な機能: 「📌 ピン」（動かしたくない駒を固定。ドラッグで運びたいマスも決められる）／「自動：オン」（盤面が変わるたびに自動で探す）／「絞り込み」（「A3が3個以上」などで結果を絞る）<br>※盤面が少しずれたら「盤面を直す」、大きく変わったら「リセット」してください。</p>
   </details>
@@ -353,7 +355,7 @@
     </div>
   </div>
 
-  <div class="bottom-bar"><button id="btnJump" class="small" style="display:none;"></button><button id="btnChainCollapse" class="small" style="display:none;"></button></div>
+  <button id="btnJump" class="fab-round" style="display:none;"></button><button id="btnChainCollapse" class="fab-pill" style="display:none;"></button>
   <footer>ブラウザ内で完結・データはこのブラウザだけに自動保存されます（ブラウザのデータを消すと消えます。残しておきたい対局は「📝 記録を書き出す」で書き出してください）。</footer>
 </div>
 
@@ -700,7 +702,10 @@ const NORMAL_PRESETS = [
   ['7MAX',  [[X,X,X,1,2,2],[3,2,2,1,2,2],[2,1,1,X,1,1],[X,2,X,1,2,2],[X,2,X,1,X,2],[X,X,X,2,X,X]]],
   ['8MAX',  [[X,X,X,1,2,2],[3,2,2,1,2,2],[2,1,1,X,1,1],[3,2,X,1,2,2],[X,2,X,1,X,2],[X,X,X,2,X,X]]],
   ['10MAX', [[X,X,X,1,2,2],[3,2,2,1,2,2],[2,1,1,X,1,1],[3,2,X,1,2,2],[3,2,X,1,X,2],[X,X,X,2,X,X]]],
+  ['12MAX', [[X,X,X,1,2,2],[3,2,2,1,2,2],[2,1,1,X,1,1],[3,2,X,1,2,2],[3,2,X,1,X,2],[X,3,X,2,X,X]]],   // 10MAX の6行2列に Lv3(2026-09-29 本人が画像で示した)
 ];
+// 最初の公開のあとで足したプリセット。前から使っている人の一覧にも、次に開いたときに一度だけ足す(一度足した後に消したものは、もう足さない)
+const ADDED_PRESETS = ['preset-12MAX'];
 const DIAGONAL_PRESETS = [
   ['3MAX',  [[X,X,X,1,2,2],[X,2,2,1,2,2],[X,1,1,2,1,1],[X,2,X,1,1,2],[X,2,X,1,X,2],[X,X,X,X,X,X]]],
   ['4MAX',  [[X,X,X,1,2,2],[X,2,2,1,2,2],[2,1,1,2,1,1],[X,2,X,1,1,2],[X,2,X,1,X,2],[X,X,X,X,X,X]]],
@@ -714,7 +719,7 @@ function defaultPresets() {
 }
 
 /* 布陣の形を検証する。要求マスを埋め、Xマスにはマッチしない詰め物を入れた盤面を作り、
-   36マスすべてを削除して試して「どこを削除すると最高レベルが何個できるか」を数える。
+   36マス全てを削除して試して「どこを削除すると最高レベルが何個できるか」を数える。
    写し間違いや、そもそも起爆しない形をその場で見つけるためのもの。 */
 function junkFill(species, x, y) {
   const others = SPECIES.filter(s => s !== species);
@@ -879,9 +884,10 @@ function defaultState() {
     resultFilter: { key: '', n: 1 },              // 結果の絞り込み: key は「A3」など(空ならなし)、n 個以上
     board: defaultBoard(),
     patterns: [],                                 // 最初は何も登録しない(登録すると連鎖を探すの結果が絞られるため)
-    currentPatternId: null,                       // いま目指している目標MAX布陣(null なら一覧の1番目)
+    currentPatternId: null,                       // 今目指している目標MAX布陣(null なら一覧の1番目)
     speciesColors: Object.assign({}, DEFAULT_SPECIES_COLORS),   // 素材ごとの色の系統
     presets: defaultPresets(),                    // プリセット(利用者が追加・削除できる)
+    presetsOffered: ADDED_PRESETS.slice(),        // あとで足したプリセットのうち、一覧に足し終えたもの(ADDED_PRESETS)
     game: defaultGame(),
   };
 }
@@ -905,6 +911,20 @@ function normalizeState(s) {
   if (typeof s.currentPatternId !== 'string') s.currentPatternId = null;
   s.speciesColors = Object.assign({}, DEFAULT_SPECIES_COLORS, s.speciesColors || {});
   s.presets = Array.isArray(s.presets) ? keepClean(s.presets, cleanPattern) : defaultPresets();
+  // あとで足したプリセットを、まだ足していなければ、最初からあるプリセットの並び順どおりの場所(12MAX なら 10MAX の次)に一度だけ足す
+  const offered = Array.isArray(s.presetsOffered) ? s.presetsOffered.filter(x => typeof x === 'string') : [];
+  const defs = defaultPresets();
+  for (const id of ADDED_PRESETS) {
+    if (offered.includes(id)) continue;
+    const k = defs.findIndex(d => d.id === id);
+    if (k >= 0 && !s.presets.some(q => q.id === id)) {
+      let at = s.presets.length;
+      for (let j = k - 1; j >= 0; j--) { const pos = s.presets.findIndex(q => q.id === defs[j].id); if (pos >= 0) { at = pos + 1; break; } }
+      s.presets.splice(at, 0, defs[k]);
+    }
+    offered.push(id);
+  }
+  s.presetsOffered = offered;
   for (const sp of Object.keys(s.speciesColors)) if (!COLOR_FAMILIES[s.speciesColors[sp]]) s.speciesColors[sp] = DEFAULT_SPECIES_COLORS[sp];
   try { s.board = cleanGrid(s.board); } catch (e) { s.board = defaultBoard(); }
   if (!s.game || !s.game.phase) s.game = defaultGame();
@@ -933,6 +953,9 @@ function loadState() {
   return defaultState();
 }
 function saveState() {
+  // 布陣や設定が変わったかもしれないので、死にゴマの判定の下ごしらえを捨てる(var なので、読み込みの途中で呼ばれても大丈夫)
+  if (deadPrepMemo) deadPrepMemo.clear();
+  countPatternsMemo = null;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* 保存できない環境 */ }
 }
 let state = loadState();
@@ -1031,11 +1054,12 @@ function patternCountsFlat(sp, lv, pattern, minLevel = 1) {
   const si = SPECIES_INDEX[pattern.species], need = patternNeedLevel(pattern), top = state.maxLevels[pattern.species] || 7;
   const have = new Array(need + 1).fill(0), req = new Array(need + 1).fill(0);
   for (const row of pattern.cells) for (const t of row) if (t !== 'X') req[t]++;
+  const dead = deadMaskOf(sp, lv, pattern);   // 死にゴマは素材として数えない
   let over = 0, max = 0;
   for (let i = 0; i < SIZE * SIZE; i++) {
     if (sp[i] !== si) continue;
     if (lv[i] > need) over++;
-    else if (lv[i] >= 1) have[lv[i]]++;
+    else if (lv[i] >= 1 && !(dead && dead[i])) have[lv[i]]++;
     if (lv[i] >= top) max++;
   }
   let deficit = 0;
@@ -1070,7 +1094,8 @@ const ACCIDENT_SAMPLES = 200;
 const ACCIDENT_WARN = 0.05;
 function pathAccidentRisk(grid, path, pattern) { return pathAccidentInfo(grid, path, pattern).risk; }
 // names: 事故が起きた布陣の名前(いまの布陣と、2番目以降の布陣のうち崩れたもの)。pinHit: 補充しだいでピンの駒が動くことがある。
-// pinParts: どのピンの駒がどうなるか(「4列・1行目のピンの駒が動く」「ピン⑥の駒が消える」。カードの⚠と確認の小窓に出す)
+// pinParts: どのピンの駒がどうなるか(「4列・1行目のピンの駒（A3）がマッチする」「4列・1行目のピンの駒が動く」「ピン⑥の駒（A3）がマッチする」。カードの⚠と確認の小窓に出す)
+// 言葉は2つにそろえる(2026-09-29 本人): ピンの駒そのものがマッチに入る=「マッチする」、同じ駒のまま位置が変わる=「動く」
 // pattern は無くてもよい(ピンだけを見る)。withPins = false なら、ピンは見ない(自分で打つ手の確認)
 function pathAccidentInfo(grid, path, pattern, withPins = true) {
   const later = pattern ? laterTargetPatterns() : [];
@@ -1093,7 +1118,7 @@ function pathAccidentInfo(grid, path, pattern, withPins = true) {
   const hitNames = new Set();
   const seed = hashString(JSON.stringify(grid) + JSON.stringify(path));
   let bad = 0, pinHit = false;
-  const fixedHit = new Set(), destLost = new Set(), destAway = new Set();
+  const fixedHit = new Set(), fixedMatched = new Set(), fixedMoved = new Set(), destLost = new Set(), destAway = new Set();
   const replay = (s0, l0, seedT) => {
     const rng = makeRng(seedT);
     let s2 = s0, l2 = l0;
@@ -1111,7 +1136,13 @@ function pathAccidentInfo(grid, path, pattern, withPins = true) {
     }
     if (pins.length && !pinsKept(sp0, lv0, s2, l2, pins, (a, b) => replay(a, b, seedT))) {
       hit = true; pinHit = true;
-      for (const p of pins) if (!pinsKept(sp0, lv0, s2, l2, [p], (a, b) => replay(a, b, seedT))) fixedHit.add(p);   // どのピンが動いたか
+      for (const p of pins) if (!pinsKept(sp0, lv0, s2, l2, [p], (a, b) => replay(a, b, seedT))) {
+        // どのピンが、マッチしたか・詰まって動いただけか(駒を「?」にして打ち直し、同じ駒が別のマスに残っていれば動いただけ)
+        fixedHit.add(p);
+        const tsp = sp0.slice(); tsp[p] = SPECIES_INDEX['?'];
+        const moved = trackDestAfter({ type: 'none' }, [p], { sp: s2, lv: l2 }, replay(tsp, lv0, seedT), sp0, lv0);
+        (moved ? fixedMoved : fixedMatched).add(p);
+      }
     }
     // 行き先付きのピン: 同じ補充で1手ずつ打ち、駒が消える・行き先から離れることがあれば事故
     if (dests.length) {
@@ -1138,11 +1169,15 @@ function pathAccidentInfo(grid, path, pattern, withPins = true) {
     if (hit) bad++;
   }
   const pinParts = [];
-  for (const p of [...fixedHit].sort((a, b) => a - b)) pinParts.push(`${p % SIZE + 1}列・${Math.floor(p / SIZE) + 1}行目のピンの駒が動く`);
+  for (const p of [...fixedHit].sort((a, b) => a - b)) {
+    const at = `${p % SIZE + 1}列・${Math.floor(p / SIZE) + 1}行目のピンの駒`;
+    if (!fixedMatched.has(p)) pinParts.push(`${at}が動く`);
+    else pinParts.push(`${at}（${SPECIES_NAME[sp0[p]]}${lv0[p]}）が${fixedMoved.has(p) ? 'マッチするか、動く' : 'マッチする'}`);
+  }
   dests.forEach((d, k) => {
     if (!destLost.has(k) && !destAway.has(k)) return;
-    const how = destLost.has(k) && destAway.has(k) ? '消えるか、行き先から離れる' : destLost.has(k) ? '消える' : '行き先から離れる';
-    pinParts.push(`ピン${circledNum(d.n)}の駒が${how}`);
+    const how = destLost.has(k) && destAway.has(k) ? 'マッチするか、行き先から離れる' : destLost.has(k) ? 'マッチする' : '行き先から離れる';
+    pinParts.push(`ピン${circledNum(d.n)}の駒（${SPECIES_NAME[sp0[d.at]]}${lv0[d.at]}）が${how}`);
   });
   return { risk: bad / ACCIDENT_SAMPLES, names: Array.from(hitNames), sureNames, pinHit, pinParts };
 }
@@ -1186,7 +1221,7 @@ function chainApply(sp0, lv0, move, ml, coefficient, rng, events) {
     if (!r.hadMatches) return { sp, lv, rec: 0, refills: 0, changed: false };
     refillFlat(sp, lv, fl, countingRng);
     resolveFlat(sp, lv, fl, ml, countingRng, coefficient, 13, counts, events);
-    let rec = 0; counts.forEach((c, i) => { rec += c * recoveryWeight(i + 2); });   // 入替のあとのマッチはラウンド2から
+    let rec = 0; counts.forEach((c, i) => { rec += c * recoveryWeight(i + 2); });   // 入替の後のマッチはラウンド2から
     return { sp, lv, rec, refills, changed: true };
   }
   const i = move.pos.y * SIZE + move.pos.x;
@@ -1194,13 +1229,13 @@ function chainApply(sp0, lv0, move, ml, coefficient, rng, events) {
   compactFlat(sp, lv);
   refillFlat(sp, lv, fl, countingRng);
   resolveFlat(sp, lv, fl, ml, countingRng, coefficient, 13, counts, events);
-  let rec = 0; for (let k = 1; k < counts.length; k++) rec += counts[k] * recoveryWeight(k + 1);   // 削除のあと最初のマッチがラウンド1
+  let rec = 0; for (let k = 1; k < counts.length; k++) rec += counts[k] * recoveryWeight(k + 1);   // 削除の後最初のマッチがラウンド1
   return { sp, lv, rec, refills, changed: true };
 }
 // 2マスを入れ替えたとき、どちらかのマスを通る縦か横に同じ駒が3つ以上並ぶか。
 // ゆるい判定で、並ぶなら必ず true を返す(最大レベルの駒など、true でも実際はマッチしないことはある)。
 function swapMayMatch(sp, lv, ia, ib) {
-  const at = (i, ja, jb) => (i === ja ? jb : i === jb ? ja : i);   // 入れ替えたあとの i の中身の元の位置
+  const at = (i, ja, jb) => (i === ja ? jb : i === jb ? ja : i);   // 入れ替えた後の i の中身の元の位置
   const runThrough = (i) => {
     const x = i % SIZE, y = Math.floor(i / SIZE), src = at(i, ia, ib);
     const s0 = sp[src], l0 = lv[src];
@@ -1332,7 +1367,7 @@ function movePinsAfter(entry) {
   g.pinTo = newTo;
   g.pinNum = newNum;
   const lost = pins.length - out.length;
-  if (lost) moveNotice = 'ピンの駒が' + (lost > 1 ? lost + '個' : '') + '動いたので、ピンを外しました。';
+  if (lost) moveNotice = 'ピンの駒が' + (lost > 1 ? lost + '個' : '') + 'マッチしたか、動いたので、ピンを外しました。';
 }
 // その手を打つと、確実に動く・消えるピンのマス(入替・削除でピンの駒そのもの、または補充を ? としてピンの駒が消える・詰まって動く)
 function pinsMovedBy(move) {
@@ -1354,7 +1389,7 @@ function setPinDest(from, to) {
   g.pinTo = g.pinTo || {}; g.pinNum = g.pinNum || {};
   if (to === from) { renderBoard(); return; }   // 駒のマスで離した: 何もしない
   const other = pinWithDestAt(to);
-  if (other >= 0 && other !== from) { renderBoard(); openNotice('そのマスは、ほかのピンの行き先になっています。'); return; }
+  if (other >= 0 && other !== from) { renderBoard(); openNotice('そのマスは、他のピンの行き先になっています。'); return; }
   if (g.pinNum[from] == null) { let v = 1; const used = currentPins().filter(k => g.pinTo[k] != null).map(k => g.pinNum[k]); while (used.includes(v)) v++; g.pinNum[from] = v; }   // 空いている一番小さい番号
   g.pinTo[from] = to;
   clearChainResults();
@@ -1486,7 +1521,7 @@ function signedNum(v) { return Number(v.toFixed(1)) < 0 ? `−${Math.abs(v).toFi
 function materialHeadParts(o, len, avgRec) {
   const pure = o.gainAvg + (o.penAvg || 0) + (o.breakPen || 0);
   const net = len - avgRec;
-  return { main: `素材の増加 ${signedNum(pure)}個`, paren: `（${net <= 0 ? '手数消費なし' : `1手あたり ${signedNum(pure / Math.max(1, net))}個`}）` };
+  return { main: `素材の増加 ${signedNum(pure)}個`, paren: `（${net <= 0 ? '手数消費なし' : `1手当たり ${signedNum(pure / Math.max(1, net))}個`}）` };
 }
 function materialHeadText(o, len, avgRec) { const h = materialHeadParts(o, len, avgRec); return h.main + h.paren; }
 // 補充される駒も入れた、手順のあとの駒の数の期待値(補充をランダムにして打ち直した平均)。打ち直していない手順は null
@@ -1497,7 +1532,14 @@ function expectedCount(o, sp, L) {
 function formationLinesHtml(finalGrid, o) {
   let html = '';
   for (const pattern of (currentTargetPattern() ? [currentTargetPattern()].concat(laterTargetPatterns()) : [])) {
-    const countBy = g => { const c = {}; for (const row of g) for (const cell of row) if (cell && cell.species === pattern.species) c[cell.level] = (c[cell.level] || 0) + 1; return c; };
+    // 死にゴマは数えない(deadMaskOf)
+    const countBy = g => {
+      const sp = new Int8Array(SIZE * SIZE), lv = new Int8Array(SIZE * SIZE);
+      flatFromGrid(g, sp, lv);
+      const dead = deadMaskOf(sp, lv, pattern), c = {};
+      g.forEach((row, y) => row.forEach((cell, x) => { if (cell && cell.species === pattern.species && !(dead && dead[y * SIZE + x])) c[cell.level] = (c[cell.level] || 0) + 1; }));
+      return c;
+    };
     const cb = countBy(state.board), ca = countBy(finalGrid);
     const used = new Set();
     for (const row of pattern.cells) for (const t of row) if (t !== 'X') used.add(t);
@@ -1534,7 +1576,7 @@ function updateJumpBtn() {
   else if (hasResults && !seen(chainListEl, 0.2)) mode = 'results';
   b.style.display = mode ? '' : 'none';
   if (!mode) return;
-  b.textContent = mode === 'board' ? '↑ 盤面へ' : '↓ 結果へ';
+  b.innerHTML = mode === 'board' ? '<span class="ar">▲</span><span class="t">盤面へ</span>' : '<span class="ar">▼</span><span class="t">結果へ</span>';
   b.onclick = () => (mode === 'board' ? document.getElementById('simPanel') : document.getElementById('chainPanel')).scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
 let jumpTimer = 0;   // スクロール中は、50ミリ秒に1回だけ更新する
@@ -1553,7 +1595,7 @@ function riskLine(info) {
   if (!info || info.risk < ACCIDENT_WARN) return [];
   const parts = (info.names.length ? ['必要な素材が減る'] : []).concat(info.pinParts || []);
   const why = (parts.length ? parts : ['必要な素材が減る']).join('か、') + 'ことがあります';
-  return [`事故の確率 ${Math.round(info.risk * 100)}%（補充される駒しだいで、${why}）`];
+  return [`事故の確率 ${Math.round(info.risk * 100)}%（補充される駒次第で、${why}）`];
 }
 function renderChainOptionsInner(list, sec, showAll) {
   const pattern = currentTargetPattern();
@@ -1569,57 +1611,60 @@ function renderChainOptionsInner(list, sec, showAll) {
     chainShown = [];
     return;
   }
-  const NUM = ['①', '②', '③', '④'];
   chainShown = list;
   chainShownKind = 'chain';
   const visible = showAll ? list : list.slice(0, CHAIN_SEARCH_SHOW);
-  chainListEl.innerHTML = visible.map((o0, idx) => {
-    const o = Object.assign({}, o0, chainDetail(state.board, o0.path));
-    const sign = o.gain >= 0 ? '+' : '';
-    const info = pattern || currentPins().length ? pathAccidentInfo(state.board, o.path, pattern) : null;
-    const signed = v => (Number(v.toFixed(1)) < 0 ? `−${Math.abs(v).toFixed(1)}` : `+${Math.abs(v).toFixed(1)}`);
-    // 目標MAX布陣があるときは、手順全体の素材の増加(素材の一覧と同じ計算)を小さく出し、その数字に入っている減点とそろえたマスの注意も出す。
-    // 連鎖の一覧は差し引きが0以上(手数を使わない)なので、「1手あたり」にすると1で割った同じ数字になり、名前が合わない
-    const perHtml = pattern && o.gainAvg != null ? `<span class="chain-gain" style="font-size:14px;font-weight:700;">${materialHeadText(o, o.path.length, o.avg)}</span><span class="chain-meta">／</span>` : '';
-    const penParts = [];
-    if (pattern && o.penAvg != null && Number(o.penAvg.toFixed(1)) > 0) penParts.push(`3個マッチ −${o.penAvg.toFixed(1)}個`);
-    if (pattern && o.breakPen > 0) penParts.push(`そろえたマスを動かす −${o.breakPen.toFixed(1)}個`);
-    const penLine = penParts.length ? [`減点 −${((o.penAvg || 0) + (o.breakPen || 0)).toFixed(1)}個（${penParts.join(' ／ ')}）`] : [];
-    const breakLine = pattern && o.breakPen > 0 ? [`そろえたマスを${o.breakCells.length}マス動かします`] : [];
-    // 補充が来なかったときに、いま目指している布陣の素材が減る連鎖(補充込みの平均では減らないので出している)
-    const lossLine = pattern && o.sureLoss > 0 ? [`「${esc(pattern.name)}」の素材が${o.sureLoss}個分減ります`] : [];
-    const pc = pinCellsAlong(o.path);   // 各盤面でのピンの駒のマス
-    const stepsHtml = o.steps.map((st, i) =>
-      `<div class="chain-step"><h4>${NUM[i] || `${i + 1}.`} ${st.move.type === 'swap' ? '入替' : '削除'}</h4>${chainMiniBoard(st.before, { move: st.move, pinCells: pc && pc[i] })}</div><div class="chain-arrow">→</div>`
-    ).join('');
-    const formationHtml = formationLinesHtml(o.final, o0);
-    // MAX(その種類の最大レベル)の駒が何個できるか(補充を ? としたとき)。布陣の起爆にあたる手順が一目で分かるように出す。
-    const maxChips = [];
-    for (const sp of ['A', 'B', 'C', 'D']) {
-      const top = state.maxLevels[sp] || 7;
-      const cnt = g => g.reduce((a, row) => a + row.filter(c => c && c.species === sp && c.level === top).length, 0);
-      const d = cnt(o.final) - cnt(state.board);
-      if (d > 0) maxChips.push(chainChip(sp, top, `+${d}`));
-    }
-    const maxHtml = maxChips.length ? `<div class="chain-chips"><b style="color:var(--accent)">MAXができる:</b> ${maxChips.join('')}</div>` : '';
-    // いま目指しているMAX布陣の起爆(その素材のMAXが増える)の手順は、布陣が役目を終えるので、
-    // 1手あたりの素材・減点・そろえたマスの注意と印は出さない(布陣の素材がなくなるのは当然のため)
-    const detonate = !!pattern && (() => { const top = state.maxLevels[pattern.species] || 7; const cnt = g => g.reduce((a, row) => a + row.filter(c => c && c.species === pattern.species && c.level === top).length, 0); return cnt(o.final) > cnt(state.board); })();
-    return `<div class="chain-card">${adoptedMarkHtml(o0)}
-      <div class="chain-head">${detonate ? '' : perHtml}<span class="chain-gain">差し引き ${sign}${o.gain.toFixed(1)}手</span>
-        <span class="chain-meta head-nums">使う手数 ${o.path.length} / 手数の増加 平均${o.avg.toFixed(1)}手（補充がマッチしない場合 ${o.sureRec}手・最高${o.bestRec}手）${detonate ? '' : riskSmall(info)}${otherTabNote(o)}</span></div>
-      ${cardWarnsHtml([...lossLine, ...laterLossLines(o.final), ...riskLine(info), ...(detonate ? [] : [...breakLine, ...penLine])])}
-      <div class="chain-steps">${stepsHtml}<div class="chain-step"><h4>手順のあと（補充は ?）</h4>${chainMiniBoard(o.final, { marks: detonate ? [] : (o.breakCells || []), newAligned: newAlignedCells(o.final), pinCells: pc && pc[o.path.length] })}</div></div>
-      ${maxHtml}
-      ${formationHtml}
-      <div class="toolbar" style="margin-top:8px;"><button class="small primary${state.game.phase === 'move' ? '' : ' dim'}" data-chain-apply="${idx}">この手順を打つ</button></div>
-    </div>`;
-  }).join('') + (!showAll && list.length > CHAIN_SEARCH_SHOW ? `<div class="toolbar" style="margin:0 0 10px;"><button id="btnChainMore" class="small">残り${list.length - CHAIN_SEARCH_SHOW}件を表示</button></div>` : '') + ``;
+  chainListEl.innerHTML = visible.map((o0, idx) => chainCardHtml(o0, idx)).join('') + (!showAll && list.length > CHAIN_SEARCH_SHOW ? `<div class="toolbar" style="margin:0 0 10px;"><button id="btnChainMore" class="small">残り${list.length - CHAIN_SEARCH_SHOW}件を表示</button></div>` : '') + ``;
   chainListEl.querySelectorAll('[data-chain-apply]').forEach(btn => {
     btn.addEventListener('click', () => startChainSequence(Number(btn.dataset.chainApply)));
   });
   const more = document.getElementById('btnChainMore');
   if (more) more.addEventListener('click', showMoreResults);
+}
+// 連鎖のタブのカード1枚。cont は今打っている手順の続きのカードのとき({ offset: 打った手の数, label: '②③④' })。続きのカードにはボタンを付けない
+function chainCardHtml(o0, idx, cont) {
+  const pattern = currentTargetPattern();
+  const off = cont ? cont.offset : 0;
+  const o = Object.assign({}, o0, chainDetail(state.board, o0.path));
+  const sign = o.gain >= 0 ? '+' : '';
+  const info = pattern || currentPins().length ? pathAccidentInfo(state.board, o.path, pattern) : null;
+  const signed = v => (Number(v.toFixed(1)) < 0 ? `−${Math.abs(v).toFixed(1)}` : `+${Math.abs(v).toFixed(1)}`);
+  // 目標MAX布陣があるときは、手順全体の素材の増加(素材の一覧と同じ計算)を小さく出し、その数字に入っている減点とそろえたマスの注意も出す。
+  // 連鎖の一覧は差し引きが0以上(手数を使わない)なので、「1手あたり」にすると1で割った同じ数字になり、名前が合わない
+  const perHtml = pattern && o.gainAvg != null ? `<span class="chain-gain" style="font-size:14px;font-weight:700;">${materialHeadText(o, o.path.length, o.avg)}</span><span class="chain-meta">／</span>` : '';
+  const penParts = [];
+  if (pattern && o.penAvg != null && Number(o.penAvg.toFixed(1)) > 0) penParts.push(`3個マッチ −${o.penAvg.toFixed(1)}個`);
+  if (pattern && o.breakPen > 0) penParts.push(`そろえたマスを動かす −${o.breakPen.toFixed(1)}個`);
+  const penLine = penParts.length ? [`減点 −${((o.penAvg || 0) + (o.breakPen || 0)).toFixed(1)}個（${penParts.join(' ／ ')}）`] : [];
+  const breakLine = pattern && o.breakPen > 0 ? [`そろえたマスを${o.breakCells.length}マス動かします`] : [];
+  // 補充が来なかったときに、いま目指している布陣の素材が減る連鎖(補充込みの平均では減らないので出している)
+  const lossLine = pattern && o.sureLoss > 0 ? [`「${esc(pattern.name)}」の素材が${o.sureLoss}個分減ります`] : [];
+  const pc = pinCellsAlong(o.path);   // 各盤面でのピンの駒のマス
+  const stepsHtml = o.steps.map((st, i) =>
+    `<div class="chain-step"><h4>${STEP_NUM[off + i] || `${off + i + 1}.`} ${st.move.type === 'swap' ? '入替' : '削除'}</h4>${chainMiniBoard(st.before, { move: st.move, pinCells: pc && pc[i] })}</div><div class="chain-arrow">→</div>`
+  ).join('');
+  const formationHtml = formationLinesHtml(o.final, o0);
+  // MAX(その種類の最大レベル)の駒が何個できるか(補充を ? としたとき)。布陣の起爆にあたる手順が一目で分かるように出す。
+  const maxChips = [];
+  for (const sp of ['A', 'B', 'C', 'D']) {
+    const top = state.maxLevels[sp] || 7;
+    const cnt = g => g.reduce((a, row) => a + row.filter(c => c && c.species === sp && c.level === top).length, 0);
+    const d = cnt(o.final) - cnt(state.board);
+    if (d > 0) maxChips.push(chainChip(sp, top, `+${d}`));
+  }
+  const maxHtml = maxChips.length ? `<div class="chain-chips"><b style="color:var(--accent)">MAXができる:</b> ${maxChips.join('')}</div>` : '';
+  // いま目指しているMAX布陣の起爆(その素材のMAXが増える)の手順は、布陣が役目を終えるので、
+  // 1手あたりの素材・減点・そろえたマスの注意と印は出さない(布陣の素材がなくなるのは当然のため)
+  const detonate = !!pattern && (() => { const top = state.maxLevels[pattern.species] || 7; const cnt = g => g.reduce((a, row) => a + row.filter(c => c && c.species === pattern.species && c.level === top).length, 0); return cnt(o.final) > cnt(state.board); })();
+  return `<div class="chain-card">${cardMarkHtml(o0, cont)}
+    <div class="chain-head">${detonate ? '' : perHtml}<span class="chain-gain">差し引き ${sign}${o.gain.toFixed(1)}手</span>
+      <span class="chain-meta head-nums">使う手数 ${o.path.length} / 手数の増加 平均${o.avg.toFixed(1)}手（補充がマッチしない場合 ${o.sureRec}手・最高${o.bestRec}手）${detonate ? '' : riskSmall(info)}${cont ? '' : otherTabNote(o)}</span></div>
+    ${cardWarnsHtml([...lossLine, ...laterLossLines(o.final), ...riskLine(info), ...(detonate ? [] : [...breakLine, ...penLine])])}
+    <div class="chain-steps">${stepsHtml}<div class="chain-step"><h4>手順の後（補充は ?）</h4>${chainMiniBoard(o.final, { marks: detonate ? [] : (o.breakCells || []), newAligned: newAlignedCells(o.final), pinCells: pc && pc[o.path.length] })}</div></div>
+    ${maxHtml}
+    ${formationHtml}
+    ${cont ? '' : `<div class="toolbar" style="margin-top:8px;"><button class="small primary${state.game.phase === 'move' ? '' : ' dim'}" data-chain-apply="${idx}">この手順を打つ</button></div>`}
+  </div>`;
 }
 // 「次の手を探す」。目標MAX布陣があれば盤面を進める手('advance')を探し、なければ連鎖('chain')を探す。
 // 盤面を進める手が0件なら(素材がもうそろっている場面など)、続けて連鎖を探して、その結果を出す(起爆の手と増える手数もここに出る)。
@@ -1648,6 +1693,7 @@ async function runChainSearchInner() {
   btnSearch.disabled = true;
   btnChainCancel.style.display = '';
   chainListEl.innerHTML = '';
+  showContOnly();   // 探している間も、今打っている手順の続きのカードは出しておく
   const t0 = performance.now();
   const ctxAtStart = searchContextKey();
   chainRunKey = ctxAtStart;
@@ -1683,7 +1729,11 @@ let chainRunKey = null;    // いま探している状態の鍵(searchContextKey
 let autoSkipKey = null;    // 「中断」を押した状態の鍵(この状態のままなら、自動では探し直さない)
 function autoShouldRun() {
   const g = state.game;
-  if (!state.autoSearch || g.phase !== 'move' || moveMode === 'edit' || currentLeft() <= 0) return false;   // 「この手順を打つ」の途中でも探す(補充しだいで別の手に切り替えられるように。2026-09-28 本人)
+  if (!state.autoSearch || g.phase !== 'move' || moveMode === 'edit' || currentLeft() <= 0) return false;
+  // 「この手順を打つ」の途中は探さない(2026-09-29 本人。2026-09-28 から途中でも探していたが、熟練者の記録で打ち比べると、
+  // 探すたびに高いほうへ乗り換えると素材の増え方が約4割少なかった。続きに1手足した手順が合計で上に出て、最後の手が延び続けるため。
+  // 続きのカードで素材の増加がマイナスになったときは、手動で探す。HANDOFF.md)
+  if (continuationPath()) return false;
   const key = searchContextKey();
   return !(lastSearch && lastSearch.key === key) && key !== autoSkipKey && key !== chainRunKey;
 }
@@ -1692,7 +1742,7 @@ function autoSearchAfterMove() {
   autoTimer = setTimeout(async () => {
     autoTimer = 0;
     // 前に探したときと同じ状態に戻っていて、結果が出ていなければ(中断した直後など)、探し直さずにその結果を出し直す
-    if (lastSearch && lastSearch.key === searchContextKey() && !chainSearchRun && !chainListEl.children.length) { restoreSearchResults(); return; }
+    if (lastSearch && lastSearch.key === searchContextKey() && !chainSearchRun && !hasShownResults()) { restoreSearchResults(); return; }
     if (!autoShouldRun()) return;
     if (chainSearchRun) { chainAbortRequested = true; chainAbortQuiet = true; await chainSearchRun; autoSearchAfterMove(); return; }
     runChainSearch();
@@ -1746,6 +1796,77 @@ function alignedCellsOf(sp, lv, target) {
   }
   return out;
 }
+// 死にゴマ(2026-09-29 本人): 形どおりにそろえたマス(alignedCellsOf。金色に光るマス)を壁と見なし、壁を動かさずに、
+// まだそろっていない布陣のマスまで入れ替えでたどり着けない布陣の色の駒。穴に入った駒や、布陣の外の隅に閉じ込められた駒。
+// 素材として数えない(patternCountsFlat・素材の数の行・「あと◯個」)。たどるのは上下左右、斜め入替ありなら斜めも。
+// 死にゴマになりうるのは布陣の外(X)のマスだけ(そろっていない布陣のマスは、たどり始めるマスなので)。
+// 布陣の色の、布陣で使うレベルまでの駒が X のマスに1つもなければ、たどらずに null(ほとんどの盤面はこれで済む)。
+// 死にゴマがなければ null、あれば死にゴマのマスに 1 を立てた配列
+// 「次の手を探す」の中で何度も呼ぶので、布陣の形ごとの下ごしらえ(deadPrep)と作業用の配列を使い回す
+const DEAD_WALL = new Uint8Array(SIZE * SIZE), DEAD_STACK = new Int8Array(SIZE * SIZE), DEAD_POW2 = Array.from({ length: SIZE * SIZE }, (_, i) => Math.pow(2, i));
+// 布陣の形(cells の配列)→ { species, flat, need, si, nb, nbDiag, reach, reachDiag }。布陣を直すと saveState で捨てる
+var deadPrepMemo = new Map();
+function deadPrep(pattern) {
+  const cells = pattern.cells, m = deadPrepMemo.get(cells);
+  if (m && m.species === pattern.species) return m;
+  const flat = new Int8Array(SIZE * SIZE), nb = [], nbDiag = [];
+  for (let i = 0; i < SIZE * SIZE; i++) {
+    const t = cells[Math.floor(i / SIZE)][i % SIZE];
+    flat[i] = t === 'X' ? 0 : t;
+    const x = i % SIZE, y = Math.floor(i / SIZE), a = [], b = [];
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      if (!dx && !dy) continue;
+      const xx = x + dx, yy = y + dy;
+      if (xx < 0 || yy < 0 || xx >= SIZE || yy >= SIZE) continue;
+      (dx && dy ? b : a).push(yy * SIZE + xx);
+    }
+    nb.push(a); nbDiag.push(a.concat(b));
+  }
+  // reach: 壁の形(36ビットの数)→ たどり着けるマス。「次の手を探す」の中では壁の形はあまり変わらないので、たどり直さずに済む
+  const prep = { species: pattern.species, flat, need: patternNeedLevel(pattern), si: SPECIES_INDEX[pattern.species], nb, nbDiag, reach: new Map(), reachDiag: new Map() };
+  if (deadPrepMemo.size > 20) deadPrepMemo.clear();
+  deadPrepMemo.set(cells, prep);
+  return prep;
+}
+function deadMaskOf(sp, lv, pattern) {
+  const P = deadPrep(pattern), N = SIZE * SIZE, si = P.si, need = P.need, flat = P.flat;
+  // 壁: alignedCellsOf と同じ(列ごとに上から、形どおりのマスが続くあいだ。X のマスは飛ばす)。壁の形を数(key)にもする
+  const wall = DEAD_WALL;
+  wall.fill(0);
+  let key = 0;
+  for (let x = 0; x < SIZE; x++) for (let y = 0; y < SIZE; y++) {
+    const i = y * SIZE + x, t = flat[i];
+    if (!t) continue;
+    if (!(sp[i] === si && lv[i] === t)) break;
+    wall[i] = 1; key += DEAD_POW2[i];
+  }
+  if (!key) return null;   // 壁がなければ、どこからでもたどり着ける
+  let any = false;
+  for (let i = 0; i < N; i++) if (sp[i] === si && flat[i] === 0 && lv[i] >= 1 && lv[i] <= need) { any = true; break; }
+  if (!any) return null;
+  const cache = state.diagonal ? P.reachDiag : P.reach;
+  let seen = cache.get(key);
+  if (!seen) {
+    seen = new Uint8Array(N);
+    const stack = DEAD_STACK;
+    let top = 0;
+    for (let i = 0; i < N; i++) if (flat[i] && !wall[i]) { seen[i] = 1; stack[top++] = i; }
+    const nbs = state.diagonal ? P.nbDiag : P.nb;
+    while (top) {
+      const list = nbs[stack[--top]];
+      for (let k = 0; k < list.length; k++) { const j = list[k]; if (!seen[j] && !wall[j]) { seen[j] = 1; stack[top++] = j; } }
+    }
+    if (cache.size > 5000) cache.clear();
+    cache.set(key, seen);
+  }
+  // 布陣が全部そろっているとき(たどり始めるマスがない)は、足りない素材はもう無いので数え分けない
+  let anySeen = false;
+  for (let i = 0; i < N; i++) if (seen[i]) { anySeen = true; break; }
+  if (!anySeen) return null;
+  let dead = null;
+  for (let i = 0; i < N; i++) if (!wall[i] && !seen[i] && sp[i] === si) { if (!dead) dead = new Uint8Array(N); dead[i] = 1; }
+  return dead;
+}
 function breakPenaltyOf(aligned, sp, lv, target) {
   const si = SPECIES_INDEX[target.species];
   let pen = 0; const cells = [];
@@ -1764,9 +1885,85 @@ function breakPenaltyOf(aligned, sp, lv, target) {
 // 盤面の素材とレベルごとの駒の数を out に足す(添字は 素材 * CNT_W + レベル)。
 // 手順のあとの盤面(補充は ?)の数と、補充をランダムにして打ち直したときの数の合計を持っておき、カードの素材の数と絞り込みに使う
 const CNT_W = LEVEL_LIMIT + 1;
+// 目標MAX布陣(いまの布陣と2番目以降の布陣)の死にゴマは数えない(カードの素材の数と絞り込みを、素材の数え方とそろえる)。
+// 同じ素材の布陣が2つ以上あるときは、先の布陣の形で見る
+var countPatternsMemo = null;   // { pats, len, id, list }。素材ごとに先の布陣だけ(布陣の一覧か、目指す布陣が変わったら作り直す)
+function countPatterns() {
+  const m = countPatternsMemo;
+  if (m && m.pats === state.patterns && m.len === state.patterns.length && m.id === state.currentPatternId) return m.list;
+  const target = currentTargetPattern(), list = [], done = new Set();
+  if (target) for (const p of [target].concat(laterTargetPatterns())) if (!done.has(p.species)) { done.add(p.species); list.push(p); }
+  countPatternsMemo = { pats: state.patterns, len: state.patterns.length, id: state.currentPatternId, list };
+  return list;
+}
 function addLevelCounts(sp, lv, out) {
-  for (let i = 0; i < SIZE * SIZE; i++) if (sp[i] >= 0 && sp[i] <= 3) out[sp[i] * CNT_W + lv[i]]++;
+  let skip = null;
+  for (const p of countPatterns()) {
+    const m = deadMaskOf(sp, lv, p);
+    if (m) { if (!skip) skip = new Uint8Array(SIZE * SIZE); for (let i = 0; i < SIZE * SIZE; i++) if (m[i]) skip[i] = 1; }
+  }
+  for (let i = 0; i < SIZE * SIZE; i++) if (sp[i] >= 0 && sp[i] <= 3 && !(skip && skip[i])) out[sp[i] * CNT_W + lv[i]]++;
   return out;
+}
+// 手順を補充ありで1回打ち直して、記録 rs に足し込む。t 回目の補充は、盤面から作った sampleSeed と t だけで決まる
+// (「次の手を探す」の一覧と、今打っている手順の続きのカードで、同じ手順なら同じ数字になるように)
+function samplePathInto(rs, sp0, lv0, path, t, sampleSeed, ctx) {
+  const rng = makeRng((sampleSeed ^ ((t + 101) * 0x9E3779B1)) >>> 0);
+  let sp = sp0, lv = lv0, rec = 0;
+  const ev = ctx.target ? [] : null;
+  for (const m of path) { const r = chainApply(sp, lv, m, ctx.ml, COEF, rng, ev); sp = r.sp; lv = r.lv; rec += r.rec; }
+  addLevelCounts(sp, lv, rs.cntSum);
+  const got = Math.min(rec, ctx.room);
+  rs.recSum += got;
+  if (got > rs.bestRec) rs.bestRec = got;   // 補充を試したうちで、一番多く増えたときの手数
+  if (ctx.target) { const pen = advancePenalty(ev, ctx.target, ctx.need); rs.gainSum += ctx.d0 - patternCountsFlat(sp, lv, ctx.target).deficit - pen; rs.penSum += pen; }
+}
+// 今打っている手順の続き(「この手順を打つ」で1手以上打ったあとの、残りの手)。打っていなければ null
+function continuationPath() {
+  const g = state.game;
+  if (!g || g.phase !== 'move' || !Array.isArray(g.queue) || !g.queue.length || !(g.queue.length < (g.queueTotal || 0))) return null;
+  return g.queue;
+}
+// 今打っている手順の続きを、「次の手を探す」と同じやり方で数えたカード(素材・連鎖のどちらのタブのカードにも使える数字を全部作る)。
+// 補充を試す回数は、一覧で上位の手順と同じ ADVANCE_EXTRA_SAMPLES 回(一覧にも同じ手順があれば、その手順も同じ回数にしてあるので数字が合う)
+function continuationCard(grid, path) {
+  const N = SIZE * SIZE, ml = maxLevelsToIdx(state.maxLevels);
+  const sp0 = new Int8Array(N), lv0 = new Int8Array(N);
+  flatFromGrid(grid, sp0, lv0);
+  const target = currentTargetPattern(), room = recoveryRoom();
+  const base0 = target ? patternCountsFlat(sp0, lv0, target) : null;
+  const d0 = target ? base0.deficit : 0;
+  const c = { path: path.map(m => JSON.parse(JSON.stringify(m))), breakPen: 0, breakCells: [], sureLoss: 0 };
+  // 補充は ? で打ったあと(補充がマッチしない場合の手数の増加・手順のあとの駒の数・減点のそろえたマス・素材が減る連鎖か)
+  let sp = sp0, lv = lv0, rec = 0, lossy = false;
+  for (const m of c.path) {
+    const r = chainApply(sp, lv, m, ml, COEF, Q_RNG, null); sp = r.sp; lv = r.lv; rec += r.rec;
+    if (target) {
+      const cw = patternCountsFlat(sp, lv, target);
+      if (cw.max <= base0.max && (cw.over - cw.max > base0.over - base0.max || cw.deficit > d0)) lossy = true;
+    }
+  }
+  c.sureRec = Math.min(rec, room);
+  c.cntSure = addLevelCounts(sp, lv, new Int16Array(4 * CNT_W));
+  if (target) {
+    const bp = breakPenaltyOf(alignedCellsOf(sp0, lv0, target), sp, lv, target);
+    c.breakPen = bp.pen; c.breakCells = bp.cells;
+    c.sureLoss = lossy ? Math.max(0, patternCountsFlat(sp, lv, target).deficit - d0) : 0;
+  }
+  const rs = { gainSum: 0, penSum: 0, recSum: 0, bestRec: 0, cntSum: new Float64Array(4 * CNT_W), samples: 0 };
+  const sctx = { ml, room, target, d0, need: target ? patternNeedLevel(target) : 0 };
+  const seed = hashString(JSON.stringify(grid));
+  while (rs.samples < ADVANCE_EXTRA_SAMPLES) samplePathInto(rs, sp0, lv0, c.path, rs.samples++, seed, sctx);
+  c.samples = rs.samples; c.cntSum = rs.cntSum; c.bestRec = rs.bestRec;
+  c.avgRec = c.avg = rs.recSum / rs.samples;
+  c.gain = c.avg - c.path.length;
+  if (target) {
+    c.penAvg = rs.penSum / rs.samples;
+    c.gainAvg = rs.gainSum / rs.samples - c.breakPen;
+    c.perMove = c.gainAvg / Math.max(1, c.path.length - c.avgRec);
+    c.free = c.path.length - c.avgRec <= 0;
+  }
+  return c;
 }
 async function findAllOptions(grid, onProgress) {
   const N = SIZE * SIZE;
@@ -1914,20 +2111,10 @@ async function findAllOptions(grid, onProgress) {
     return r;
   };
   // 手順を補充ありで n 回まで打ち直して、素材と手数の増え方を足し込む
+  const sctx = { ml, room, target, d0, need };
   const sampleTo = (c, n) => {
     const rs = c.rs;
-    while (rs.samples < n) {
-      const t = rs.samples++;
-      const rng = makeRng((sampleSeed ^ ((t + 101) * 0x9E3779B1)) >>> 0);
-      let sp = sp0, lv = lv0, rec = 0;
-      const ev = target ? [] : null;
-      for (const m of c.path) { const r = chainApply(sp, lv, m, ml, COEF, rng, ev); sp = r.sp; lv = r.lv; rec += r.rec; }
-      addLevelCounts(sp, lv, rs.cntSum);
-      const got = Math.min(rec, room);
-      rs.recSum += got;
-      if (got > rs.bestRec) rs.bestRec = got;   // 補充を試したうちで、いちばん多く増えたときの手数
-      if (target) { const pen = advancePenalty(ev, target, need); rs.gainSum += d0 - patternCountsFlat(sp, lv, target).deficit - pen; rs.penSum += pen; }
-    }
+    while (rs.samples < n) samplePathInto(rs, sp0, lv0, c.path, rs.samples++, sampleSeed, sctx);
   };
   // 打ち直しの結果を手順(カード)に写す(カードの素材の数・絞り込みは c.cntSum と c.samples を見る)
   const copyRecord = c => { const rs = c.rs; c.samples = rs.samples; c.cntSum = rs.cntSum; c.bestRec = rs.bestRec; };
@@ -2022,6 +2209,9 @@ async function findAllOptions(grid, onProgress) {
   const extra = new Set();
   if (target) cands.slice().sort(advanceMaterialOrder).slice(0, ADVANCE_EXTRA_TOP).forEach(c => extra.add(c));
   chainCands.slice().sort((p, q) => (q.gain - p.gain) || (p.path.length - q.path.length)).slice(0, CHAIN_EXTRA_TOP).forEach(c => extra.add(c));
+  // 今打っている手順の続きが候補にあれば、続きのカード(continuationCard)と同じ回数だけ試す(一覧と続きのカードで数字をそろえる)
+  const cont = grid === state.board ? continuationPath() : null;
+  if (cont) { const ck = pathKeyOf(cont); for (const c of cands.concat(chainCands)) if (pathKeyOf(c.path) === ck) extra.add(c); }
   for (const c of extra) {
     if (performance.now() - lastYield > 60) {
       await new Promise(resolve => setTimeout(resolve, 0));
@@ -2179,7 +2369,7 @@ function renderFilterRow() {
     state.resultFilter = { key: document.getElementById('filterKey').value, n: Number(document.getElementById('filterN').value) || 1 };
     saveState();
     renderFilterRow();
-    if (shownResults && chainListEl.children.length) renderResults(shownResults.res, shownResults.sec, false);
+    if (shownResults && hasShownResults()) renderResults(shownResults.res, shownResults.sec, false);
   };
   document.getElementById('filterKey').addEventListener('change', onChange);
   document.getElementById('filterN').addEventListener('change', onChange);
@@ -2201,6 +2391,9 @@ function renderResults(res, sec, showAll) {
   } else if (tab === 'gain') renderAdvanceOptionsInner(list, sec, showAll);
   else renderChainOptionsInner(list, sec, showAll);
   setChainCollapse(!!showAll && chainShown.length > CHAIN_SEARCH_SHOW, () => renderResults(res, sec, false));
+  const contHtml = contCardHtml(tab);   // 今打っている手順の続きのカードは、一覧の一番上(タブのすぐ下)
+  if (contHtml) chainListEl.insertAdjacentHTML('afterbegin', contHtml);
+  contShown = contHtml ? contCardKey() + '|' + tab : null;
   const unknownNote = unknownNoteFor(tab === 'chain' ? 'chain' : 'advance', res.unknownN || 0);
   if (unknownNote) chainListEl.insertAdjacentHTML('afterbegin', unknownNote);
   if (hasPattern) {
@@ -2246,46 +2439,49 @@ function renderAdvanceOptionsInner(list, sec, showAll) {
     chainShown = [];
     return;
   }
-  const NUM = ['①', '②', '③', '④'];
   chainShown = list;
   chainShownKind = 'advance';
   const visible = showAll ? list : list.slice(0, CHAIN_SEARCH_SHOW);
-  chainListEl.innerHTML = visible.map((o0, idx) => {
-    const o = Object.assign({}, o0, chainDetail(state.board, o0.path));
-    const info = pathAccidentInfo(state.board, o.path, pattern);
-    // 手数の増加は連鎖のタブと同じ書き方(平均・補充がマッチしない場合・最高)
-    const recText = ` / 手数の増加 平均${o.avgRec.toFixed(1)}手（補充がマッチしない場合 ${o.sureRec}手・最高${o.bestRec}手）`;
-    // 見出しは「素材の増加（1手あたり）(大きく) ／ 差し引き(小さく)」
-    const signed = v => (Number(v.toFixed(1)) < 0 ? `−${Math.abs(v).toFixed(1)}` : `+${Math.abs(v).toFixed(1)}`);
-    const small = 'font-size:14px;font-weight:700;';
-    const gainHead = materialHeadParts(o, o.path.length, o.avgRec);
-    const netHead = `差し引き ${signed(o.avgRec - o.path.length)}手`;
-    // ツールが素材の増加から引いた減点の内訳(使う人が判断できるように出す)
-    const penParts = [];
-    if (Number(o.penAvg.toFixed(1)) > 0) penParts.push(`3個マッチ −${o.penAvg.toFixed(1)}個`);
-    if (o.breakPen > 0) penParts.push(`そろえたマスを動かす −${o.breakPen.toFixed(1)}個`);
-    const penLine = penParts.length ? [`減点 −${(o.penAvg + o.breakPen).toFixed(1)}個（${penParts.join(' ／ ')}）`] : [];
-    const breakLine = o.breakPen > 0 ? [`そろえたマスを${o.breakCells.length}マス動かします`] : [];
-    // 素材の増加は大きく、（ ）と差し引きは小さく。（ ）を大きい文字の外に出して、スマホでも見出しが2行に収まるようにする
-    const headHtml = `<span class="chain-gain">${gainHead.main}</span><span class="chain-gain" style="${small}">${gainHead.paren}</span><span class="chain-meta">／</span><span class="chain-gain" style="${small}">${netHead}</span>`;
-    const pc = pinCellsAlong(o.path);   // 各盤面でのピンの駒のマス
-    const stepsHtml = o.steps.map((st, i) =>
-      `<div class="chain-step"><h4>${NUM[i] || `${i + 1}.`} ${st.move.type === 'swap' ? '入替' : '削除'}</h4>${chainMiniBoard(st.before, { move: st.move, pinCells: pc && pc[i] })}</div><div class="chain-arrow">→</div>`
-    ).join('');
-    return `<div class="chain-card">${adoptedMarkHtml(o0)}
-      <div class="chain-head">${headHtml}
-        <span class="chain-meta head-nums">使う手数 ${o.path.length}${recText}${riskSmall(info)}${otherTabNote(o)}</span></div>
-      ${cardWarnsHtml([...laterLossLines(o.final), ...riskLine(info), ...breakLine, ...penLine])}
-      <div class="chain-steps">${stepsHtml}<div class="chain-step"><h4>手順のあと（補充は ?）</h4>${chainMiniBoard(o.final, { marks: o.breakCells, newAligned: newAlignedCells(o.final), pinCells: pc && pc[o.path.length] })}</div></div>
-      ${formationLinesHtml(o.final, o0)}
-      <div class="toolbar" style="margin-top:8px;"><button class="small primary${state.game.phase === 'move' ? '' : ' dim'}" data-chain-apply="${idx}">${o.path.length > 1 ? 'この手順を打つ' : 'この手を打つ'}</button></div>
-    </div>`;
-  }).join('') + (!showAll && list.length > CHAIN_SEARCH_SHOW ? `<div class="toolbar" style="margin:0 0 10px;"><button id="btnChainMore" class="small">残り${list.length - CHAIN_SEARCH_SHOW}件を表示</button></div>` : '') + ``;
+  chainListEl.innerHTML = visible.map((o0, idx) => advanceCardHtml(o0, idx)).join('') + (!showAll && list.length > CHAIN_SEARCH_SHOW ? `<div class="toolbar" style="margin:0 0 10px;"><button id="btnChainMore" class="small">残り${list.length - CHAIN_SEARCH_SHOW}件を表示</button></div>` : '') + ``;
   chainListEl.querySelectorAll('[data-chain-apply]').forEach(btn => {
     btn.addEventListener('click', () => startChainSequence(Number(btn.dataset.chainApply)));
   });
   const more = document.getElementById('btnChainMore');
   if (more) more.addEventListener('click', showMoreResults);
+}
+// 素材のタブのカード1枚。cont は chainCardHtml と同じ
+function advanceCardHtml(o0, idx, cont) {
+  const pattern = currentTargetPattern();
+  const off = cont ? cont.offset : 0;
+  const o = Object.assign({}, o0, chainDetail(state.board, o0.path));
+  const info = pathAccidentInfo(state.board, o.path, pattern);
+  // 手数の増加は連鎖のタブと同じ書き方(平均・補充がマッチしない場合・最高)
+  const recText = ` / 手数の増加 平均${o.avgRec.toFixed(1)}手（補充がマッチしない場合 ${o.sureRec}手・最高${o.bestRec}手）`;
+  // 見出しは「素材の増加（1手あたり）(大きく) ／ 差し引き(小さく)」
+  const signed = v => (Number(v.toFixed(1)) < 0 ? `−${Math.abs(v).toFixed(1)}` : `+${Math.abs(v).toFixed(1)}`);
+  const small = 'font-size:14px;font-weight:700;';
+  const gainHead = materialHeadParts(o, o.path.length, o.avgRec);
+  const netHead = `差し引き ${signed(o.avgRec - o.path.length)}手`;
+  // ツールが素材の増加から引いた減点の内訳(使う人が判断できるように出す)
+  const penParts = [];
+  if (Number(o.penAvg.toFixed(1)) > 0) penParts.push(`3個マッチ −${o.penAvg.toFixed(1)}個`);
+  if (o.breakPen > 0) penParts.push(`そろえたマスを動かす −${o.breakPen.toFixed(1)}個`);
+  const penLine = penParts.length ? [`減点 −${(o.penAvg + o.breakPen).toFixed(1)}個（${penParts.join(' ／ ')}）`] : [];
+  const breakLine = o.breakPen > 0 ? [`そろえたマスを${o.breakCells.length}マス動かします`] : [];
+  // 素材の増加は大きく、（ ）と差し引きは小さく。（ ）を大きい文字の外に出して、スマホでも見出しが2行に収まるようにする
+  const headHtml = `<span class="chain-gain">${gainHead.main}</span><span class="chain-gain" style="${small}">${gainHead.paren}</span><span class="chain-meta">／</span><span class="chain-gain" style="${small}">${netHead}</span>`;
+  const pc = pinCellsAlong(o.path);   // 各盤面でのピンの駒のマス
+  const stepsHtml = o.steps.map((st, i) =>
+    `<div class="chain-step"><h4>${STEP_NUM[off + i] || `${off + i + 1}.`} ${st.move.type === 'swap' ? '入替' : '削除'}</h4>${chainMiniBoard(st.before, { move: st.move, pinCells: pc && pc[i] })}</div><div class="chain-arrow">→</div>`
+  ).join('');
+  return `<div class="chain-card">${cardMarkHtml(o0, cont)}
+    <div class="chain-head">${headHtml}
+      <span class="chain-meta head-nums">使う手数 ${o.path.length}${recText}${riskSmall(info)}${cont ? '' : otherTabNote(o)}</span></div>
+    ${cardWarnsHtml([...laterLossLines(o.final), ...riskLine(info), ...breakLine, ...penLine])}
+    <div class="chain-steps">${stepsHtml}<div class="chain-step"><h4>手順の後（補充は ?）</h4>${chainMiniBoard(o.final, { marks: o.breakCells, newAligned: newAlignedCells(o.final), pinCells: pc && pc[o.path.length] })}</div></div>
+    ${formationLinesHtml(o.final, o0)}
+    ${cont ? '' : `<div class="toolbar" style="margin-top:8px;"><button class="small primary${state.game.phase === 'move' ? '' : ' dim'}" data-chain-apply="${idx}">${o.path.length > 1 ? 'この手順を打つ' : 'この手を打つ'}</button></div>`}
+  </div>`;
 }
 btnChainCancel.addEventListener('click', () => { chainAbortRequested = true; autoSkipKey = chainRunKey; });   // 中断した状態のままなら、自動では探し直さない
 
@@ -2369,7 +2565,7 @@ function playMove(move, riskChecked, pinChecked, pinsBefore) {
     if (moved.length) {
       const to = g.pinTo || {};
       const destOnly = moved.every(i => to[i] != null);
-      openAsk(destOnly ? 'この手を打つと、行き先付きのピンの駒が行き先から離れるか、消えます。ピンを外して打ちますか？' : 'この手を打つと、ピンの駒が動きます。ピンを外して打ちますか？', {
+      openAsk(destOnly ? 'この手を打つと、行き先付きのピンの駒がマッチするか、行き先から離れます。ピンを外して打ちますか？' : 'この手を打つと、ピンの駒がマッチするか、動きます。ピンを外して打ちますか？', {
         okLabel: 'ピンを外して打つ',
         onOk: () => { const before = currentPins(); g.pins = before.filter(i => !moved.includes(i)); playMove(move, riskChecked, true, before); },
         onCancel: () => { picked = null; refresh(); },
@@ -2396,7 +2592,9 @@ function playMove(move, riskChecked, pinChecked, pinsBefore) {
   if (!g.queue.length) g.queueCard = null;
   const before = cloneGrid(state.board);
   picked = null;
-  clearChainResults();
+  // 補充の入力中は、打つ直前に出ていたカードをそのまま残す(次に打つ手を見られるように。2026-09-29 本人)。
+  // 手が確定したとき(commitMove・commitFinal)に消して、今の盤面のカードに切り替える。練習モードは入力がないので、すぐ消す
+  if (g.practice) clearChainResults();
   if (chainSearchRun) { chainAbortRequested = true; chainAbortQuiet = true; }   // 前の盤面で探している最中なら止める(結果はもう使えない)
   if (g.practice) { playPracticeMove(move, before, queueBefore); return; }
   if (state.refillInputMode === 'final') {
@@ -2651,7 +2849,7 @@ function checkPaintedBoard(before, move, painted, rec, recAtLeast, opts) {
 
   const sp = new Int8Array(N), lv = new Int8Array(N), id = new Int16Array(N).fill(-1);
   flatFromGrid(before, sp, lv);
-  let firstRound;   // 補充のあとの最初のマッチが、何ラウンド目か(増える手数の数え方に使う)
+  let firstRound;   // 補充の後の最初のマッチが、何ラウンド目か(増える手数の数え方に使う)
   if (move.type === 'swap') {
     const m = applySwapFlat(sp, lv, move.a.y * SIZE + move.a.x, move.b.y * SIZE + move.b.x, ml, 1, null);
     if (!m.hadMatches) {
@@ -2688,6 +2886,7 @@ function commitFinal(leftAfter) {
   advanceTargetAfterMove(g.log[g.log.length - 1]);
   g.pending = null;
   g.phase = 'move';
+  clearChainResults();   // 補充の入力中に残していた、打つ前の盤面のカードを消す
   refresh();
   autoSearchAfterMove();
 }
@@ -2733,7 +2932,7 @@ function renderFinalControls(p) {
   gameControlsEl.innerHTML = `
     <div class="moves-left">残り手数（ツールの計算） <span class="num">${expected}</span>
       <span class="note">（この手: ${describeMove(p.move)} / 補充された駒が絡まない連鎖による増加 ${p.sureChain}）</span>
-      <div class="note" style="margin-top:2px;">この数字は<b>目安</b>です（補充された駒がマッチしなかった場合）。補充された駒しだいで、実際はこれより多くなることも、少なくなることもあります。</div></div>
+      <div class="note" style="margin-top:2px;">この数字は<b>目安</b>です（補充された駒がマッチしなかった場合）。補充された駒次第で、実際はこれより多くなることも、少なくなることもあります。</div></div>
     <div class="game-status">${n
       ? `<b>ゲーム画面のマッチが止まったら</b>、その盤面どおりに入力してください。「?」が補充されたマス（${n}マス）です。補充された駒でマッチが起きて変わったマスも入力し直してください。`
       : '入力が終わりました。ゲーム画面の残り手数を確かめて「確定」を押してください。'}
@@ -2822,7 +3021,7 @@ function openAccidentModal(move, names, risk, onPlay, sure, pathLen, pinParts, s
       ? `<p>この${pathLen > 1 ? '手順' : '手'}を打つと、補充が来なかったときは、目標MAX布陣${names.map(n => `「${esc(n)}」`).join('・')}の素材が<b style="color:var(--danger);font-size:18px;">${sureLoss}個分</b>減ります（補充を入れた平均では減りません）。</p>`
       : sure
       ? `<p>この${pathLen > 1 ? '手順' : '手'}を打つと、補充される駒に関係なく、<b style="color:var(--danger);font-size:18px;">必ず</b>目標MAX布陣${names.map(n => `「${esc(n)}」`).join('・')}に必要な素材が減るか、使わないレベルの駒ができます。</p>`
-      : `<p>この${pathLen > 1 ? '手順' : '手'}を打つと、補充される駒しだいで、<b style="color:var(--danger);font-size:18px;">${Math.round(risk * 100)}%</b> の確率で、${(names.length ? [`目標MAX布陣${names.map(n => `「${esc(n)}」`).join('・')}に必要な素材が減るか、使わないレベルの駒ができる`] : []).concat(pinParts || []).join('か、')}ことがあります。</p>
+      : `<p>この${pathLen > 1 ? '手順' : '手'}を打つと、補充される駒次第で、<b style="color:var(--danger);font-size:18px;">${Math.round(risk * 100)}%</b> の確率で、${(names.length ? [`目標MAX布陣${names.map(n => `「${esc(n)}」`).join('・')}に必要な素材が減るか、使わないレベルの駒ができる`] : []).concat(pinParts || []).join('か、')}ことがあります。</p>
 `}
     <div class="modal-actions"><button id="btnAccCancel">やめる</button><button id="btnAccPlay" class="danger">${pathLen > 1 ? 'この手順を打つ' : '打つ'}</button></div>`;
   overlay.appendChild(modal);
@@ -2855,6 +3054,7 @@ function commitMove() {
   advanceTargetAfterMove(g.log[g.log.length - 1]);
   g.pending = null;
   g.phase = 'move';
+  clearChainResults();   // 補充の入力中に残していた、打つ前の盤面のカードを消す
   refresh();
   autoSearchAfterMove();
 }
@@ -2929,7 +3129,7 @@ function startGame() {
 // 最初の盤面と補充をツールがランダムに決める(4種類の素材が同じ確率)。手を打つと、その場で最後まで計算して確定し、
 // マッチの様子(そろったマスに印 → 消える → 詰まって補充)を1ラウンドずつ見せる。打ち直すたびに補充は変わる。
 const ANIM_MS = 400;   // 1場面の長さ
-const ANIM_HINT = '盤面を押すと、途中を省いて、マッチが止まったあとの盤面を表示します。';
+const ANIM_HINT = '盤面を押すと、途中を省いて、マッチが止まった後の盤面を表示します。';
 let anim = null;       // マッチの様子を見せている間: { frames, k, timer, finalKey }
 function practiceRng() { return makeRng(Math.floor(Math.random() * 4294967296)); }
 // 平坦な盤面を、見せるための盤面に(消えたマス・空きは null)
@@ -3160,6 +3360,50 @@ function adoptedMarkHtml(o) {
   const same = a && a.card.path.length === o.path.length && a.card.path.every((m, i) => sameMove(m, o.path[i]));
   return same ? '<div class="adopted-mark">この手順を打ちました</div>' : '';
 }
+/* ---------- 今打っている手順の続きのカード(2026-09-29 本人) ----------
+ * 「この手順を打つ」で1手以上打ったら、残りの手だけを今の盤面からの手順として数えたカードを、結果の一番上に出す(素材・連鎖の両方のタブ)。
+ * 乗り換えるかどうかを、新しい候補と同じ物差しで比べられるように。打った手は乗り換えても戻らないので、比べるのは「ここから先の手」どうし。
+ * 自動がオフで結果がないときも、このカードだけは出す。一覧の決まり(差し引き0以上など)に合わなくても出す。ボタンは付けない(続きは盤面の下のボタンで打つ)。
+ * 一覧に同じ手順があれば、そのカードに「今打っている手順の続きです」と書き添える */
+const STEP_NUM = ['①', '②', '③', '④'];
+function isContinuation(o) {
+  const p = continuationPath();
+  return !!p && p.length === o.path.length && p.every((m, i) => sameMove(m, o.path[i]));
+}
+function cardMarkHtml(o, cont) {
+  if (cont) return `<div class="adopted-mark">今打っている手順の続き（${cont.label}）</div>`;
+  return adoptedMarkHtml(o) + (isContinuation(o) ? '<div class="adopted-mark">今打っている手順の続きです</div>' : '');
+}
+let contMemo = null;   // { key, card }。同じ盤面・同じ続きなら数え直さない
+function contCardKey() { const p = continuationPath(); return p ? searchContextKey() + '|' + pathKeyOf(p) : null; }
+// 続きのカードの HTML(tab: 'gain' 素材 / 'chain' 連鎖)。続きがなければ ''
+function contCardHtml(tab) {
+  const key = contCardKey();
+  if (!key) return '';
+  if (!contMemo || contMemo.key !== key) contMemo = { key, card: continuationCard(state.board, continuationPath()) };
+  const c = contMemo.card, g = state.game, off = g.queueTotal - g.queue.length;
+  const cont = { offset: off, label: c.path.map((_, i) => STEP_NUM[off + i] || '').join('') };
+  return tab === 'gain' ? advanceCardHtml(c, -1, cont) : chainCardHtml(c, -1, cont);
+}
+// 結果(探した一覧や「見つかりませんでした」)が出ているか(続きのカードだけのときは出ていない扱い)
+function hasShownResults() { return Array.from(chainListEl.children).some(el => !el.hasAttribute('data-cont-only')); }
+let contShown = null;   // いま出している続きのカードの鍵(contCardKey + '|' + タブ)。出していなければ null
+// 結果が出ていないときに、続きのカードだけを出す(続きがなくなったら消す)。結果が出ているときは renderResults が一番上に出す。
+// 結果が出たまま続きが変わったとき(「手順をやめる」など)は、結果を描き直して、一番上のカードを合わせる
+function showContOnly() {
+  if (state.game && state.game.phase === 'fix') return;   // 補充の入力中は、打つ直前のカードをそのまま残す
+  const key = contCardKey(), tab = currentTargetPattern() ? state.resultTab : 'chain';
+  const want = key ? key + '|' + tab : null;
+  if (hasShownResults()) {
+    if (want !== contShown && shownResults && lastSearch && lastSearch.key === searchContextKey()) renderResults(shownResults.res, shownResults.sec, false);
+    return;
+  }
+  const old = chainListEl.querySelector('[data-cont-only]');
+  if (!key) { if (old) old.remove(); contShown = null; return; }
+  if (old && contShown === want) return;
+  chainListEl.innerHTML = `<div data-cont-only>${contCardHtml(tab)}</div>`;
+  contShown = want;
+}
 // 1手戻して、「この手順を打つ」を押した場面に来たら、そのとき選んだカードを1枚出す(一覧は「次の手を探す」で出し直せる)
 function showAdoptedCard() {
   const a = adoptedAtHere();
@@ -3188,13 +3432,14 @@ function restoreSearchResults() {
 function clearChainResults() {
   setChainCollapse(false);
   chainListEl.innerHTML = '';
+  contShown = null;
   chainShown = [];
   chainProgressEl.textContent = '';
 }
-// 盤面を入力し直したときなど
+// 盤面を入力し直したときなど。補充の入力中(fix)にマスを塗ったときは、打つ直前のカードを残す(確定したときに消す)
 function onBoardChanged() {
   if (state.game.pins && state.game.pins.length) state.game.pins = currentPins();
-  clearChainResults();
+  if (state.game.phase !== 'fix') clearChainResults();
   refresh();
 }
 
@@ -3331,7 +3576,10 @@ function shortageHtml() {
   if (!state.showShortage || !p) return '';
   const req = {}, have = {};
   for (const row of p.cells) for (const t of row) if (t !== 'X') req[t] = (req[t] || 0) + 1;
-  for (const row of state.board) for (const c of row) if (c && c.species === p.species) have[c.level] = (have[c.level] || 0) + 1;
+  const bsp = new Int8Array(SIZE * SIZE), blv = new Int8Array(SIZE * SIZE);
+  flatFromGrid(state.board, bsp, blv);
+  const dead = deadMaskOf(bsp, blv, p);   // 死にゴマは数えない
+  state.board.forEach((row, y) => row.forEach((c, x) => { if (c && c.species === p.species && !(dead && dead[y * SIZE + x])) have[c.level] = (have[c.level] || 0) + 1; }));
   const levels = Object.keys(req).map(Number).sort((a, b) => a - b);
   const short = levels.map(L => Math.max(0, req[L] - (have[L] || 0)));
   const name = `${esc(p.name)}（${p.species}）`;
@@ -3395,7 +3643,7 @@ function renderGameControls() {
     document.getElementById('btnRedo').addEventListener('click', redoNext);
     const clearBtn = document.getElementById('btnClearBoard');
     if (clearBtn) clearBtn.addEventListener('click', () => {
-      openAsk('盤面の36マスをすべて「?」にします。残り手数と打った手の記録は残ります。よろしいですか？', {
+      openAsk('盤面の36マスを全て「?」にします。残り手数と打った手の記録は残ります。よろしいですか？', {
         okLabel: 'クリアする', cancelLabel: 'キャンセル', danger: true,
         onOk: () => withFutureDropped(() => { state.board = defaultBoard(); fillEmptyAsUnknown(state.board); g.queue = []; onBoardChanged(); }),
       });
@@ -3418,10 +3666,10 @@ function renderGameControls() {
   const n = pendingInputCount(p);   // この手で新しく補充された「?」と未入力のマス
   gameControlsEl.innerHTML = `
     <div class="moves-left">残り手数 <span class="num">${currentLeft() - 1 + p.chain}</span>
-      <span class="note">（この手: ${describeMove(p.move)} / いまのところ連鎖で増加 ${p.chain}）</span></div>
+      <span class="note">（この手: ${describeMove(p.move)} / 今のところ連鎖で増加 ${p.chain}）</span></div>
     <div class="game-status"><b>${p.wave}回目の補充</b>: ${n
-      ? `「?」のマスが${n}マスあります。ゲーム画面を見て、素材とレベルを選んで入力してください。ほかのマスも入力し直せます。`
-      : '「次へ」を押すと、マッチを1回ぶん進めます。もうマッチが起きなければ、この手が確定します。'}</div>
+      ? `「?」のマスが${n}マスあります。ゲーム画面を見て、素材とレベルを選んで入力してください。他のマスも入力し直せます。`
+      : '「次へ」を押すと、マッチを1回分進めます。もうマッチが起きなければ、この手が確定します。'}</div>
     <div class="toolbar" style="margin-top:0;margin-bottom:8px;">
       <button id="btnFixNext" class="primary" ${n ? 'disabled' : ''}>次へ</button>
       ${n ? '<button id="btnFixKeep">「?」のまま進む</button>' : ''}
@@ -3453,6 +3701,7 @@ function refresh() {
   renderBrushRow();
   renderBoard();
   saveState();
+  showContOnly();          // 結果が出ていなければ、今打っている手順の続きのカードだけ出す
   autoSearchAfterMove();   // 「自動：オン」で、結果が今の状態に合っていなければ探す
 }
 
@@ -3690,13 +3939,13 @@ function renderPatternListInner() {
     else card.style.opacity = '0.6';
     const order = document.createElement('div');
     order.className = 'pattern-order';
-    order.innerHTML = `<span><span class="note" style="font-weight:700;">${i + 1}番目</span>${isCurrent ? '<span class="tag" style="color:var(--accent);border:1px solid var(--accent);">いま目指している</span>' : ''}</span>`;
+    order.innerHTML = `<span><span class="note" style="font-weight:700;">${i + 1}番目</span>${isCurrent ? '<span class="tag" style="color:var(--accent);border:1px solid var(--accent);">今目指している</span>' : ''}</span>`;
     const orderBtns = document.createElement('span');
     const mkBtn = (label, title, disabled, fn) => { const b = document.createElement('button'); b.className = 'small'; b.textContent = label; b.title = title; b.disabled = disabled; b.addEventListener('click', fn); orderBtns.appendChild(b); };
     const swapOrder = (d) => { const a = state.patterns; [a[i], a[i + d]] = [a[i + d], a[i]]; saveState(); renderPatternList(); };
     mkBtn('↑', '順番を1つ前へ', i === 0, () => swapOrder(-1));
     mkBtn('↓', '順番を1つ後ろへ', i === state.patterns.length - 1, () => swapOrder(1));
-    if (!isCurrent) mkBtn('これを目指す', 'いま目指しているMAX布陣にします。', false, () => { state.currentPatternId = p.id; saveState(); renderPatternList(); onBoardChanged(); });
+    if (!isCurrent) mkBtn('これを目指す', '今目指しているMAX布陣にします。', false, () => { state.currentPatternId = p.id; saveState(); renderPatternList(); onBoardChanged(); });
     order.appendChild(orderBtns);
     card.appendChild(order);
     const head = document.createElement('div');
@@ -3961,7 +4210,7 @@ document.getElementById('btnPickPattern').addEventListener('click', () => {
   modal.appendChild(title);
   const note = document.createElement('div');
   note.className = 'note';
-  note.textContent = 'いま目指すMAX布陣を選んでください。3MAXを作ってから7MAXを目指すなど、2つ以上選ぶこともできます。用意されているプリセットは素材Aで登録されるので、ほかの素材で作るときは、登録したあとにカードの「編集」で素材を変えてください。';
+  note.textContent = '今目指すMAX布陣を選んでください。3MAXを作ってから7MAXを目指すなど、2つ以上選ぶこともできます。用意されているプリセットは素材Aで登録されるので、他の素材で作るときは、登録した後にカードの「編集」で素材を変えてください。';
   modal.appendChild(note);
   const wrap = document.createElement('div');
   wrap.style.maxHeight = '60vh'; wrap.style.overflow = 'auto'; wrap.style.margin = '10px 0';
@@ -4023,10 +4272,10 @@ document.getElementById('btnPickPattern').addEventListener('click', () => {
   render();
   const restore = document.createElement('button');
   restore.className = 'small'; restore.textContent = 'もとの一覧に戻す';
-  restore.title = '最初からあるプリセット（斜め移動なし5つ・斜め移動あり5つ）のうち、消したものを戻します。自分で追加したプリセットは消えません。';
+  restore.title = '最初からあるプリセット（斜め移動なし6つ・斜め移動あり5つ）のうち、消したものを戻します。自分で追加したプリセットは消えません。';
   restore.addEventListener('click', () => {
     const missing = defaultPresets().filter(d => !state.presets.some(q => q.id === d.id));
-    if (!missing.length) { openNotice('最初からあるプリセットは、すべて一覧にあります。'); return; }
+    if (!missing.length) { openNotice('最初からあるプリセットは、全て一覧にあります。'); return; }
     openAsk(`消したプリセット（${missing.map(m => m.name).join('・')}）を戻しますか？`, {
       okLabel: '戻す',
       onOk: () => {
@@ -4111,10 +4360,10 @@ function openInfoModal(html) {
 }
 document.getElementById('btnHowItWorks').addEventListener('click', () => openInfoModal(`
   <h2>手順を探す</h2>
-  <p>今の盤面から3手先（「4手まで」なら4手先）までの手順を全部調べて、よい手順をカードで出します。「自動：オン」にすると、盤面などが変わるたびに自動で探します。</p>
+  <p>今の盤面から3手先（「4手まで」なら4手先）までの手順を全部調べて、良い手順をカードで出します。「自動：オン」にすると、盤面などが変わるたびに自動で探します。</p>
   <p class="sec-h">■ 2つのタブ</p>
   <ul>
-    <li><b>素材</b>: 目標MAX布陣に必要な素材が増える手順です。手数消費なしの手順が先で素材の増加の多い順、そのあとは1手あたりの多い順です。</li>
+    <li><b>素材</b>: 目標MAX布陣に必要な素材が増える手順です。手数消費なしの手順が先で素材の増加の多い順、その後は1手当たりの多い順です。</li>
     <li><b>連鎖</b>: 使う手数以上に手数が増える連鎖です（起爆の手順も含みます）。差し引きの多い順です。</li>
   </ul>
   <p>目標MAX布陣を登録していないときは、連鎖だけを探します。</p>
@@ -4122,7 +4371,7 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
   <p>見出し</p>
   <ul>
     <li><b>素材の増加 ＋◯個</b>: その手順で増える素材の見込みです（Lv1換算。Lv2＝3個分）。</li>
-    <li><b>（1手あたり ＋◯個）</b>: 素材の増加を、実際に減る手数（使う手数 − 手数の増加）で割った数です。手数が減らない手順は「手数消費なし」と出ます。</li>
+    <li><b>（1手当たり ＋◯個）</b>: 素材の増加を、減る手数の見込み（使う手数 − 手数の増加の平均）で割った数です。手数が減らない見込みの手順は「手数消費なし」と出ます。</li>
     <li><b>差し引き ＋◯手</b>: 増える手数から使う手数を引いた数です。プラスなら手数が増えます。</li>
     <li>素材のタブでは素材の増加を、連鎖のタブでは差し引きを、大きな文字で出します。同じ手順なら、どちらのタブでも数字は同じです。</li>
   </ul>
@@ -4135,12 +4384,12 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
         <li>最高: 試したうちで一番多く増えたとき。</li>
       </ul>
     </li>
-    <li><b>事故の確率 ◯%</b>: 補充しだいで、布陣の素材が減る・ピンの駒が動くなどが起きる確率です。5%以上は下の⚠の行に出ます。</li>
+    <li><b>事故の確率 ◯%</b>: 補充次第で、布陣の素材が減る・ピンの駒がマッチする・動くなどが起きる確率です。5%以上は下の⚠の行に出ます。</li>
     <li><b>連鎖のタブにもあります（◯番目）</b>: 同じ手順が、もう一方のタブの上から◯番目にもあります。</li>
   </ul>
   <p>⚠ の行（注意が必要なこと）</p>
   <ul>
-    <li><b>事故の確率 ◯%（…）</b>: 5%以上のときです。ピンが元なら、「ピン⑥の駒が消える」のように、どのピンかを書きます。</li>
+    <li><b>事故の確率 ◯%（…）</b>: 5%以上のときです。ピンが元なら、「ピン⑥の駒（A3）がマッチする」のように、どのピンかを書きます。</li>
     <li><b>「◯」の素材が◯個分減ります</b>: 連鎖のタブで、補充が来なかったときに減る素材の量です。</li>
     <li><b>「◯」のA3が減ります／使わないA4ができます</b>: 2番目以降に登録したMAX布陣への影響です。</li>
     <li><b>そろえたマスを動かします</b>: 目標MAX布陣の形どおりに置いた駒を動かします。</li>
@@ -4149,8 +4398,13 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
   <p>盤面と素材の数</p>
   <ul>
     <li><b>①②③の盤面</b>: 打つ手の順です。赤い枠の2マスを入れ替え、✕のマスを削除します。ピンの駒は、右上の角が赤くなります。</li>
-    <li><b>手順のあと（補充は ?）</b>: 打ち終わったあとの盤面です。金色の枠は、新しく目標MAX布陣の形どおりにそろうマスです。赤い点線の枠は、目標MAX布陣の形どおりにそろえてあったのに、この手順でそろわなくなるマスです（⚠「そろえたマスを動かします」が出るカードに付きます）。</li>
-    <li><b>10MAXの素材: A1 6個→3個（3.8個）</b>: 矢印の左が今の数、矢印の右が手順を打ったあとの数です。矢印の右の数は、補充で入ってくる駒を数えていません（何が来るか分からないため）。かっこの中は、補充で入ってくる駒も入れた平均の見込みです。</li>
+    <li><b>手順の後（補充は ?）</b>: 打ち終わった後の盤面です。金色の枠は、新しく目標MAX布陣の形どおりにそろうマスです。赤い点線の枠は、目標MAX布陣の形どおりにそろえてあったのに、この手順でそろわなくなるマスです（⚠「そろえたマスを動かします」が出るカードに付きます）。</li>
+    <li><b>10MAXの素材: A1 6個→3個（3.8個）</b>: 矢印の左が今の数、矢印の右が手順を打った後の数です。矢印の右の数は、補充で入ってくる駒を数えていません（何が来るか分からないため）。括弧の中は、補充で入ってくる駒も入れた平均の見込みです。</li>
+  </ul>
+  <p>今打っている手順の続き</p>
+  <ul>
+    <li><b>「今打っている手順の続き（②③④）」</b>: 「この手順を打つ」で1手以上打つと、一番上に出るカードです。このカードの数字は、残りの手（②③④）を今の盤面から打ったときの見込みです。打ち終えた①は数えません。</li>
+    <li>補充された駒によっては、この数字が変わります。「次の手を探す」を押すと、新しい手順と比べられます。乗り換えるかどうかの目安は、「詳しい仕様を知りたい方へ」の「手順の途中で他の手順に乗り換えない方がよい理由」にあります。</li>
   </ul>
   <p class="sec-h">■ ピン</p>
   <ul>
@@ -4160,20 +4414,20 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
   </ul>
   <p class="sec-h">■ 絞り込み</p>
   <ul>
-    <li>素材とレベル・個数を選ぶと、手順のあとにその駒が指定した個数以上あるカードだけを出します。</li>
-    <li>見るのはカードの素材の数です。矢印の右の数か、かっこの中の数を切り上げた数のどちらかが、指定した個数以上なら出ます。「A3が3個以上」なら、次のようになります。
+    <li>素材とレベル・個数を選ぶと、手順の後にその駒が指定した個数以上あるカードだけを出します。</li>
+    <li>見るのはカードの素材の数です。矢印の右の数か、括弧の中の数を切り上げた数のどちらかが、指定した個数以上なら出ます。「A3が3個以上」なら、次のようになります。
       <ul>
         <li>A3 1個→<b>3個</b>（3.0個） … 出る（矢印の右が3）</li>
-        <li>A3 1個→2個（<b>2.4個</b>） … 出る（かっこの中の2.4を切り上げると3）</li>
+        <li>A3 1個→2個（<b>2.4個</b>） … 出る（括弧の中の2.4を切り上げると3）</li>
         <li>A3 1個→2個（2.0個） … 出ない</li>
       </ul>
     </li>
-    <li>かっこの中は平均の見込みなので、出たカードでも3個に届くとは限りません。「届く見込みがある」という目安です。</li>
+    <li>括弧の中は平均の見込みなので、出たカードでも3個に届くとは限りません。「届く見込みがある」という目安です。</li>
   </ul>
-  <p class="note">※必ず事故になる手順、MAXの駒を削除する手順などは出しません（くわしくは下の「詳しい仕様を知りたい方へ」）。</p>
+  <p class="note">※必ず事故になる手順、MAXの駒を削除する手順などは出しません（詳しくは下の「詳しい仕様を知りたい方へ」）。</p>
   <details class="warn-why" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);"><summary style="font-size:14px;font-weight:700;color:var(--text);">詳しい仕様を知りたい方へ</summary>
     <p class="sec-h">■ 計算の流れ</p>
-    <p><b>方法論</b>: 手順の候補は総当たり（全探索）で作り、補充の運はモンテカルロ法で平均を出しています。モンテカルロ法は、乱数を使ったシミュレーションを何回もくり返して、その平均で期待値を求める方法です。</p>
+    <p><b>方法論</b>: 手順の候補は総当たり（全探索）で作り、補充の運はモンテカルロ法で平均を出しています。モンテカルロ法は、乱数を使ったシミュレーションを何回も繰り返して、その平均で期待値を求める方法です。</p>
     <ul>
       <li><b>Step1 全部の手順を打つ</b>: 入替と削除を3手まで（「4手まで」なら4手まで）組み合わせて打ちます（3手で約90万通り）。この段階では、補充される駒はどれともマッチしない駒として扱います。この計算は1回だけで、2つのタブで共有します。</li>
       <li><b>Step2 見積もる</b>: 手順ごとに、タブごとの見積もりを出します。
@@ -4182,7 +4436,7 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
           <li>連鎖: 補充がどれともマッチしないとしたときの差し引きで見積もります。</li>
         </ul>
       </li>
-      <li><b>Step3 候補を選ぶ</b>: タブごとに、見積もりの上位150件を選びます。素材のタブは、表示と同じ並べ方（手数消費なしを先、そのあとは1手あたり）で選びます。</li>
+      <li><b>Step3 候補を選ぶ</b>: タブごとに、見積もりの上位150件を選びます。素材のタブは、表示と同じ並べ方（手数消費なしを先、その後は1手当たり）で選びます。</li>
       <li><b>Step4 シミュレーションする</b>: 選んだ手順を、補充をランダムにして各32回ずつ打ち、平均を出します。
         <ul>
           <li>素材のタブの上位20件と連鎖のタブの上位20件は、精度を高めるため各256回にします。</li>
@@ -4196,11 +4450,12 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
     <p>素材</p>
     <ul>
       <li>目標MAX布陣に足りない素材を、Lv1換算で数えます（Lv2＝3個分、Lv3＝9個分）。</li>
+      <li>布陣に使えない駒は、素材として数えません。布陣に使えない駒とは、形どおりにそろえた駒（盤面で金色に光る駒）に囲まれて、まだそろっていない布陣のマスへ入替で動かせない駒です。例えば、穴に入った駒や、布陣の外の隅にある駒です。斜め入替ありの設定では、斜めに隣り合うマスからも動かせるものとして判定します。</li>
       <li>つまり、Lv1素材の3個マッチは増減なし、4個マッチは＋2個、5個マッチは＋4個です（4個マッチでは上のレベルの駒が2個できるため）。できた駒のレベルがもう足りているときは増えません。</li>
       <li>次の手順には減点（ペナルティ）を付けています。
         <ul>
           <li>目標MAX布陣の素材の3個マッチ1回につき、1個分（Lv2の3個マッチなら3個分）。4個マッチにできた駒を、3個マッチで無駄に使うことを避けるためです。</li>
-          <li>目標MAX布陣の形どおりに置いた駒を動かすと、その駒の分（その列の上がすべてMAX布陣どおりのマスだけ）。正しく置いた駒を動かすことを避けるためです。</li>
+          <li>目標MAX布陣の形どおりに置いた駒を動かすと、その駒の分（その列の上が全てMAX布陣どおりのマスだけ）。正しく置いた駒を動かすことを避けるためです。</li>
         </ul>
       </li>
     </ul>
@@ -4214,66 +4469,75 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
         <ul>
           <li>目標MAX布陣に必要な素材が減る。</li>
           <li>使わないレベルの駒ができる。</li>
-          <li>ピンの駒が動く（行き先付きのピンは、消えるか行き先から離れる）。</li>
+          <li>ピンの駒がマッチする・動く（行き先付きのピンは、マッチするか行き先から離れる）。</li>
         </ul>
       </li>
       <li>次に目指すMAX布陣は、Lv3以上の素材が減るときと、使わないレベルの駒ができるときだけ数えます。</li>
       <li>5%未満の事故の確率は、数字の行に小さく出します。</li>
-      <li>0%は、200回試して1回も起きなかったという意味で、まったく起きないとは限りません。起爆の手順と、目標MAX布陣もピンもないときは出しません。</li>
+      <li>0%は、200回試して1回も起きなかったという意味で、全く起きないとは限りません。起爆の手順と、目標MAX布陣もピンもないときは出しません。</li>
     </ul>
     <p>どの数字も補充を試した平均なので、ぶれがあります。</p>
     <p class="sec-h">■ 並び順</p>
     <ul>
       <li>並び順は、減点を引いた数字で決めます。見出しの数字（減点の前）とは違う順になることがあります。</li>
-      <li>1手あたりは、実際に減る手数が1より少ないときは、1で割ります。</li>
+      <li>1手当たりは、減る手数の見込みが0と1の間の数になったときは、1で割ります。減る手数の見込みは平均なので、整数にならないことがあります。</li>
       <li>素材のタブで、並べる数字が小数点第1位まで同じときは、手数の増加の多い順にします。それも同じときは、目標でない素材の高いレベルの駒を消す手順を先にします。</li>
       <li>連鎖のタブは、差し引きの多い順です。</li>
     </ul>
     <p class="sec-h">■ 表示する手順</p>
     <p>次の手順は出しません。</p>
     <ul>
-      <li>いま目指しているMAX布陣で必ず事故になる手順（連鎖のタブでは、使わないレベルの駒ができる手順と、補充を入れた平均でも素材が減る手順。素材が減っても補充を入れた平均で減らない連鎖は、⚠を付けて出します）</li>
+      <li>今目指しているMAX布陣で必ず事故になる手順（連鎖のタブでは、使わないレベルの駒ができる手順と、補充を入れた平均でも素材が減る手順。素材が減っても補充を入れた平均で減らない連鎖は、⚠を付けて出します）</li>
       <li>MAXの駒を削除する手順</li>
       <li>途中で手数が尽きる手順</li>
-      <li>素材のタブ: 素材が増えない手順、連鎖のあとに手を足しただけの手順、最後の手でマッチが起きない手順（1手だけの削除は出します）、手順の一部の手だけを打つほうが得な手順</li>
-      <li>連鎖のタブ: 連鎖のあとに手を足しただけの手順</li>
+      <li>素材のタブ: 素材が増えない手順、連鎖の後に手を足しただけの手順、最後の手でマッチが起きない手順（1手だけの削除は出します）、手順の一部の手だけを打つ方が得な手順</li>
+      <li>連鎖のタブ: 連鎖の後に手を足しただけの手順</li>
     </ul>
     <p>似た手順のまとめ方</p>
     <ul>
-      <li>最後の手と手数が同じ手順は、いちばん良い1件だけを出します。連鎖のタブでは、「布陣の素材が減らない手順」と「布陣の素材が減るかわりに、手数がもっと増える手順」があれば両方出します。</li>
-      <li>打ち終わったあとの盤面が同じ手順は、1件だけ出します。</li>
-      <li>次に目指すMAX布陣は、手順の候補に影響しません。Lv3以上（補充がLv2ならLv4以上）の素材が減るときと、使わないレベルの駒ができるときに⚠を付けます（いま目指している布陣と同じ素材の布陣には付けません）。</li>
+      <li>最後の手と手数が同じ手順は、一番良い1件だけを出します。連鎖のタブでは、「布陣の素材が減らない手順」と「布陣の素材が減るかわりに、手数がもっと増える手順」があれば両方出します。</li>
+      <li>打ち終わった後の盤面が同じ手順は、1件だけ出します。</li>
+      <li>次に目指すMAX布陣は、手順の候補に影響しません。Lv3以上（補充がLv2ならLv4以上）の素材が減るときと、使わないレベルの駒ができるときに⚠を付けます（今目指している布陣と同じ素材の布陣には付けません）。</li>
     </ul>
     <p class="sec-h">■ 絞り込み</p>
     <ul>
       <li>選べるのは、登録した目標MAX布陣で使う素材とレベルです（2番目以降の布陣も含みます）。</li>
       <li>切り上げは、画面に出ている小数点第1位の数字で行います（画面の数字と判定がずれないように）。</li>
       <li>出ている一覧の中だけを絞ります。一覧に出していない手順（上の「表示する手順」）は対象になりません。</li>
-      <li>探し直しはしないので、すぐに絞られます。「◯のタブにもあります」の番号は、絞り込んだあとの番号です。</li>
+      <li>探し直しはしないので、すぐに絞られます。「◯のタブにもあります」の番号は、絞り込んだ後の番号です。</li>
     </ul>
     <p class="sec-h">■ 自動で探すとき</p>
     <ul>
       <li>盤面・残り手数・目標MAX布陣・設定・ピン・探す手数のどれかが変わるたびに探します。</li>
-      <li>「この手順を打つ」で打っている途中も、手を確定するたびに探します（手順の続きはそのまま打てます）。</li>
+      <li>「この手順を打つ」で打っている途中は、自動では探しません。「次の手を探す」を押せば探せます。</li>
       <li>「盤面を直す」のときは、直し終わってから探します。</li>
       <li>「中断」を押したときは、盤面などが変わるまで探しません。</li>
     </ul>
+    <p class="sec-h">■ 手順の途中で他の手順に乗り換えない方がよい理由</p>
+    <ul>
+      <li>手順の多くは、前半の手で駒を並べて、最後の手で素材を増やします。</li>
+      <li>途中で乗り換えると、駒を並べるために打った手が無駄になります。</li>
+      <li>手順の途中で「次の手を探す」を押すと、続きの手に1手を足した手順が、続きより大きな数字で一番上に出ることがよくあります。手を足した分、合計が大きくなるためです。</li>
+      <li>この手順に乗り換えると、素材が増える最後の手が1手先に延びます。探すたびに乗り換えると、最後の手が先へ先へと延び続けて、素材が増えにくくなります。</li>
+      <li>乗り換えを検討するのは、新しい手順の素材の増加が、続きのカードを大きく上回るときがお勧めです。</li>
+      <li>目安は、続きの2倍以上で、差が2個以上あるときです。例えば、続きが＋2個で、新しい手順が＋5個のときです。</li>
+    </ul>
     <p class="sec-h">■ ピン</p>
     <ul>
-      <li>ピンの駒は、入れ替える・削除する・マッチで消える・上の駒が消えて詰まる、のどれも起きない手順だけを探します。</li>
-      <li>行き先付きのピンの駒は、マッチで消えず、1手ごとに行き先までのマス数（縦のずれ＋横のずれ）が増えない手順だけを探します。入替で動くときも、同じ列で上の駒が消えて上に詰まるときも同じです（駒は上に詰まり、補充は下から入ります）。そのため、行き先が駒より下にあるときは、その列で駒より上が消える手順は出ません。行き先に着いたら、行き先と番号は自動で外れ、ふつうのピンになります（そこから動かない手順だけになります）。</li>
+      <li>ピンの駒は、入れ替える・削除する・マッチする・上の駒が消えて動く、のどれも起きない手順だけを探します。</li>
+      <li>行き先付きのピンの駒は、マッチせず、1手ごとに行き先までのマス数（縦のずれ＋横のずれ）が増えない手順だけを探します。入替で動くときも、同じ列で上の駒が消えて上に詰まるときも同じです（駒は上に詰まり、補充は下から入ります）。そのため、行き先が駒より下にあるときは、その列で駒より上が消える手順は出ません。行き先に着いたら、行き先と番号は自動で外れ、普通のピンになります（そこから動かない手順だけになります）。</li>
       <li>どちらのピンも、目標MAX布陣の起爆の手順は出します。</li>
-      <li>1つのマスを行き先にできるのは、1つのピンだけです。ピンの駒のマスを行き先にすることはできます（2つの駒を入れ替えたいときなど）。そのマスを押したりドラッグしたりすると、駒のほうの操作になります。</li>
-      <li>番号は行き先を付けたときに決まり、ほかのピンを外しても変わりません。</li>
-      <li>補充された駒がたまたまピンの駒とそろってマッチすると、ピンの駒が消えたり動いたりします。この起きやすさは事故の確率に含めます。</li>
-      <li>自分で打つ手でピンの駒が動くとき（行き先付きは、消えるか離れるとき）は、打つ前に確認して、ピンを外してから打ちます。行き先付きのピンは、近づく・動かないあいだは、駒について移ります。</li>
-      <li>カードの盤面では、手順の途中で動くピンの駒も、1手ごとの位置に印を付けます（補充は「?」として追います）。起爆などでピンの駒が消えたあとの盤面には付けません。</li>
+      <li>1つのマスを行き先にできるのは、1つのピンだけです。ピンの駒のマスを行き先にすることはできます（2つの駒を入れ替えたいときなど）。そのマスを押したりドラッグしたりすると、駒の方の操作になります。</li>
+      <li>番号は行き先を付けたときに決まり、他のピンを外しても変わりません。</li>
+      <li>補充された駒次第で、ピンの駒がマッチしたり動いたりすることがあります。この起きやすさは事故の確率に含めます。</li>
+      <li>自分で打つ手でピンの駒がマッチする・動くとき（行き先付きは、マッチするか行き先から離れるとき）は、打つ前に確認して、ピンを外してから打ちます。行き先付きのピンは、近づく・動かないあいだは、駒について移ります。</li>
+      <li>カードの盤面では、手順の途中で動くピンの駒も、1手ごとの位置に印を付けます（補充は「?」として追います）。起爆などでピンの駒がマッチした後の盤面には付けません。</li>
     </ul>
-    <p class="sec-h">■ 駒の相対的な位置を見れない理由</p>
+    <p class="sec-h">■ 駒の相対的な位置を見られない理由</p>
     <ul>
-      <li>1手の候補は、入替と削除でおよそ100通りあります。3手先まで読むだけで約90万通り、補充される駒の出方まで含めると、さらにその何十万倍にもなります。</li>
-      <li>しかも、ゲームの始めから終わりまでは、長いと百手を超えます。いま駒をどこに置くのが良いかは、そのずっと先まで打ってみないと分かりません。</li>
-      <li>人は「このあたりに集めておけば、あとで使える」と感覚で判断できます。これをコンピューターにさせるには、大量の対局から盤面の良し悪しを学ばせる、囲碁や将棋のAIと同じような開発が必要になります。</li>
+      <li>1手の候補は、入替と削除でおよそ100通りあります。3手先まで読むだけで約90万通り、補充される駒の出方まで含めると、更にその何十万倍にもなります。</li>
+      <li>しかも、ゲームの始めから終わりまでは、長いと百手を超えます。今駒をどこに置くのが良いかは、そのずっと先まで打ってみないと分かりません。</li>
+      <li>人は「この辺りに集めておけば、後で使える」と感覚で判断できます。これをコンピューターにさせるには、大量の対局から盤面の良し悪しを学ばせる、囲碁や将棋のAIと同じような開発が必要になります。</li>
       <li>そこでこのツールは、コンピューターが得意な「素材の数を数えること」と「補充の運の平均を出すこと」を受け持ちます。駒をどこに置くかの判断は、ご自身でお願いします。動かしたくない駒は「📌 ピン」で固定できます。</li>
     </ul>
   </details>
@@ -4283,44 +4547,44 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
   <p>ゲーム画面と全く同じ盤面を入力して、1手ずつ仮想で打つことができるシミュレーターです。</p>
   <p class="sec-h">■ 基本の使い方の流れ</p>
   <ol>
-    <li><b>はじめの盤面を入力する</b><br>ゲーム画面どおりに盤面と残り手数を入力し、「この盤面で始める」を押します。<br>（※入力を省いたマスは「?」になります。「?」はどの駒ともマッチしない仮のマスとして扱われます）</li>
+    <li><b>初めの盤面を入力する</b><br>ゲーム画面どおりに盤面と残り手数を入力し、「この盤面で始める」を押します。<br>（※入力を省いたマスは「?」になります。「?」はどの駒ともマッチしない仮のマスとして扱われます）</li>
     <li><b>ゲームと同じ手を打つ</b><br>「入替」か「削除」を選んで、シミュレーター上で手を打ちます。実際のゲームと同じように、ドラッグで入替、長押しまたは盤面の外へのドラッグで削除もできます。</li>
     <li><b>補充されたマスを確定する</b><br>新しく補充された駒（「?」になったマス）を入力し、「確定」を押します。</li>
   </ol>
   <p>※練習モード：1で「ランダムな盤面で練習する」を押すと、入力なしで、実際のゲームと同じ流れで練習できます。やめるときは「リセット」を押してください。</p>
   <p class="sec-h">■ 盤面で光っている駒は？</p>
-  <p>目標MAX布陣の形どおりに置いた駒のうち、その列の上がすべてMAX布陣どおりの駒です。「次の手を探す」で「⚠ そろえたマスを動かします」と出るのは、この駒を動かす手順です。光らせたくないときは、「⚙ 設定」の「画面の表示」でチェックを外してください。</p>
+  <p>目標MAX布陣の形どおりに置いた駒のうち、その列の上が全てMAX布陣どおりの駒です。「次の手を探す」で「⚠ そろえたマスを動かします」と出るのは、この駒を動かす手順です。光らせたくないときは、「⚙ 設定」の「画面の表示」でチェックを外してください。</p>
   <p class="sec-h">■ 残り手数の下の「◯◯まで あと: …」は？</p>
-  <p>いま目指しているMAX布陣まで、各レベルの素材があと何個足りないかです（盤面で見たままの数。置いた場所と「?」は見ません）。⚙ 設定で消せます。</p>
+  <p>今目指しているMAX布陣まで、各レベルの素材があと何個足りないかです。盤面にある駒を数え、置いた場所は見ません。ただし、布陣に使えない駒は数えません（条件は、「手順を探す」の「ⓘ 説明」の「詳しい仕様を知りたい方へ」にあります）。⚙ 設定で消せます。</p>
   <p class="sec-h">■ ゲームとずれたり、間違えたときは？</p>
   <ul>
     <li>入力間違いを直したい → 「盤面を直す」で修正できます。</li>
-    <li>盤面を全部入れ直したい → 「盤面を直す」の中の「盤面をクリア」で、盤面をすべて「?」にできます（残り手数と打った手の記録は残ります）。</li>
+    <li>盤面を全部入れ直したい → 「盤面を直す」の中の「盤面をクリア」で、盤面を全て「?」にできます（残り手数と打った手の記録は残ります）。</li>
     <li>1手前の状態に戻したい → 「1手戻す」で戻れます。</li>
     <li>赤い点線の枠が出た → 「確定」を押した際、ツールが「ありえない盤面（入力ミス）」を検知しました。赤枠のマスを確認し、入力し直してください。そのままもう一度「確定」を押せば、無視して進めることもできます。</li>
-    <li>赤枠は「ここを直せば辻褄が合う」という候補で、間違えた場所そのものとは限りません。枠のマスが合っていても、盤面のどこかがゲームとずれていることがあります。</li>
+    <li>赤枠は「ここを直せばつじつまが合う」という候補で、間違えた場所そのものとは限りません。枠のマスが合っていても、盤面のどこかがゲームとずれていることがあります。</li>
   </ul>
   <p class="sec-h">■ その他の機能</p>
   <ul>
-    <li><b>📌 ピン</b>: 駒を固定します。ドラッグで運びたいマスも決められます（くわしくは「手順を探す」の「ⓘ 説明」）。</li>
-    <li><b>リセット</b>: 盤面をすべて「?」に戻し、記録を消去します（設定と目標MAX布陣は残ります）。</li>
+    <li><b>📌 ピン</b>: 駒を固定します。ドラッグで運びたいマスも決められます（詳しくは「手順を探す」の「ⓘ 説明」）。</li>
+    <li><b>リセット</b>: 盤面を全て「?」に戻し、記録を消去します（設定と目標MAX布陣は残ります）。</li>
     <li><b>記録の書き出し／読み込み</b>: 打った手と盤面を1局分まるごとファイル（.txt）に保存・復元できます。</li>
-    <li><b>↑ 盤面へ／↓ 結果へ</b>: 盤面と「次の手を探す」の結果が1画面に収まらないとき、画面の下に出ます。押すと、盤面と結果の間を移動できます。</li>
-    <li><b>⚙ 設定</b>: ゲームモード（補充のレベル・斜め入替・PvPなど）をゲームに合わせてください。残り手数の計算や手順の探し方が変わります。ほかのゲームモードを試したいときも、ここで切り替えます。</li>
+    <li><b>▲ 盤面へ／▼ 結果へ</b>: 盤面と「次の手を探す」の結果が1画面に収まらないとき、画面の右下に丸いボタンで出ます。押すと、盤面と結果の間を移動できます。</li>
+    <li><b>⚙ 設定</b>: ゲームモード（補充のレベル・斜め入替・PvPなど）をゲームに合わせてください。残り手数の計算や手順の探し方が変わります。他のゲームモードを試したいときも、ここで切り替えます。</li>
   </ul>
 `));
 document.getElementById('btnPatternHelp').addEventListener('click', () => openInfoModal(`
   <h2>目標MAX布陣</h2>
-  <p>いま作ろうとしている最終的な盤面の形（目標MAX布陣）を登録します。</p>
+  <p>今作ろうとしている最終的な盤面の形（目標MAX布陣）を登録します。</p>
   <p class="sec-h">■ 登録するメリット</p>
   <p>登録は任意ですが、登録することで以下の機能が使えるようになります。</p>
   <ol>
     <li>「🔍 次の手を探す」が、目標に必要な素材が効率よく増える手順を探すようになります。</li>
-    <li>必要な素材が勝手に揃って消えてしまう「事故」の確率を事前に警告してくれます。</li>
-    <li>いま目指しているMAX布陣に必要な素材が減る手順や連鎖を除外してくれます（連鎖は、補充を入れた平均で素材が減らないものは注意を付けて出します）。</li>
+    <li>必要な素材が勝手にそろって消えてしまう「事故」の確率を事前に警告してくれます。</li>
+    <li>今目指しているMAX布陣に必要な素材が減る手順や連鎖を除外してくれます（連鎖は、補充を入れた平均で素材が減らないものは注意を付けて出します）。</li>
   </ol>
-  <p class="sec-h">■ はじめての方は「プリセット」がおすすめ</p>
-  <p>よく使われるMAX布陣が用意されています（斜め移動なし: 3・4・7・8・10MAX ／ 斜め移動あり: 3・4・6・12・18MAX）。まずはここから選んでみてください。（ご自身で作った布陣をプリセットとして保存することも可能です）</p>
+  <p class="sec-h">■ 初めての方は「プリセット」がお勧め</p>
+  <p>よく使われるMAX布陣が用意されています（斜め移動なし: 3・4・7・8・10・12MAX ／ 斜め移動あり: 3・4・6・12・18MAX）。まずはここから選んでみてください。（ご自身で作った布陣をプリセットとして保存することも可能です）</p>
   <p class="sec-h">■ 複数の目標を登録した場合</p>
   <p>上から順番に目指します（順番は ↑↓ ボタンで入れ替え可能）。<br>1つ目が起爆（完成）すると、自動的に次の目標に切り替わります。次に目指すMAX布陣（2番目以降の布陣）の素材が減る手順や、使わないレベルの駒ができる手順も表示します。Lv3以上の素材が減るときと、使わないレベルの駒ができるときは、カードに⚠を付けて知らせます。</p>
   <p class="sec-h">■ ボタンの機能</p>
@@ -4357,7 +4621,7 @@ document.getElementById('btnConfig').addEventListener('click', () => {
     h += `<div class="config-item"><label><span class="species-pill" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${sp}</span> 最大Lv</label>` +
       `<input type="number" min="2" max="15" data-max="${sp}" value="${state.maxLevels[sp]}"></div>`;
   }
-  h += '</div><p class="sec-h">■ 補充される駒のレベル</p><div class="note">駒が消えたあと補充される駒のレベルです。「補充される駒がLv2になる」ゲームモードでは、その素材をLv2にしてください。</div><div class="config-grid">';
+  h += '</div><p class="sec-h">■ 補充される駒のレベル</p><div class="note">駒が消えた後補充される駒のレベルです。「補充される駒がLv2になる」ゲームモードでは、その素材をLv2にしてください。</div><div class="config-grid">';
   for (const sp of SPECIES) {
     const v = state.refillLevels[sp] || 1;
     h += `<div class="config-item"><label><span class="species-pill" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${sp}</span> 補充</label>` +
@@ -4366,23 +4630,23 @@ document.getElementById('btnConfig').addEventListener('click', () => {
   // 盤面の見え方を変える項目(そろえたマスの光・足りない素材の数)は「画面の表示」にまとめる(2026-09-29 本人)
   h += '</div><p class="sec-h">■ 画面の表示</p>';
   h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgAlignedGlow" ${state.alignedGlow ? 'checked' : ''}> 目標MAX布陣にそろえたマスをゆっくり光らせる</label>` +
-    '<div class="note">いま目指しているMAX布陣の形どおりに置いた駒のうち、その列の上がすべてMAX布陣どおりの駒を、盤面で光らせます。「この盤面で始める」を押したあとに適用されます。</div></div>';
+    '<div class="note">今目指しているMAX布陣の形どおりに置いた駒のうち、その列の上が全てMAX布陣どおりの駒を、盤面で光らせます。「この盤面で始める」を押した後に適用されます。</div></div>';
   h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgShowShortage" ${state.showShortage ? 'checked' : ''}> 目標MAX布陣まで足りない素材の数を出す</label>` +
-    '<div class="note">残り手数の下に、いま目指しているMAX布陣まであと何個足りないかを、レベルごとに出します。置いた場所は見ません。「?」は数えません。</div></div>';
+    '<div class="note">残り手数の下に、今目指しているMAX布陣まであと何個足りないかを、レベルごとに出します。置いた場所は見ません。布陣に使えない駒は数えません。</div></div>';
   // ゲームのルールに合わせる設定(連鎖による手数の増加・斜め入替・PvP)は見出し「ゲームモード」1つにまとめ、ツールの入力のしかたは最後に置く
   h += '<p class="sec-h">■ ゲームモード</p>' +
     '<div class="cfg-box"><div class="cfg-sub">連鎖による手数の増加</div>' +
     `<label class="opt"><input type="radio" name="cfgRecovery" value="normal" ${state.increasingRecovery ? '' : 'checked'}> 通常（魔神とーばつ・PvPなど）</label>` +
     `<label class="opt"><input type="radio" name="cfgRecovery" value="increasing" ${state.increasingRecovery ? 'checked' : ''}> ラウンドごとに増える（勇者しゅーらいなど）</label>` +
-    '<div class="note">通常は、ラウンド2以降のマッチ1回につき+1です。ラウンドごとに増えるは、ラウンド2は+1、ラウンド3は+2…と増えます。ラウンドは1手の中でマッチが起きる回ごとの数え方で、入替で直接そろったマッチと、削除のあと最初のマッチがラウンド1です。</div></div>';
+    '<div class="note">通常は、ラウンド2以降のマッチ1回につき+1です。ラウンドごとに増えるは、ラウンド2は+1、ラウンド3は+2…と増えます。ラウンドは1手の中でマッチが起きる回ごとの数え方で、入替で直接そろったマッチと、削除の後最初のマッチがラウンド1です。</div></div>';
   h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgDiagonal" ${state.diagonal ? 'checked' : ''}> 斜め入替（斜めに隣り合うマスとも入れ替えられる）</label>` +
-    '<div class="note">オンにすると「次の手を探す」で調べる手が増えるので、計算に時間がかかります。</div></div>';
+    '<div class="note">オンにすると「次の手を探す」で調べる手が増えるので、計算に時間が掛かります。</div></div>';
   h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgPvp" ${state.pvp ? 'checked' : ''}> PvPモード</label>` +
     `<div class="note">打った手と残り手数の合計が${PVP_MOVE_CAP}手に届くと、連鎖が起きても手数が増えなくなります。</div></div>`;
   h += '<p class="sec-h">■ 補充の入力のしかた</p>' +
     `<div class="cfg-box"><label class="opt"><input type="radio" name="cfgRefillInput" value="final" ${state.refillInputMode === 'waves' ? '' : 'checked'}> 最後の盤面だけ</label>` +
     `<label class="opt"><input type="radio" name="cfgRefillInput" value="waves" ${state.refillInputMode === 'waves' ? 'checked' : ''}> 補充の回ごと</label>` +
-    '<div class="note">最後の盤面だけは、マッチが止まったあとの盤面を入力して、ゲーム画面の残り手数を確かめて確定します。補充の回ごとは、補充されるたびに補充されたマスを入力します（通常プレイでは非推奨。他人の手を動画などで追うとき用）。</div></div>';
+    '<div class="note">最後の盤面だけは、マッチが止まった後の盤面を入力して、ゲーム画面の残り手数を確かめて確定します。補充の回ごとは、補充されるたびに補充されたマスを入力します（通常プレイでは非推奨。他人の手を動画などで追うとき用）。</div></div>';
   h += '<div class="note" style="margin-top:12px;">「初期設定に戻す」を押すと、この画面の項目が初期の設定に戻ります。「保存」を押すまでは決まりません。</div>';
   h += '<div class="modal-actions"><button id="cfgDefaults" style="margin-right:auto;" title="この画面の項目を初期設定に戻します。「保存」を押すまでは決まりません。">初期設定に戻す</button><button id="cfgCancel">キャンセル</button><button id="cfgSave" class="primary">保存</button></div>';
   modal.innerHTML = h;
@@ -4500,7 +4764,7 @@ function exportGameRecord() {
     `設定: 最大レベル A${state.maxLevels.A} B${state.maxLevels.B} C${state.maxLevels.C} D${state.maxLevels.D}` +
       ` / 補充レベル A${state.refillLevels.A} B${state.refillLevels.B} C${state.refillLevels.C} D${state.refillLevels.D}` +
       ` / 斜め入替 ${state.diagonal ? 'あり' : 'なし'} / 連鎖による増加がラウンドごとに増える ${state.increasingRecovery ? 'あり' : 'なし'} / PvPモード ${state.pvp ? 'あり' : 'なし'}`,
-    `目標MAX布陣: ${state.patterns.length ? state.patterns.map((p, i) => `${i + 1}番目「${p.name}」（${p.species}）${target && target.id === p.id ? '←いま目指している' : ''}`).join(' / ') : 'なし'}`,
+    `目標MAX布陣: ${state.patterns.length ? state.patterns.map((p, i) => `${i + 1}番目「${p.name}」（${p.species}）${target && target.id === p.id ? '←今目指している' : ''}`).join(' / ') : 'なし'}`,
     '',
     '手ごとの記録:',
     ...log.map((e, i) => `  手${i + 1}  ${describeMove(e.move)}  増加${e.chain}${e.adjust ? `  直し${e.adjust > 0 ? '+' : ''}${e.adjust}` : ''}  残り${e.leftAfter}${e.src === 'card' ? `  （カードの手順 ${e.step}/${e.total}手目）` : ''}`),
@@ -4553,7 +4817,7 @@ function importGameRecord(text, skipAsk) {
   if (!rec) { openNotice('記録を読み込めませんでした。「📝 記録を書き出す」で書き出したファイルを選んでください。'); return; }
   const load = () => applyRecord(rec);
   if (skipAsk) { load(); return; }
-  openAsk(`記録（${rec.log.length}手）を読み込みます。いま打っている対局は消え、設定と目標MAX布陣も記録のものに置き換わります。よろしいですか？`, { okLabel: '読み込む', onOk: load });
+  openAsk(`記録（${rec.log.length}手）を読み込みます。今打っている対局は消え、設定と目標MAX布陣も記録のものに置き換わります。よろしいですか？`, { okLabel: '読み込む', onOk: load });
 }
 function applyRecord(rec) {
   state.maxLevels = rec.maxLevels;
