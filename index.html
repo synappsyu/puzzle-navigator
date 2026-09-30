@@ -3579,12 +3579,18 @@ function shortageHtml() {
   const bsp = new Int8Array(SIZE * SIZE), blv = new Int8Array(SIZE * SIZE);
   flatFromGrid(state.board, bsp, blv);
   const dead = deadMaskOf(bsp, blv, p);   // 死にゴマは数えない
-  state.board.forEach((row, y) => row.forEach((c, x) => { if (c && c.species === p.species && !(dead && dead[y * SIZE + x])) have[c.level] = (have[c.level] || 0) + 1; }));
+  const deadN = {};   // 布陣に使えない駒の数(レベルごと)。数えずに、行の最後の括弧に出す
+  state.board.forEach((row, y) => row.forEach((c, x) => {
+    if (!c || c.species !== p.species) return;
+    if (dead && dead[y * SIZE + x]) deadN[c.level] = (deadN[c.level] || 0) + 1;
+    else have[c.level] = (have[c.level] || 0) + 1;
+  }));
   const levels = Object.keys(req).map(Number).sort((a, b) => a - b);
   const short = levels.map(L => Math.max(0, req[L] - (have[L] || 0)));
   const name = `${esc(p.name)}（${p.species}）`;
   if (short.every(v => v === 0)) return `${name}に必要な素材は盤面にそろっています。`;
-  return `${name}まで あと: ${levels.map((L, i) => `${p.species}${L} ${short[i]}個`).join(' / ')}`;
+  const deadParts = levels.filter(L => deadN[L]).map(L => `${p.species}${L} ${deadN[L]}個`);
+  return `${name}まで あと: ${levels.map((L, i) => `${p.species}${L} ${short[i]}個`).join(' / ')}${deadParts.length ? `（布陣に使えない駒: ${deadParts.join(' / ')}）` : ''}`;
 }
 function updateShortageLine() {
   const el = document.getElementById('shortageLine');
@@ -4555,7 +4561,7 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
   <p class="sec-h">■ 盤面で光っている駒は？</p>
   <p>目標MAX布陣の形どおりに置いた駒のうち、その列の上が全てMAX布陣どおりの駒です。「次の手を探す」で「⚠ そろえたマスを動かします」と出るのは、この駒を動かす手順です。光らせたくないときは、「⚙ 設定」の「画面の表示」でチェックを外してください。</p>
   <p class="sec-h">■ 残り手数の下の「◯◯まで あと: …」は？</p>
-  <p>今目指しているMAX布陣まで、各レベルの素材があと何個足りないかです。盤面にある駒を数え、置いた場所は見ません。ただし、布陣に使えない駒は数えません（条件は、「手順を探す」の「ⓘ 説明」の「詳しい仕様を知りたい方へ」にあります）。⚙ 設定で消せます。</p>
+  <p>今目指しているMAX布陣まで、各レベルの素材があと何個足りないかです。盤面にある駒を数え、置いた場所は見ません。ただし、布陣に使えない駒は数えません（条件は、「手順を探す」の「ⓘ 説明」の「詳しい仕様を知りたい方へ」にあります）。布陣に使えない駒があるときは、その数を最後の括弧の中に出します。入替で運べば使えることもあるので、盤面を見て判断してください。⚙ 設定で消せます。</p>
   <p class="sec-h">■ ゲームとずれたり、間違えたときは？</p>
   <ul>
     <li>入力間違いを直したい → 「盤面を直す」で修正できます。</li>
@@ -4632,7 +4638,7 @@ document.getElementById('btnConfig').addEventListener('click', () => {
   h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgAlignedGlow" ${state.alignedGlow ? 'checked' : ''}> 目標MAX布陣にそろえたマスをゆっくり光らせる</label>` +
     '<div class="note">今目指しているMAX布陣の形どおりに置いた駒のうち、その列の上が全てMAX布陣どおりの駒を、盤面で光らせます。「この盤面で始める」を押した後に適用されます。</div></div>';
   h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgShowShortage" ${state.showShortage ? 'checked' : ''}> 目標MAX布陣まで足りない素材の数を出す</label>` +
-    '<div class="note">残り手数の下に、今目指しているMAX布陣まであと何個足りないかを、レベルごとに出します。置いた場所は見ません。布陣に使えない駒は数えません。</div></div>';
+    '<div class="note">残り手数の下に、今目指しているMAX布陣まであと何個足りないかを、レベルごとに出します。置いた場所は見ません。布陣に使えない駒は数えず、その数を括弧の中に出します。</div></div>';
   // ゲームのルールに合わせる設定(連鎖による手数の増加・斜め入替・PvP)は見出し「ゲームモード」1つにまとめ、ツールの入力のしかたは最後に置く
   h += '<p class="sec-h">■ ゲームモード</p>' +
     '<div class="cfg-box"><div class="cfg-sub">連鎖による手数の増加</div>' +
