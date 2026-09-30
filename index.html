@@ -532,7 +532,9 @@ function runsValueDelta(runs, coefficient) {
   }
   return delta;
 }
+// 1回の呼び出しが1回分(1ラウンド)のマッチ。回の区切り(その回の最初の位置)を out.rounds に積む(advancePenalty が使う)。
 function pushEvents(runs, out) {
+  (out.rounds || (out.rounds = [])).push(out.length);
   for (const r of runs) out.push({ species: SPECIES_NAME[r.spIdx], level: r.level, length: r.len });
 }
 function maxLevelsToIdx(maxLevels) {
@@ -1759,6 +1761,7 @@ function renderAutoSearchBtn() {
  * 素材は patternCountsFlat の deficit(布陣を完成させるのに足りない素材。Lv1換算で Lv2 = 3個分)の減りで数え、駒の位置は見ない(位置は利用者が見る)。
  * 3個マッチ自体は0(A1 3個 = A2 1個)で、空いたマスに入る補充の分だけ増える。4個マッチは2個分増える。
  * ただし布陣の色の3個マッチ(布陣で使う最高レベルより下)は、1回につき 3^(レベル-1) 個分を引く(A1の3マッチなら1個分)。
+ * (5個以上のマッチでできた3個の駒が、すぐ次の回にそのままマッチした分は引かない。)
  * 4個マッチならA2をA1 2個分で作れるのに3個使った分。引かないと、4個マッチにできたA1を3マッチで使う手順が上位に並ぶ。
  * 手順の洗い出しは2つの一覧で共有する(findAllOptions。入替と削除を3手/4手まで全部。途中の補充は '?' として打つ)。
  *   ・荒い見積り: 補充が '?' のときの deficit の減り + 補充されるマス × 布陣の色が来る確率 × 補充の駒のLv1換算(足りない分まで)
@@ -1776,9 +1779,26 @@ function advanceBetter(a, b) {
   return ((b.free ? 1 : 0) - (a.free ? 1 : 0)) || (b.perMove - a.perMove);
 }
 // 布陣の色の3個マッチで引く素材の量(マッチの内訳 events から)
+// 5個以上のマッチでできた3個の駒が、すぐ次の回にそのままマッチした分は引かない(5個マッチの一部で、避けられないため。2026-10-01 本人)。
+// 「すぐ前の回に同じ素材・1つ下のレベルの5個以上のマッチがあれば、その1回につき、3個マッチ1回分を引かない」で数える。
 function advancePenalty(events, target, need) {
   let pen = 0;
-  for (const e of events) if (e.species === target.species && e.length === 3 && e.level < need) pen += Math.pow(3, e.level - 1);
+  const starts = events.rounds || [0];
+  let prev = null;   // すぐ前の回の5個以上のマッチの数(レベルごと)
+  for (let r = 0; r < starts.length; r++) {
+    const end = r + 1 < starts.length ? starts[r + 1] : events.length;
+    let cur = null;
+    for (let k = starts[r]; k < end; k++) {
+      const e = events[k];
+      if (e.species !== target.species) continue;
+      if (e.length >= 5) { if (!cur) cur = []; cur[e.level] = (cur[e.level] || 0) + 1; }
+      else if (e.length === 3 && e.level < need) {
+        if (prev && prev[e.level - 1] > 0) prev[e.level - 1]--;
+        else pen += Math.pow(3, e.level - 1);
+      }
+    }
+    prev = cur;
+  }
   return pen;
 }
 // そろったマス(目標MAX布陣の形どおりに、素材・レベル・場所が全部合っているマス)を動かした分を引く。
@@ -4460,7 +4480,7 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
       <li>布陣に使えない駒は、素材として数えません。布陣に使えない駒とは、形どおりにそろえた駒（盤面で金色に光る駒）に囲まれて、まだそろっていない布陣のマスへ入替で動かせない駒です。例えば、起爆位置に入った駒や、布陣の外の隅にある駒です。斜め入替ありの設定では、斜めに隣り合うマスからも動かせるものとして判定します。</li>
       <li>次の手順には減点（ペナルティ）を付けています。
         <ul>
-          <li>目標MAX布陣の素材の3個マッチ1回につき、1個分（Lv2の3個マッチなら3個分）。4個マッチにできた駒を、3個マッチで無駄に使うことを避けるためです。</li>
+          <li>目標MAX布陣の素材の3個マッチ1回につき、1個分（Lv2の3個マッチなら3個分）。4個マッチにできた駒を、3個マッチで無駄に使うことを避けるためです。ただし、5個マッチでできた3個の駒が続けてマッチしたときは、減点を付けません。このマッチは5個マッチの一部で、避けられないためです。</li>
           <li>目標MAX布陣の形どおりに置いた駒を動かすと、その駒の分（その列の上が全てMAX布陣どおりのマスだけ）。正しく置いた駒を動かすことを避けるためです。</li>
         </ul>
       </li>
