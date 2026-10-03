@@ -202,13 +202,20 @@
      ピンの点線・行き先の枠は、白では明るい板の上で見えにくいので、濃い紫にする */
   #board .cell.highlight, #board .cell.highlight-del { box-shadow: 0 0 0 3px var(--mark); }
   #board .cell.pinned { border-color: #4b2f7a; }
-  #board .cell.pin-dest { box-shadow: inset 0 0 0 2px #4b2f7a; }
-  #board .cell.pin-dest.highlight, #board .cell.pin-dest.highlight-del { box-shadow: inset 0 0 0 2px #4b2f7a, 0 0 0 3px var(--mark); }
+  /* 行き先のマスは、番号の丸だけで示す(枠は付けない。2026-10-03 本人「番号だけの方がノイズが少ない」) */
+  #board .cell.pin-dest { box-shadow: none; }
+  #board .cell.pin-dest.highlight, #board .cell.pin-dest.highlight-del { box-shadow: 0 0 0 3px var(--mark); }
+  /* 削除の✕の縁: 黒い縁は明るい板の上で重く見えるので、白い細い縁にする(赤い駒の上でも✕の形が分かる) */
+  #board .cell .delx, .mini-board.chain .cell .delx { text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; }
   #board .cell.dest-hover { box-shadow: inset 0 0 0 3px #4b2f7a; }
   #board .cell.aligned-glow.highlight, #board .cell.aligned-glow.highlight-del { animation-name: alignedGlowRingLight; }
   @keyframes alignedGlowRingLight { 0%, 100% { box-shadow: 0 0 0 3px var(--mark), 0 0 0 0 rgba(255,184,0,0); } 50% { box-shadow: 0 0 0 3px var(--mark), 0 0 15px 8px rgba(255,184,0,1); } }
   .mini-board.chain .cell.mini.highlight, .mini-board.chain .cell.mini.highlight-del { box-shadow: 0 0 0 2px var(--mark); }
   .mini-board.chain .cell.mini.align-new { box-shadow: 0 0 0 2px rgb(255,184,0); }
+  /* 線の絵の印(ツールの中で描くので、機種によって見た目が変わらない。2026-10-03) */
+  .ico { width: 16px; height: 16px; vertical-align: -3px; margin-right: 5px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .ico-pin { width: 13px; height: 13px; display: block; }
+  .ico-warn { width: 1.05em; height: 1.05em; vertical-align: -0.15em; margin-right: 3px; }
   /* ヒーローの絵(2026-10-03) */
   .cell.char { text-shadow: none; }
   .char-rows { display:flex; flex-direction:column; gap:8px; margin:10px 0; }
@@ -250,7 +257,7 @@
   .game-status { font-size:13px; line-height:1.6; margin:0 0 8px; }
   .shortage-line { font-size:13px; line-height:1.6; margin:-4px 0 8px; }
   .help-btn { vertical-align: middle; }
-  /* 枠の見出しと「ⓘ 説明」を並べる。幅が狭いときは、見出しを折らずに右のボタンを次の行に回す */
+  /* 枠の見出しと「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.6v.01"/></svg>説明」を並べる。幅が狭いときは、見出しを折らずに右のボタンを次の行に回す */
   .panel-title { display:flex; align-items:center; gap:8px; }
   .panel-title h2 { margin:0; }
   .panel-title h2, .panel-title .help-btn { white-space: nowrap; }
@@ -314,17 +321,17 @@
 <div class="app">
   <header>
     <div>
-      <h1>スラだんパズルナビゲーター <span class="ver">v2.2.6</span></h1>
+      <h1>スラだんパズルナビゲーター <span class="ver">v2.2.10</span></h1>
       <div class="credit"><span>created by シナっぷ ／</span> <span>thanks to EGGのみんな</span></div>
       <div class="sub">ゲームと同じ盤面を入力して1手ずつ進められるシミュレーターです。MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖も探せます。</div>
     </div>
     <div class="toolbar">
-      <button id="btnConfig">⚙ 設定</button>
-      <button id="btnChars">🖼 ヒーロー</button>
+      <button id="btnConfig"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.49 10.69L22.14 10.88L22.14 13.12L19.49 13.31L19.42 13.66L18.22 16.37L19.96 18.38L18.38 19.96L16.37 18.22L16.07 18.42L13.31 19.49L13.12 22.14L10.88 22.14L10.69 19.49L10.34 19.42L7.63 18.22L5.62 19.96L4.04 18.38L5.78 16.37L5.58 16.07L4.51 13.31L1.86 13.12L1.86 10.88L4.51 10.69L4.58 10.34L5.78 7.63L4.04 5.62L5.62 4.04L7.63 5.78L7.93 5.58L10.69 4.51L10.88 1.86L13.12 1.86L13.31 4.51L13.66 4.58L16.37 5.78L18.38 4.04L19.96 5.62L18.22 7.63L18.42 7.93Z"/><circle cx="12" cy="12" r="3"/></svg>設定</button>
+      <button id="btnChars"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>ヒーロー</button>
       <button id="btnResetGame" class="danger" title="盤面を全部「?」に戻し、打った手の記録も消します。目標MAX布陣と設定は残ります。">リセット</button>
       <span class="toolbar-break"></span>
-      <button id="btnExportGame" class="quiet dim" title="1手以上打つと押せます。">📝 記録を書き出す</button>
-      <button id="btnImportGame" class="quiet" title="書き出した記録を読み込んで、最初の盤面から1手ずつ再現します。">📂 記録を読み込む</button>
+      <button id="btnExportGame" class="quiet dim" title="1手以上打つと押せます。"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/></svg>記録を書き出す</button>
+      <button id="btnImportGame" class="quiet" title="書き出した記録を読み込んで、最初の盤面から1手ずつ再現します。"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4"/><path d="M7 8l5-5 5 5"/><path d="M4 20h16"/></svg>記録を読み込む</button>
       <input type="file" id="importFile" accept=".txt,.json,text/plain,application/json" style="display:none">
     </div>
   </header>
@@ -345,18 +352,18 @@
     </ol>
     <p class="guide-h">③ MAX布陣づくりのサポートに使う</p>
     <ol>
-      <li>⚙ 設定でゲームモードを合わせ、「目標MAX布陣」を選びます（初めは「プリセット」がお勧め）。</li>
+      <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.49 10.69L22.14 10.88L22.14 13.12L19.49 13.31L19.42 13.66L18.22 16.37L19.96 18.38L18.38 19.96L16.37 18.22L16.07 18.42L13.31 19.49L13.12 22.14L10.88 22.14L10.69 19.49L10.34 19.42L7.63 18.22L5.62 19.96L4.04 18.38L5.78 16.37L5.58 16.07L4.51 13.31L1.86 13.12L1.86 10.88L4.51 10.69L4.58 10.34L5.78 7.63L4.04 5.62L5.62 4.04L7.63 5.78L7.93 5.58L10.69 4.51L10.88 1.86L13.12 1.86L13.31 4.51L13.66 4.58L16.37 5.78L18.38 4.04L19.96 5.62L18.22 7.63L18.42 7.93Z"/><circle cx="12" cy="12" r="3"/></svg>設定でゲームモードを合わせ、「目標MAX布陣」を選びます（初めは「プリセット」がお勧め）。</li>
       <li>盤面と残り手数を入力して、「この盤面で始める」を押します。</li>
-      <li>「🔍 次の手を探す」を押します。素材を集める手順は「素材」、手数が増える連鎖は「連鎖」のタブに出ます。</li>
+      <li>「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>次の手を探す」を押します。素材を集める手順は「素材」、手数が増える連鎖は「連鎖」のタブに出ます。</li>
       <li>良い手をゲームで打ち、補充された駒を入力して「確定」を押します。</li>
     </ol>
-    <p class="note">※便利な機能: 「📌 ピン」（動かしたくない駒を固定。ドラッグで運びたいマスも決められる）／「自動：オン」（盤面が変わるたびに自動で探す）／「絞り込み」（「A3が3個以上」などで結果を絞る）<br>※盤面が少しずれたら「盤面を直す」、大きく変わったら「リセット」してください。</p>
+    <p class="note">※便利な機能: 「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/></svg>ピン」（動かしたくない駒を固定。ドラッグで運びたいマスも決められる）／「自動：オン」（盤面が変わるたびに自動で探す）／「絞り込み」（「A3が3個以上」などで結果を絞る）<br>※盤面が少しずれたら「盤面を直す」、大きく変わったら「リセット」してください。</p>
   </details>
 
   <div class="layout">
     <div class="col-left">
       <div class="panel" id="simPanel">
-        <div class="panel-head"><div class="panel-title"><h2>シミュレーター</h2><button id="btnSimHelp" class="small help-btn">ⓘ 説明</button></div><span class="note" id="ruleBadge"></span></div>
+        <div class="panel-head"><div class="panel-title"><h2>シミュレーター</h2><button id="btnSimHelp" class="small help-btn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.6v.01"/></svg>説明</button></div><span class="note" id="ruleBadge"></span></div>
         <div id="gameControls"></div>
         <div class="brush-row" id="brushRow"></div>
         <div class="board-wrap">
@@ -366,10 +373,10 @@
 
       <div class="panel" id="chainPanel">
         <div class="panel-head">
-          <div class="panel-title"><h2>手順を探す</h2><button id="btnHowItWorks" class="small help-btn">ⓘ 説明</button></div>
+          <div class="panel-title"><h2>手順を探す</h2><button id="btnHowItWorks" class="small help-btn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.6v.01"/></svg>説明</button></div>
         </div>
         <div class="toolbar" style="margin-top:0;margin-bottom:6px;">
-          <button id="btnSearch" class="primary">🔍 次の手を探す</button>
+          <button id="btnSearch" class="primary"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>次の手を探す</button>
           <button id="btnAutoSearch">自動：オフ</button>
           <button id="btnChainCancel" class="danger" style="display:none;">中断</button>
           <label class="small" style="display:flex;align-items:center;gap:4px;">探す手数
@@ -385,20 +392,20 @@
     <div class="col-right">
       <div class="panel">
         <div class="panel-head">
-          <div class="panel-title"><h2>目標MAX布陣</h2><button id="btnPatternHelp" class="small help-btn">ⓘ 説明</button></div>
+          <div class="panel-title"><h2>目標MAX布陣</h2><button id="btnPatternHelp" class="small help-btn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.6v.01"/></svg>説明</button></div>
           <div>
             <button id="btnPickPattern" class="small">プリセット</button>
             <button id="btnAddPattern" class="small primary">＋ 新規追加</button>
           </div>
         </div>
         <div id="patternList"></div>
-        <div class="note" id="patternEmptyNote" style="display:none;">登録されているMAX布陣はありません。登録しなくても「シミュレーター」と「🔍 次の手を探す」は使えます（手数が増える連鎖を探します）。登録すると、「🔍 次の手を探す」が目標MAX布陣に必要な素材が増える手順も探すようになります。</div>
+        <div class="note" id="patternEmptyNote" style="display:none;">登録されているMAX布陣はありません。登録しなくても「シミュレーター」と「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>次の手を探す」は使えます（手数が増える連鎖を探します）。登録すると、「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>次の手を探す」が目標MAX布陣に必要な素材が増える手順も探すようになります。</div>
       </div>
     </div>
   </div>
 
   <button id="btnJump" class="fab-round" style="display:none;"></button><button id="btnChainCollapse" class="fab-pill" style="display:none;"></button>
-  <footer>ブラウザ内で完結・データはこのブラウザだけに自動保存されます（ブラウザのデータを消すと消えます。残しておきたい対局は「📝 記録を書き出す」で書き出してください）。</footer>
+  <footer>ブラウザ内で完結・データはこのブラウザだけに自動保存されます（ブラウザのデータを消すと消えます。残しておきたい対局は「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/></svg>記録を書き出す」で書き出してください）。</footer>
 </div>
 
 <div id="modalRoot"></div>
@@ -809,14 +816,14 @@ function inspectPattern(pattern, maxLevels, coefficient, samples = 12) {
 }
 function inspectSummary(info) {
   if (!info.need) return 'MAX布陣のマスがまだ入力されていません。';
-  if (!info.hits.length) return '⚠ どの手を打ってもMAXができません。入力に間違いがないか確かめてください。';
+  if (!info.hits.length) return '<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>どの手を打ってもMAXができません。入力に間違いがないか確かめてください。';
   const h = info.hits[0];
   const n = h.min === h.max ? `${h.max}個` : `${h.min}〜${h.max}個`;
   const m = h.move;
   const how = m.type === 'delete' ? `列${m.pos.x + 1}・行${m.pos.y + 1} を削除して起爆`
     : `列${m.a.x + 1}・行${m.a.y + 1} と 列${m.b.x + 1}・行${m.b.y + 1} を${m.a.x !== m.b.x && m.a.y !== m.b.y ? '斜めに' : ''}入れ替えて起爆`;
   return `${how} → MAX ${n}`
-    + (info.stable ? '' : ' / ⚠ 完成しても勝手にマッチしてしまう形です');
+    + (info.stable ? '' : ' / <svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>完成しても勝手にマッチしてしまう形です');
 }
 
 /* ============================== 読み込んだデータの点検 ==============================
@@ -1480,7 +1487,7 @@ function setPinDest(from, to) {
   refresh();
   autoSearchAfterMove();
 }
-// 「📌 ピン」でマスを押す: 1段階戻す。行き先付きのピンの駒 → 行き先を外す(固定ピンに戻る) / 固定ピンの駒 → 外す /
+// 「ピン」でマスを押す: 1段階戻す。行き先付きのピンの駒 → 行き先を外す(固定ピンに戻る) / 固定ピンの駒 → 外す /
 // 行き先のマス(ピンの駒ではない) → その行き先を外す / ほかの駒 → 固定ピンを付ける。ピンの駒と行き先が同じマスなら、駒を優先する
 function togglePin(x, y) {
   const g = state.game, i = y * SIZE + x, c = state.board[y][x];
@@ -1598,7 +1605,7 @@ function laterLossLines(finalGrid) {
 }
 // カードの注意(⚠付きの赤字の行)を、見出しのすぐ下にまとめて出す
 function cardWarnsHtml(lines) {
-  return lines.length ? `<div class="card-warns">${lines.map(t => `<div class="card-warn">⚠ ${t}</div>`).join('')}</div>` : '';
+  return lines.length ? `<div class="card-warns">${lines.map(t => `<div class="card-warn"><svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>${t}</div>`).join('')}</div>` : '';
 }
 // 見出しの「素材の増加 +5.4個（1手あたり +4.0個）」または「（手数消費なし）」。素材・連鎖の両方のタブで同じ文にする(同じ手順だと気付けるように)。
 // 数字は減点を引く前の期待値(純粋な数字)。並び順だけ、減点を引いた数字で決める(2026-09-28 本人)
@@ -3272,7 +3279,7 @@ function openAccidentModal(move, names, risk, onPlay, sure, pathLen, pinParts, s
   overlay.className = 'overlay';
   const modal = document.createElement('div');
   modal.className = 'modal info-modal';
-  modal.innerHTML = `<h2 style="color:var(--danger)">⚠ 事故に注意</h2>
+  modal.innerHTML = `<h2 style="color:var(--danger)"><svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>事故に注意</h2>
     <p style="font-size:15px;"><b>${pathLen > 1 ? `この${pathLen}手の手順（1手目: ${describeMove(move)}）` : describeMove(move)}</b></p>
     ${sureLoss
       ? `<p>この${pathLen > 1 ? '手順' : '手'}を打つと、補充が来なかったときは、目標MAX布陣${names.map(n => `「${esc(n)}」`).join('・')}の素材が<b style="color:var(--danger);font-size:18px;">${sureLoss}個分</b>減ります（補充を入れた平均では減りません）。</p>`
@@ -3781,7 +3788,7 @@ function renderBoard() {
     if (glow && glow.has(y * SIZE + x)) div.classList.add('aligned-glow');
     if (pinSet.has(y * SIZE + x)) {
       div.classList.add('pinned');
-      const m = document.createElement('div'); m.className = 'pin-mark'; m.textContent = '📌';
+      const m = document.createElement('div'); m.className = 'pin-mark'; m.innerHTML = '<svg class="ico-pin" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 2.5h6l-1 6.5 4 4H6l4-4z" fill="#e5484d" stroke="#7a1a1d" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 13v9" stroke="#7a1a1d" stroke-width="2" stroke-linecap="round"/></svg>';
       div.appendChild(m);
       // 行き先付きのピンは、行き先のマスと同じ番号の丸を左上に出す(どの駒がどこへ行くか分かるように)
       if (pinNum.has(y * SIZE + x)) { const d = document.createElement('div'); d.className = 'dest-mark'; d.textContent = pinNum.get(y * SIZE + x); div.appendChild(d); }
@@ -3887,7 +3894,7 @@ function renderGameControls() {
       <div class="toolbar" style="margin-top:0;margin-bottom:6px;">
         <button id="modeSwap" class="${moveMode === 'swap' ? 'on' : ''}">入替</button>
         <button id="modeDelete" class="${moveMode === 'delete' ? 'on' : ''}">削除</button>
-        <button id="modePin" class="${moveMode === 'pin' ? 'on' : ''}">📌 ピン</button>
+        <button id="modePin" class="${moveMode === 'pin' ? 'on' : ''}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/></svg>ピン</button>
         ${g.practice ? '' : `<button id="modeEdit" class="${moveMode === 'edit' ? 'on' : ''}">盤面を直す</button>`}
         <button id="btnUndo" ${g.log.length ? '' : 'disabled'}>1手戻す</button>
         <button id="btnRedo" ${g.future.length ? '' : 'disabled'}>1手進める</button>
@@ -4049,7 +4056,7 @@ function clearPressTimers() { if (press) { clearTimeout(press.t1); clearTimeout(
 boardEl.addEventListener('contextmenu', (e) => { if (boardEl.classList.contains('play')) e.preventDefault(); });
 boardEl.addEventListener('pointerdown', (ev) => {
   if (press) endPress(null, true);   // 前の押し方が終わっていなければ(小窓の上で指を離したなど)、取りやめにする
-  // 「📌 ピン」のとき: ピンの駒をドラッグして、離したマスを行き先にする(押すだけならクリックでピンの付け外し)
+  // 「ピン」のとき: ピンの駒をドラッグして、離したマスを行き先にする(押すだけならクリックでピンの付け外し)
   if (!anim && moveMode === 'pin' && state.game.phase === 'move' && !(ev.pointerType === 'mouse' && ev.button !== 0)) {
     const p = cellAtPoint(ev);
     // ピンの駒からなら、その駒の行き先を付ける・付け替える。行き先のマス(ピンの駒ではない)からなら、その行き先を移す
@@ -4253,7 +4260,7 @@ function renderPatternListInner() {
     renderPatternPreviewGrid(grid, p);
     const trigInfo = document.createElement('div');
     trigInfo.className = 'note';
-    try { trigInfo.textContent = inspectSummary(inspectPattern(p, state.maxLevels, COEF, 6)); } catch (e) {}
+    try { trigInfo.innerHTML = inspectSummary(inspectPattern(p, state.maxLevels, COEF, 6)); } catch (e) {}
     const costWrap = document.createElement('div');
     costWrap.appendChild(trigInfo);
     body.appendChild(grid); body.appendChild(costWrap);
@@ -4421,7 +4428,7 @@ function openPatternModal(existingPattern) {
     inspectNote.textContent = '確認中…';
     setTimeout(() => {
       try {
-        inspectNote.textContent = inspectSummary(inspectPattern(pattern, state.maxLevels, COEF));
+        inspectNote.innerHTML = inspectSummary(inspectPattern(pattern, state.maxLevels, COEF));
       } catch (e) { inspectNote.textContent = ''; }
     }, 0);
   }
@@ -4648,10 +4655,10 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
         <li>最高: 試したうちで一番多く増えたとき。</li>
       </ul>
     </li>
-    <li><b>事故の確率 ◯%</b>: 補充次第で、布陣の素材が減る・ピンの駒がマッチする・動くなどが起きる確率です。5%以上は下の⚠の行に出ます。</li>
+    <li><b>事故の確率 ◯%</b>: 補充次第で、布陣の素材が減る・ピンの駒がマッチする・動くなどが起きる確率です。5%以上は下の<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>の行に出ます。</li>
     <li><b>連鎖のタブにもあります（◯番目）</b>: 同じ手順が、もう一方のタブの上から◯番目にもあります。</li>
   </ul>
-  <p>⚠ の行（注意が必要なこと）</p>
+  <p><svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>の行（注意が必要なこと）</p>
   <ul>
     <li><b>事故の確率 ◯%（…）</b>: 5%以上のときです。ピンが元なら、「ピン⑥の駒（A3）がマッチする」のように、どのピンかを書きます。</li>
     <li><b>「◯」の素材が◯個分減ります</b>: 連鎖のタブで、補充が来なかったときに減る素材の量です。</li>
@@ -4662,7 +4669,7 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
   <p>盤面と素材の数</p>
   <ul>
     <li><b>①②③の盤面</b>: 打つ手の順です。赤い枠の2マスを入れ替え、✕のマスを削除します。ピンの駒は、右上の角が赤くなります。</li>
-    <li><b>手順の後（補充は ?）</b>: 打ち終わった後の盤面です。金色の枠は、新しく目標MAX布陣の形どおりにそろうマスです。赤い点線の枠は、目標MAX布陣の形どおりにそろえてあったのに、この手順でそろわなくなるマスです（⚠「そろえたマスを動かします」が出るカードに付きます）。</li>
+    <li><b>手順の後（補充は ?）</b>: 打ち終わった後の盤面です。金色の枠は、新しく目標MAX布陣の形どおりにそろうマスです。赤い点線の枠は、目標MAX布陣の形どおりにそろえてあったのに、この手順でそろわなくなるマスです（<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>「そろえたマスを動かします」が出るカードに付きます）。</li>
     <li><b>10MAXの素材: A1 6個→3個（3.8個）</b>: 矢印の左が今の数、矢印の右が手順を打った後の数です。矢印の右の数は、補充で入ってくる駒を数えていません（何が来るか分からないため）。括弧の中は、補充で入ってくる駒も入れた平均の見込みです。</li>
   </ul>
   <p>今打っている手順の続き</p>
@@ -4672,7 +4679,7 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
   </ul>
   <p class="sec-h">■ ピン</p>
   <ul>
-    <li>「📌 ピン」を選んで駒を押すとピンが付き、その駒を動かさない手順だけを探します。</li>
+    <li>「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/></svg>ピン」を選んで駒を押すとピンが付き、その駒を動かさない手順だけを探します。</li>
     <li>ピンの駒を運びたいマスまでドラッグすると「行き先付きのピン」になり、そこへ近づく（か動かない）手順だけを探します。</li>
     <li>押すと1段階戻ります（行き先付き → ピン → なし）。行き先のマスは、押すと外れ、ドラッグで移せます。</li>
   </ul>
@@ -4751,7 +4758,7 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
     <p class="sec-h">■ 表示する手順</p>
     <p>次の手順は出しません。</p>
     <ul>
-      <li>今目指しているMAX布陣で必ず事故になる手順（連鎖のタブでは、使わないレベルの駒ができる手順と、補充を入れた平均でも素材が減る手順。素材が減っても補充を入れた平均で減らない連鎖は、⚠を付けて出します）</li>
+      <li>今目指しているMAX布陣で必ず事故になる手順（連鎖のタブでは、使わないレベルの駒ができる手順と、補充を入れた平均でも素材が減る手順。素材が減っても補充を入れた平均で減らない連鎖は、<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>を付けて出します）</li>
       <li>MAXの駒を削除する手順</li>
       <li>途中で手数が尽きる手順</li>
       <li>素材のタブ: 素材が増えない手順、連鎖の後に手を足しただけの手順、最後の手でマッチが起きない手順（1手だけの削除は出します）、手順の一部の手だけを打つ方が得な手順</li>
@@ -4761,7 +4768,7 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
     <ul>
       <li>最後の手と手数が同じ手順は、一番良い1件だけを出します。連鎖のタブでは、「布陣の素材が減らない手順」と「布陣の素材が減るかわりに、手数がもっと増える手順」があれば両方出します。</li>
       <li>打ち終わった後の盤面が同じ手順は、1件だけ出します。</li>
-      <li>次に目指すMAX布陣は、手順の候補に影響しません。Lv3以上（補充がLv2ならLv4以上）の素材が減るときと、使わないレベルの駒ができるときに⚠を付けます（今目指している布陣と同じ素材の布陣には付けません）。</li>
+      <li>次に目指すMAX布陣は、手順の候補に影響しません。Lv3以上（補充がLv2ならLv4以上）の素材が減るときと、使わないレベルの駒ができるときに<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>を付けます（今目指している布陣と同じ素材の布陣には付けません）。</li>
     </ul>
     <p class="sec-h">■ 絞り込み</p>
     <ul>
@@ -4802,7 +4809,7 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
       <li>1手の候補は、入替と削除でおよそ100通りあります。3手先まで読むだけで約90万通り、補充される駒の出方まで含めると、更にその何十万倍にもなります。</li>
       <li>しかも、ゲームの始めから終わりまでは、長いと百手を超えます。今駒をどこに置くのが良いかは、そのずっと先まで打ってみないと分かりません。</li>
       <li>人は「この辺りに集めておけば、後で使える」と感覚で判断できます。これをコンピューターにさせるには、大量の対局から盤面の良し悪しを学ばせる、囲碁や将棋のAIと同じような開発が必要になります。</li>
-      <li>そこでこのツールは、コンピューターが得意な「素材の数を数えること」と「補充の運の平均を出すこと」を受け持ちます。駒をどこに置くかの判断は、ご自身でお願いします。動かしたくない駒は「📌 ピン」で固定できます。</li>
+      <li>そこでこのツールは、コンピューターが得意な「素材の数を数えること」と「補充の運の平均を出すこと」を受け持ちます。駒をどこに置くかの判断は、ご自身でお願いします。動かしたくない駒は「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/></svg>ピン」で固定できます。</li>
     </ul>
   </details>
 `));
@@ -4817,9 +4824,9 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
   </ol>
   <p>※練習モード：1で「ランダムな盤面で練習する」を押すと、入力なしで、実際のゲームと同じ流れで練習できます。やめるときは「リセット」を押してください。</p>
   <p class="sec-h">■ 盤面で光っている駒は？</p>
-  <p>目標MAX布陣の形どおりに置いた駒のうち、その列の上が全てMAX布陣どおりの駒です。「次の手を探す」で「⚠ そろえたマスを動かします」と出るのは、この駒を動かす手順です。光らせたくないときは、「⚙ 設定」の「画面の表示」でチェックを外してください。</p>
+  <p>目標MAX布陣の形どおりに置いた駒のうち、その列の上が全てMAX布陣どおりの駒です。「次の手を探す」で「<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>そろえたマスを動かします」と出るのは、この駒を動かす手順です。光らせたくないときは、「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.49 10.69L22.14 10.88L22.14 13.12L19.49 13.31L19.42 13.66L18.22 16.37L19.96 18.38L18.38 19.96L16.37 18.22L16.07 18.42L13.31 19.49L13.12 22.14L10.88 22.14L10.69 19.49L10.34 19.42L7.63 18.22L5.62 19.96L4.04 18.38L5.78 16.37L5.58 16.07L4.51 13.31L1.86 13.12L1.86 10.88L4.51 10.69L4.58 10.34L5.78 7.63L4.04 5.62L5.62 4.04L7.63 5.78L7.93 5.58L10.69 4.51L10.88 1.86L13.12 1.86L13.31 4.51L13.66 4.58L16.37 5.78L18.38 4.04L19.96 5.62L18.22 7.63L18.42 7.93Z"/><circle cx="12" cy="12" r="3"/></svg>設定」の「画面の表示」でチェックを外してください。</p>
   <p class="sec-h">■ 残り手数の下の「◯◯まで あと: …」は？</p>
-  <p>今目指しているMAX布陣まで、各レベルの素材があと何個足りないかです。盤面にある駒を数え、置いた場所は見ません。ただし、布陣に使えない駒は数えません（条件は、「手順を探す」の「ⓘ 説明」の「詳しい仕様を知りたい方へ」にあります）。布陣に使えない駒があるときは、その数を最後の括弧の中に出します。入替で運べば使えることもあるので、盤面を見て判断してください。⚙ 設定で消せます。</p>
+  <p>今目指しているMAX布陣まで、各レベルの素材があと何個足りないかです。盤面にある駒を数え、置いた場所は見ません。ただし、布陣に使えない駒は数えません（条件は、「手順を探す」の「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.6v.01"/></svg>説明」の「詳しい仕様を知りたい方へ」にあります）。布陣に使えない駒があるときは、その数を最後の括弧の中に出します。入替で運べば使えることもあるので、盤面を見て判断してください。<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.49 10.69L22.14 10.88L22.14 13.12L19.49 13.31L19.42 13.66L18.22 16.37L19.96 18.38L18.38 19.96L16.37 18.22L16.07 18.42L13.31 19.49L13.12 22.14L10.88 22.14L10.69 19.49L10.34 19.42L7.63 18.22L5.62 19.96L4.04 18.38L5.78 16.37L5.58 16.07L4.51 13.31L1.86 13.12L1.86 10.88L4.51 10.69L4.58 10.34L5.78 7.63L4.04 5.62L5.62 4.04L7.63 5.78L7.93 5.58L10.69 4.51L10.88 1.86L13.12 1.86L13.31 4.51L13.66 4.58L16.37 5.78L18.38 4.04L19.96 5.62L18.22 7.63L18.42 7.93Z"/><circle cx="12" cy="12" r="3"/></svg>設定で消せます。</p>
   <p class="sec-h">■ ゲームとずれたり、間違えたときは？</p>
   <ul>
     <li>入力間違いを直したい → 「盤面を直す」で修正できます。</li>
@@ -4830,7 +4837,7 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
   </ul>
   <p class="sec-h">■ ヒーローの絵</p>
   <ul>
-    <li>「🖼 ヒーロー」の画面でヒーローを選ぶと、盤面のその素材の駒を、ゲームと同じ絵で表示します。ゲームの画面と見比べやすくするためです。</li>
+    <li>「ヒーロー」の画面でヒーローを選ぶと、盤面のその素材の駒を、ゲームと同じ絵で表示します。ゲームの画面と見比べやすくするためです。</li>
     <li>このツールには、ゲームの画像は入っていません。表示するのは、使う人が自分の端末で登録した絵だけです。</li>
     <li>ヒーローの絵は、ゲームのスキン画面にある「ステージ画像プレビュー」を、LV1から最後のレベルまで1枚ずつスクショして、「ヒーローを登録」で選んで登録します。</li>
     <li>その端末で初めて登録するときは、枠をヒーローの絵に合わせます。次からは、同じ位置で切り出します。</li>
@@ -4840,11 +4847,11 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
   </ul>
   <p class="sec-h">■ その他の機能</p>
   <ul>
-    <li><b>📌 ピン</b>: 駒を固定します。ドラッグで運びたいマスも決められます（詳しくは「手順を探す」の「ⓘ 説明」）。</li>
+    <li><b><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/></svg>ピン</b>: 駒を固定します。ドラッグで運びたいマスも決められます（詳しくは「手順を探す」の「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.6v.01"/></svg>説明」）。</li>
     <li><b>リセット</b>: 盤面を全て「?」に戻し、記録を消去します（設定と目標MAX布陣は残ります）。</li>
     <li><b>記録の書き出し／読み込み</b>: 打った手と盤面を1局分まるごとファイル（.txt）に保存・復元できます。</li>
     <li><b>▲ 盤面へ／▼ 結果へ</b>: 盤面と「次の手を探す」の結果が1画面に収まらないとき、画面の右下に丸いボタンで出ます。押すと、盤面と結果の間を移動できます。</li>
-    <li><b>⚙ 設定</b>: ゲームモード（補充のレベル・斜め入替・PvPなど）をゲームに合わせてください。残り手数の計算や手順の探し方が変わります。他のゲームモードを試したいときも、ここで切り替えます。</li>
+    <li><b><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.49 10.69L22.14 10.88L22.14 13.12L19.49 13.31L19.42 13.66L18.22 16.37L19.96 18.38L18.38 19.96L16.37 18.22L16.07 18.42L13.31 19.49L13.12 22.14L10.88 22.14L10.69 19.49L10.34 19.42L7.63 18.22L5.62 19.96L4.04 18.38L5.78 16.37L5.58 16.07L4.51 13.31L1.86 13.12L1.86 10.88L4.51 10.69L4.58 10.34L5.78 7.63L4.04 5.62L5.62 4.04L7.63 5.78L7.93 5.58L10.69 4.51L10.88 1.86L13.12 1.86L13.31 4.51L13.66 4.58L16.37 5.78L18.38 4.04L19.96 5.62L18.22 7.63L18.42 7.93Z"/><circle cx="12" cy="12" r="3"/></svg>設定</b>: ゲームモード（補充のレベル・斜め入替・PvPなど）をゲームに合わせてください。残り手数の計算や手順の探し方が変わります。他のゲームモードを試したいときも、ここで切り替えます。</li>
   </ul>
 `));
 document.getElementById('btnPatternHelp').addEventListener('click', () => openInfoModal(`
@@ -4853,14 +4860,14 @@ document.getElementById('btnPatternHelp').addEventListener('click', () => openIn
   <p class="sec-h">■ 登録するメリット</p>
   <p>登録は任意ですが、登録することで以下の機能が使えるようになります。</p>
   <ol>
-    <li>「🔍 次の手を探す」が、目標に必要な素材が効率よく増える手順を探すようになります。</li>
+    <li>「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>次の手を探す」が、目標に必要な素材が効率よく増える手順を探すようになります。</li>
     <li>必要な素材が勝手にそろって消えてしまう「事故」の確率を事前に警告してくれます。</li>
     <li>今目指しているMAX布陣に必要な素材が減る手順や連鎖を除外してくれます（連鎖は、補充を入れた平均で素材が減らないものは注意を付けて出します）。</li>
   </ol>
   <p class="sec-h">■ 初めての方は「プリセット」がお勧め</p>
   <p>よく使われるMAX布陣が用意されています（斜め移動なし: 3・4・7・8・10・12MAX ／ 斜め移動あり: 3・4・6・12・18MAX）。まずはここから選んでみてください。（ご自身で作った布陣をプリセットとして保存することも可能です）</p>
   <p class="sec-h">■ 複数の目標を登録した場合</p>
-  <p>上から順番に目指します（順番は ↑↓ ボタンで入れ替え可能）。<br>1つ目が起爆（完成）すると、自動的に次の目標に切り替わります。次に目指すMAX布陣（2番目以降の布陣）の素材が減る手順や、使わないレベルの駒ができる手順も表示します。Lv3以上の素材が減るときと、使わないレベルの駒ができるときは、カードに⚠を付けて知らせます。</p>
+  <p>上から順番に目指します（順番は ↑↓ ボタンで入れ替え可能）。<br>1つ目が起爆（完成）すると、自動的に次の目標に切り替わります。次に目指すMAX布陣（2番目以降の布陣）の素材が減る手順や、使わないレベルの駒ができる手順も表示します。Lv3以上の素材が減るときと、使わないレベルの駒ができるときは、カードに<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>を付けて知らせます。</p>
   <p class="sec-h">■ ボタンの機能</p>
   <ul>
     <li><b>左右反転</b>: 盤面を左右反転します（反転でMAX数が減る場合があるので、起爆の確認に注意してください）。</li>
@@ -4978,15 +4985,20 @@ function findCharInShot(img, region) {
   let top = 0; for (let b = 1; b < 4096; b++) if (hist[b] > hist[top]) top = b;
   const bg = [sum[top * 3] / hist[top], sum[top * 3 + 1] / hist[top], sum[top * 3 + 2] / hist[top]];
   const dist = q => Math.hypot(p[q * 4] - bg[0], p[q * 4 + 1] - bg[1], p[q * 4 + 2] - bg[2]);
-  // 背景: 背景の色とほぼ同じマスから、背景に近い色をたどる(絵の中の似た色は、輪郭で区切られているので残る)
-  const T = 38, isBg = new Uint8Array(N), stack = [];
-  for (let q = 0; q < N; q++) if (dist(q) < 12) { isBg[q] = 1; stack.push(q); }
-  while (stack.length) {
-    const q = stack.pop(), x = q % cw;
-    if (x > 0 && !isBg[q - 1] && dist(q - 1) < T) { isBg[q - 1] = 1; stack.push(q - 1); }
-    if (x < cw - 1 && !isBg[q + 1] && dist(q + 1) < T) { isBg[q + 1] = 1; stack.push(q + 1); }
-    if (q >= cw && !isBg[q - cw] && dist(q - cw) < T) { isBg[q - cw] = 1; stack.push(q - cw); }
-    if (q < N - cw && !isBg[q + cw] && dist(q + cw) < T) { isBg[q + cw] = 1; stack.push(q + cw); }
+  // 背景: 背景に近い色のマスがつながったかたまりのうち、範囲の縁に触れるか、とても大きい(範囲の4分の1以上)ものだけ。
+  // 絵の輪郭の内側に囲まれた、背景に似た色の部分(体の色など)は、背景にしない(2026-10-03 本人: LV1 のコウモリの体が抜けて白く見えた)
+  const T = 38, near = new Uint8Array(N), isBg = new Uint8Array(N), stack = [], seenN = new Uint8Array(N);
+  for (let q = 0; q < N; q++) if (dist(q) < T) near[q] = 1;
+  for (let s0 = 0; s0 < N; s0++) {
+    if (!near[s0] || seenN[s0]) continue;
+    const comp = [s0]; seenN[s0] = 1; stack.push(s0);
+    let edge = false;
+    while (stack.length) {
+      const q = stack.pop(), x = q % cw;
+      if (x === 0 || x === cw - 1 || q < cw || q >= N - cw) edge = true;
+      for (const n of [x > 0 ? q - 1 : -1, x < cw - 1 ? q + 1 : -1, q >= cw ? q - cw : -1, q < N - cw ? q + cw : -1]) if (n >= 0 && near[n] && !seenN[n]) { seenN[n] = 1; stack.push(n); comp.push(n); }
+    }
+    if (edge || comp.length >= N / 4) for (const q of comp) isBg[q] = 1;
   }
   // 背景でないかたまりに分ける
   const label = new Int32Array(N).fill(-1), comps = [];
@@ -5471,7 +5483,7 @@ function parseRecordText(text) {
 // skipAsk … true なら確認を出さずに読み込む(確かめの道具から使う)
 function importGameRecord(text, skipAsk) {
   const rec = parseRecordText(text);
-  if (!rec) { openNotice('記録を読み込めませんでした。「📝 記録を書き出す」で書き出したファイルを選んでください。'); return; }
+  if (!rec) { openNotice('記録を読み込めませんでした。「記録を書き出す」で書き出したファイルを選んでください。'); return; }
   const load = () => applyRecord(rec);
   if (skipAsk) { load(); return; }
   openAsk(`記録（${rec.log.length}手）を読み込みます。今打っている対局は消え、設定と目標MAX布陣も記録のものに置き換わります。よろしいですか？`, { okLabel: '読み込む', onOk: load });
