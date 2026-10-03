@@ -73,6 +73,7 @@
   .brush-row { display:flex; gap:5px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
   .brush-row .sw { width:30px; height:28px; border-radius:6px; border:2px solid transparent; color:#fff; font-weight:800; cursor:pointer; }
   .brush-row .sw.on { border-color:#fff; }
+  .brush-row .sw.hero { background-size:88% auto !important; background-position:center !important; background-repeat:no-repeat !important; }
   .brush-row .lv { min-width:28px; padding:4px 0; }
   .brush-row .lv.on { border-color: var(--accent); color: var(--accent); font-weight:700; }
   .brush-row .row-break { display:none; }
@@ -183,6 +184,7 @@
   .pattern-card-head .name { font-weight:700; }
   .pattern-card-body { display:flex; gap:10px; margin-top:8px; align-items:center; }
   .species-pill { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:5px; color:#fff; font-weight:800; font-size:11px; }
+  .species-pill.named { width:auto; padding:0 6px; white-space:nowrap; }
 
   .config-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; }
   .config-item { display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--panel2); border:1px solid var(--border); border-radius:8px; padding:8px 10px; }
@@ -245,6 +247,7 @@
   .species-selector { display:flex; gap:6px; }
   .species-btn { width:34px; height:34px; border-radius:8px; border:2px solid transparent; color:#fff; font-weight:800; cursor:pointer; }
   .species-btn.active { border-color: #fff; }
+  .species-btn.named { width:auto; padding:0 10px; white-space:nowrap; }
   .modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:14px; flex-wrap:wrap; }
   .modal select { background: var(--panel2); color: var(--text); border:1px solid var(--border); border-radius:6px; padding:3px 6px; }
   .info-modal ul, .info-modal ol { margin:6px 0 10px; padding-left:1.4em; line-height:1.8; }
@@ -321,7 +324,7 @@
 <div class="app">
   <header>
     <div>
-      <h1>スラだんパズルナビゲーター <span class="ver">v2.2.11</span></h1>
+      <h1>スラだんパズルナビゲーター <span class="ver">v2.2.14</span></h1>
       <div class="credit"><span>created by シナっぷ ／</span> <span>thanks to EGGのみんな</span></div>
       <div class="sub">ゲームと同じ盤面を入力して1手ずつ進められるシミュレーターです。MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖も探せます。</div>
     </div>
@@ -1040,6 +1043,18 @@ function simulateMove(grid, move, maxLevels, rng, coefficient) {
     : simulateDelete(grid, move.pos, maxLevels, rng, coefficient);
 }
 // 画面の部品(HTML)に文字を入れるときは、必ずこれを通して「ただの文字」にする
+// ヒーローを選んでいる素材は、画面の文で A〜D の代わりにヒーローの名前を出す(2026-10-03 本人「画像登録してるときはA～Dの概念持ち出さない方がいい」)。
+// 書き出す記録のファイルと、「説明」の中の例の文は A〜D のまま
+function heroNameOf(sp) {
+  const n = state.speciesChars && state.speciesChars[sp];
+  return n && charStore.has(n) ? n : null;
+}
+// 素材の名前(ヒーローの名前か A〜D)。文字のまま返すので、HTML に入れるときは esc を通す
+function spLabel(sp) { return heroNameOf(sp) || sp; }
+// 素材とレベル(「名無しLv1」か「A1」)
+// 行の頭にヒーローの名前を出している行(目標MAX布陣の残りの行・カードの素材の行)では、レベルだけ(「Lv1」)にする(2026-10-03 本人)
+function lvLabel(sp, lv) { return heroNameOf(sp) ? `Lv${lv}` : `${sp}${lv}`; }
+function pieceLabel(sp, lv) { const n = heroNameOf(sp); return n ? `${n}Lv${lv}` : `${sp}${lv}`; }
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -1574,7 +1589,7 @@ function chainMiniBoard(grid, opts) {
 }
 function chainChip(species, level, label) {
   const bg = levelShade(species, level, state.maxLevels[species] || 7);
-  return `<span class="chain-chip"><span class="mini-badge" style="background:${bg};color:${textOn(bg)}">${species}${level}</span>${label}</span>`;
+  return `<span class="chain-chip"><span class="mini-badge" style="background:${bg};color:${textOn(bg)}">${esc(pieceLabel(species, level))}</span>${label}</span>`;
 }
 // 布陣が登録されていれば、布陣の素材の個数を「手順の前→あと」で出す(補充は考慮外)。
 // 布陣で使うレベルは変化がなくても出し、それ以外のレベルは増減したときだけ出す。
@@ -1592,12 +1607,12 @@ function laterLossLines(finalGrid) {
     const diffAt = L => { let d = 0; for (let i = 0; i < SIZE * SIZE; i++) { if (sp1[i] === si && lv1[i] === L) d++; if (sp0[i] === si && lv0[i] === L) d--; } return d; };
     if (laterCounts(sp1, lv1, p).deficit > laterCounts(sp0, lv0, p).deficit) {
       const lows = [];
-      for (let L = laterMinLevel(p); L <= patternNeedLevel(p); L++) if (diffAt(L) < 0) lows.push(`${p.species}${L}`);
+      for (let L = laterMinLevel(p); L <= patternNeedLevel(p); L++) if (diffAt(L) < 0) lows.push(esc(pieceLabel(p.species, L)));
       out.push(`「${esc(p.name)}」の${lows.length ? lows.join('・') : '素材'}が減ります`);
     }
     if (patternCountsFlat(sp1, lv1, p).over > patternCountsFlat(sp0, lv0, p).over) {
       const highs = [];
-      for (let L = patternNeedLevel(p) + 1; L <= (state.maxLevels[p.species] || 7); L++) if (diffAt(L) > 0) highs.push(`${p.species}${L}`);
+      for (let L = patternNeedLevel(p) + 1; L <= (state.maxLevels[p.species] || 7); L++) if (diffAt(L) > 0) highs.push(esc(pieceLabel(p.species, L)));
       out.push(`「${esc(p.name)}」で使わない${highs.length ? highs.join('・') : '駒'}ができます`);
     }
   }
@@ -1640,9 +1655,9 @@ function formationLinesHtml(finalGrid, o) {
       const b = cb[lvl] || 0, a = ca[lvl] || 0;
       if (!used.has(lvl) && a === b) continue;
       const e = expectedCount(o, pattern.species, lvl);
-      parts.push(`<span style="${a !== b ? 'color:var(--text);font-weight:700;' : ''}">${pattern.species}${lvl} ${b}個→${a}個${e != null ? `（${e.toFixed(1)}個）` : ''}</span>`);
+      parts.push(`<span style="${a !== b ? 'color:var(--text);font-weight:700;' : ''}">${esc(lvLabel(pattern.species, lvl))} ${b}個→${a}個${e != null ? `（${e.toFixed(1)}個）` : ''}</span>`);
     }
-    html += `<div class="chain-chips">${esc(pattern.name)}の素材: ${parts.join(' / ')}</div>`;
+    html += `<div class="chain-chips">${esc(pattern.name)}${heroNameOf(pattern.species) ? `（${esc(heroNameOf(pattern.species))}）` : ''}の素材: ${parts.join(' / ')}</div>`;
   }
   return html;
 }
@@ -2627,7 +2642,7 @@ function renderFilterRow() {
   row.style.display = '';
   const cur = activeFilter() ? state.resultFilter.key : '';
   row.innerHTML = `<label class="small" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">絞り込み
-    <select id="filterKey"><option value="">なし</option>${keys.map(k => `<option value="${k}"${k === cur ? ' selected' : ''}>${k}</option>`).join('')}</select>が
+    <select id="filterKey"><option value="">なし</option>${keys.map(k => `<option value="${k}"${k === cur ? ' selected' : ''}>${esc(pieceLabel(k[0], Number(k.slice(1))))}</option>`).join('')}</select>が
     <select id="filterN"${cur ? '' : ' disabled'}>${Array.from({ length: 20 }, (_, i) => i + 1).map(n => `<option value="${n}"${n === state.resultFilter.n ? ' selected' : ''}>${n}</option>`).join('')}</select>個以上</label>`;
   const onChange = () => {
     state.resultFilter = { key: document.getElementById('filterKey').value, n: Number(document.getElementById('filterN').value) || 1 };
@@ -2694,7 +2709,7 @@ function advanceLowNote(pattern) {
   let low = 99;
   for (const row of pattern.cells) for (const t of row) if (t !== 'X' && t < low) low = t;
   const refillLv = state.refillLevels[pattern.species] || 1;
-  return low < refillLv ? `<br>MAX布陣に${pattern.species}${low}のマスがありますが、${pattern.species}の補充はLv${refillLv}なので、${pattern.species}${low}は増えません。MAX布陣のカードの「レベル+1」で合わせてください。` : '';
+  return low < refillLv ? `<br>MAX布陣に${esc(pieceLabel(pattern.species, low))}のマスがありますが、${esc(spLabel(pattern.species))}の補充はLv${refillLv}なので、${esc(pieceLabel(pattern.species, low))}は増えません。MAX布陣のカードの「レベル+1」で合わせてください。` : '';
 }
 function renderAdvanceOptionsInner(list, sec, showAll) {
   const pattern = currentTargetPattern();
@@ -3724,7 +3739,10 @@ function renderBrushRow() {
   const maxLv = Math.max(...SPECIES.map(s => state.maxLevels[s] || 7));
   let h = '<span class="note" style="margin-right:2px;">素材</span>';
   for (const sp of SPECIES) {
-    h += `<button class="sw ${brush.species === sp && !brush.erase ? 'on' : ''}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}" data-sp="${sp}">${sp}</button>`;
+    const lvSp = Math.max(minBoardLevelOf(sp), Math.min(brush.level, state.maxLevels[sp] || 7)), img = charImage(sp, lvSp);
+    h += img
+      ? `<button class="sw hero ${brush.species === sp && !brush.erase ? 'on' : ''}" style="background:${CHECKER[0]} url('${img}')" data-sp="${sp}" title="${esc(pieceLabel(sp, lvSp))}"></button>`
+      : `<button class="sw ${brush.species === sp && !brush.erase ? 'on' : ''}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}" data-sp="${sp}">${sp}</button>`;
   }
   h += '<span class="row-break"></span><span class="note" style="margin:0 2px;">Lv</span>';
   fixBrushLevel();
@@ -3732,13 +3750,13 @@ function renderBrushRow() {
   const spMax = state.maxLevels[brush.species] || 7, spMin = minBoardLevelOf(brush.species);
   for (let lv = 1; lv <= maxLv; lv++) {
     const off = lv < spMin || lv > spMax;
-    const why = lv < spMin ? `${brush.species}は補充がLv2なので、Lv1は入力できません。` : `${brush.species}の最大レベルはLv${spMax}です。`;
+    const why = lv < spMin ? `${esc(spLabel(brush.species))}は補充がLv2なので、Lv1は入力できません。` : `${esc(spLabel(brush.species))}の最大レベルはLv${spMax}です。`;
     h += `<button class="lv ${brush.level === lv && !brush.erase ? 'on' : ''}" data-lv="${lv}" ${off ? `disabled title="${why}"` : ''}>${lv}</button>`;
   }
   // 「?」のボタン: 入力を省くマスにする
   h += `<button class="sw ${brush.erase ? 'on' : ''}" data-erase="1" style="background:#202228;width:auto;padding:0 8px;margin-left:6px;" title="入力を省くマスにします。どの駒ともマッチしない駒として計算します。">?</button>`;
   // マウスを乗せたときの説明はスマホで見えないので、Lv1 を選べない理由は文でも出す
-  if (spMin > 1) h += `<span class="note" style="margin:0 0 0 4px;">（${brush.species}は補充がLv2なのでLv1は選べません）</span>`;
+  if (spMin > 1) h += `<span class="note" style="margin:0 0 0 4px;">（${esc(spLabel(brush.species))}は補充がLv2なのでLv1は選べません）</span>`;
   brushRowEl.innerHTML = h;
 }
 function renderBoard() {
@@ -3854,10 +3872,10 @@ function shortageHtml() {
   }));
   const levels = Object.keys(req).map(Number).sort((a, b) => a - b);
   const short = levels.map(L => Math.max(0, req[L] - (have[L] || 0)));
-  const name = `${esc(p.name)}（${p.species}）`;
+  const name = `${esc(p.name)}（${esc(spLabel(p.species))}）`;
   if (short.every(v => v === 0)) return `${name}に必要な素材は盤面にそろっています。`;
-  const deadParts = levels.filter(L => deadN[L]).map(L => `${p.species}${L} ${deadN[L]}個`);
-  return `${name}まで あと: ${levels.map((L, i) => `${p.species}${L} ${short[i]}個`).join(' / ')}${deadParts.length ? `（布陣に使えない駒: ${deadParts.join(' / ')}）` : ''}`;
+  const deadParts = levels.filter(L => deadN[L]).map(L => `${esc(lvLabel(p.species, L))} ${deadN[L]}個`);
+  return `${name}まで あと: ${levels.map((L, i) => `${esc(lvLabel(p.species, L))} ${short[i]}個`).join(' / ')}${deadParts.length ? `（布陣に使えない駒: ${deadParts.join(' / ')}）` : ''}`;
 }
 function updateShortageLine() {
   const el = document.getElementById('shortageLine');
@@ -4021,7 +4039,7 @@ function onBoardCellClick(x, y) {
 function deleteAt(x, y) {
   const c = state.board[y][x];
   if (c && SPECIES.includes(c.species) && c.level >= (state.maxLevels[c.species] || 7)) {
-    openAsk(`（列${x + 1}・行${y + 1}）の${c.species}${c.level}はMAXの駒です。削除すると、このMAXはなくなります。削除しますか？`, {
+    openAsk(`（列${x + 1}・行${y + 1}）の${pieceLabel(c.species, c.level)}はMAXの駒です。削除すると、このMAXはなくなります。削除しますか？`, {
       okLabel: '削除する', danger: true,
       onOk: () => playMove({ type: 'delete', pos: { x, y } }),
       onCancel: () => { picked = null; refresh(); },
@@ -4230,7 +4248,8 @@ function renderPatternListInner() {
     const pill = document.createElement('span');
     pill.className = 'species-pill';
     pill.style.background = SPECIES_COLOR_HEX[p.species]; pill.style.color = textOn(SPECIES_COLOR_HEX[p.species]);
-    pill.textContent = p.species;
+    pill.textContent = spLabel(p.species);
+    if (heroNameOf(p.species)) pill.classList.add('named');
     const nameSpan = document.createElement('span');
     nameSpan.className = 'name';
     nameSpan.textContent = ' ' + p.name;
@@ -4345,7 +4364,8 @@ function openPatternModal(existingPattern) {
     const b = document.createElement('div');
     b.className = 'species-btn' + (sp === pattern.species ? ' active' : '');
     b.style.background = SPECIES_COLOR_HEX[sp]; b.style.color = textOn(SPECIES_COLOR_HEX[sp]);
-    b.textContent = sp;
+    b.textContent = spLabel(sp);
+    if (heroNameOf(sp)) b.classList.add('named');
     b.addEventListener('click', () => {
       pattern.species = sp;
       Array.from(spSel.children).forEach(c => c.classList.remove('active'));
@@ -4950,7 +4970,8 @@ function charRename(from, to) {
 function loadChars() {
   return charDbRun('readonly', st => st.getAll()).then(list => {
     (list || []).forEach(r => { if (r && typeof r.name === 'string' && Array.isArray(r.levels)) charMemSet(r); });
-    renderBoard();
+    // 絵と名前が読み込めたので、絵や名前を出す所を描き直す(盤面・素材のボタン・目標MAX布陣の行と札・絞り込み)
+    renderBoard(); renderBrushRow(); updateShortageLine(); renderPatternList(); renderFilterRow();
   }).catch(() => {});
 }
 // 素材とレベルの駒の絵(blob URL)。ヒーローを選んでいない・そのレベルの絵がないときは null
@@ -5326,7 +5347,32 @@ function newOverlay() {
   return { overlay, modal, close: () => overlay.remove() };
 }
 // 「ヒーロー」の画面: A〜Dのヒーローを選ぶ、登録・一覧・控え
-function openCharsModal() {
+// 最大レベルを下げたときは、盤面と布陣のレベルもそこまでに抑える(設定の保存と、ヒーローの絵に合わせたとき)
+function clampLevelsToMax() {
+  for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
+    const c = state.board[y][x];
+    if (c && SPECIES.includes(c.species) && c.level > state.maxLevels[c.species]) c.level = state.maxLevels[c.species];
+  }
+  state.patterns.forEach(p => { p.cells = p.cells.map(row => row.map(v => (v === 'X' ? v : Math.min(v, state.maxLevels[p.species])))); });
+}
+// ヒーローを選んでいる素材の最大レベルを、登録した絵のレベルの数に合わせる(2026-10-03 本人「自動で揃えてもらった方が絶対にいい」)。
+// ステージ画像プレビューは最後のレベルまで見られるので、全レベルを登録すれば、絵の数がゲームの最大レベルと同じになる。
+// 変えたときは、画面に出す文を返す(変えなければ空)
+function syncMaxLevelToChar(sp) {
+  const name = state.speciesChars[sp], rec = name ? charStore.get(name) : null;
+  if (!rec) return '';
+  const n = Math.min(LEVEL_LIMIT, rec.levels.length), old = state.maxLevels[sp] || 7;
+  if (n < 2 || n === old) return '';
+  state.maxLevels[sp] = n;
+  clampLevelsToMax();
+  saveState();
+  return `${sp}の最大レベルは、登録した絵に合わせて、${old}から${n}に変わりました。`;
+}
+// 名前 name のヒーローを選んでいる素材を、全てそろえる。変えたときの文を返す
+function syncMaxLevelsForChar(name) {
+  return SPECIES.filter(sp => state.speciesChars[sp] === name).map(syncMaxLevelToChar).filter(Boolean).join('');
+}
+function openCharsModal(msg) {
   const { overlay, modal, close } = newOverlay();
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
   const names = Array.from(charStore.keys()).sort((a, b) => a.localeCompare(b, 'ja'));
@@ -5337,13 +5383,18 @@ function openCharsModal() {
       `<select data-char="${sp}"><option value="">選ばない</option>${names.map(n => `<option value="${esc(n)}" ${cur === n ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>` +
       `<div class="char-thumbs" data-thumbs="${sp}">${cur ? charThumbsHtml(charStore.get(cur).urls, 24) : ''}</div></div>`;
   }
-  h += '</div><div class="char-buttons"><button id="chRegister" class="primary">ヒーローを登録</button><button id="chList">登録したヒーロー</button><button id="chExport">控えを書き出す</button><button id="chImport">控えを読み込む</button><input type="file" id="chImportFile" accept=".json,application/json" style="display:none"></div>';
+  h += `</div><div class="note char-msg" id="chMaxMsg">${typeof msg === 'string' ? esc(msg) : ''}</div>`;
+  h += '<div class="char-buttons"><button id="chRegister" class="primary">ヒーローを登録</button><button id="chList">登録したヒーロー</button><button id="chExport">控えを書き出す</button><button id="chImport">控えを読み込む</button><input type="file" id="chImportFile" accept=".json,application/json" style="display:none"></div>';
   h += '<div class="note">ブラウザのデータを消したときや、機種を変えたときは、登録した絵が消えます。控えを書き出しておけば、その控えを読み込むだけで、登録した絵を元に戻せます。</div>';
   h += '<div class="modal-actions"><button id="chClose">閉じる</button></div>';
   modal.innerHTML = h;
   modal.querySelectorAll('[data-char]').forEach(sel => sel.addEventListener('change', () => {
     const sp = sel.dataset.char;
     state.speciesChars[sp] = sel.value || null;
+    const m = syncMaxLevelToChar(sp);
+    if (m) { modal.querySelector('#chMaxMsg').textContent = m; onBoardChanged(); }
+    // 素材の名前・素材のボタンの絵・目標MAX布陣の札を、選んだヒーローに合わせて描き直す
+    refresh(); renderPatternList(); renderFilterRow();
     saveState();
     const t = modal.querySelector(`[data-thumbs="${sp}"]`);
     t.innerHTML = sel.value && charStore.has(sel.value) ? charThumbsHtml(charStore.get(sel.value).urls, 24) : '';
@@ -5463,8 +5514,10 @@ function openCharRegister() {
       const name = modal.querySelector('#crName').value.trim();
       if (!name) { modal.querySelector('.char-msg').textContent = 'ヒーローの名前を入れてください。'; return; }
       const save = () => charSave({ name, levels: crops.slice() }).then(() => {
-        cleanup(); renderBoard();
-        openNotice(`「${name}」を登録しました。控えを書き出しておくと、機種を変えたときも登録し直さずに済みます。`, openCharsModal);
+        cleanup();
+        const m = syncMaxLevelsForChar(name);
+        onBoardChanged(); renderPatternList();
+        openNotice(`「${name}」を登録しました。控えを書き出しておくと、機種を変えたときも登録し直さずに済みます。`, () => openCharsModal(m));
       });
       if (charStore.has(name)) openAsk(`「${name}」は登録済みです。登録し直しますか？`, { okLabel: '登録し直す', onOk: save });
       else save();
@@ -5544,18 +5597,18 @@ document.getElementById('btnConfig').addEventListener('click', () => {
   }).join('');
   for (const sp of SPECIES) {
     const cur = state.speciesColors[sp];
-    h += `<div class="config-item"><label>${sp} の色</label><select data-color="${sp}">${famOptions(cur)}</select> <span data-color-preview="${sp}">${famPreview(cur)}</span></div>`;
+    h += `<div class="config-item"><label>${esc(spLabel(sp))} の色</label><select data-color="${sp}">${famOptions(cur)}</select> <span data-color-preview="${sp}">${famPreview(cur)}</span></div>`;
   }
   h += '</div><div class="note" id="cfgColorWarn" style="color:var(--danger);"></div>';
-  h += '<p class="sec-h">■ 素材ごとの最大レベル</p><div class="note">このレベルに達した駒は、それ以上マッチしません。</div><div class="config-grid">';
+  h += '<p class="sec-h">■ 素材ごとの最大レベル</p><div class="note">このレベルに達した駒は、それ以上マッチしません。ヒーローを選んでいる素材の最大レベルは、登録した絵のレベルの数に合わせて変わります。</div><div class="config-grid">';
   for (const sp of SPECIES) {
-    h += `<div class="config-item"><label><span class="species-pill" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${sp}</span> 最大Lv</label>` +
+    h += `<div class="config-item"><label><span class="species-pill${heroNameOf(sp) ? ' named' : ''}" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${esc(spLabel(sp))}</span> 最大Lv</label>` +
       `<input type="number" min="2" max="15" data-max="${sp}" value="${state.maxLevels[sp]}"></div>`;
   }
   h += '</div><p class="sec-h">■ 補充される駒のレベル</p><div class="note">駒が消えた後補充される駒のレベルです。「補充される駒がLv2になる」ゲームモードでは、その素材をLv2にしてください。</div><div class="config-grid">';
   for (const sp of SPECIES) {
     const v = state.refillLevels[sp] || 1;
-    h += `<div class="config-item"><label><span class="species-pill" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${sp}</span> 補充</label>` +
+    h += `<div class="config-item"><label><span class="species-pill${heroNameOf(sp) ? ' named' : ''}" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${esc(spLabel(sp))}</span> 補充</label>` +
       `<select data-refill="${sp}"><option value="1" ${v === 1 ? 'selected' : ''}>Lv1</option><option value="2" ${v === 2 ? 'selected' : ''}>Lv2</option></select></div>`;
   }
   // 盤面の見え方を変える項目(そろえたマスの光・足りない素材の数)は「画面の表示」にまとめる(2026-09-29 本人)
@@ -5630,12 +5683,7 @@ document.getElementById('btnConfig').addEventListener('click', () => {
     state.increasingRecovery = modal.querySelector('input[name="cfgRecovery"]:checked').value === 'increasing';
     // 補充の入力のしかたは、いま補充を入力している途中の手には使わない(次に打つ手から)
     state.refillInputMode = modal.querySelector('input[name="cfgRefillInput"]:checked').value === 'waves' ? 'waves' : 'final';
-    // 最大レベルを下げたときは、盤面と布陣のレベルもそこまでに抑える
-    for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
-      const c = state.board[y][x];
-      if (c && SPECIES.includes(c.species) && c.level > state.maxLevels[c.species]) c.level = state.maxLevels[c.species];
-    }
-    state.patterns.forEach(p => { p.cells = p.cells.map(row => row.map(v => (v === 'X' ? v : Math.min(v, state.maxLevels[p.species])))); });
+    clampLevelsToMax();
     modalRoot.innerHTML = '';
     picked = null;
     onBoardChanged();
