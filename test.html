@@ -4,18 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:,">
-<title>スラだんパズルナビゲーター</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet">
+<title>EGG Navi</title>
 <style>
+  /* v3.0 の見た目(2026-10-03 本人OK): 卵の殻の白の地に、大事なボタンは黄身のイエロー。角を大きく丸め、影は薄く */
   :root {
-    --bg: #1b1d24;
-    --panel: #24272f;
-    --panel2: #2c2f3a;
-    --border: #3a3e4a;
-    --text: #e8e9ee;
-    --text-dim: #9a9fae;
-    --accent: #f2b544;
-    --accent2: #5aa9e6;
-    --danger: #e0574c;
+    --bg: #fffaf0;
+    --panel: #ffffff;
+    --panel2: #f7f2e8;
+    --border: #eee5d3;
+    --text: #2d2a26;
+    --text-dim: #8b8478;
+    --accent: #ffc83d;
+    --accent-ink: #3b2a00;
+    --accent-soft: #fff1c7;
+    --accent2: #2f7fe0;
+    --danger: #e5484d;
     --mark: #ff1a1a;   /* 盤面の印(入替・削除の枠、✕、点線の枠) */
     --ok: #3cb371;
     --radius: 10px;
@@ -123,7 +128,8 @@
   .cell.aligned-glow.highlight, .cell.aligned-glow.highlight-del { animation-name: alignedGlowRing; }
   .cell.highlight, .cell.highlight-del, .cell.check-mark { z-index: 2; }
   /* 練習モードでマッチの様子を見せる場面: そろったマスは白く強く光って少し小さくなる。消えたマスは暗い空き */
-  .cell.match-flash { filter: brightness(2); box-shadow: inset 0 0 18px 14px #fff, 0 0 12px 5px #fff; transform: scale(.82); transition: transform .15s; z-index: 1; }
+  /* マッチした駒・長押しで削除する駒: 駒だけを白く光らせて縮める。白い四角の光は、明るい板の上では四角い枠に見えたので出さない(2026-10-03 本人) */
+  .cell.match-flash { filter: brightness(2); transform: scale(.82); transition: transform .15s; z-index: 1; }
   .cell.gone { background: #202228; }
   /* 1手戻したときに、その場面で「この手順を打つ」を押したカードに付ける印 */
   .adopted-mark { display:inline-block; font-size:12px; font-weight:700; color:#1b1d24; background:var(--accent); border-radius:5px; padding:2px 8px; margin-bottom:6px; }
@@ -135,7 +141,7 @@
   /* 盤面の外で離すと削除になる間: 長押しの削除と同じ白い光 */
   .drag-piece.drag-delete { filter: brightness(2); box-shadow: inset 0 0 18px 14px #fff, 0 0 12px 5px #fff; transform: translate(-50%, -50%) scale(.82); }
   /* 長押し: 光り始めてから削除までに、「そろったマスが白く光って少し小さくなる」強さまで強くなる */
-  @keyframes pressGlow { 0% { filter: brightness(1); box-shadow: inset 0 0 0 0 rgba(255,255,255,0), 0 0 0 0 rgba(255,255,255,0); transform: scale(1); } 100% { filter: brightness(2); box-shadow: inset 0 0 18px 14px #fff, 0 0 12px 5px #fff; transform: scale(.82); } }
+  @keyframes pressGlow { 0% { filter: brightness(1); transform: scale(1); } 100% { filter: brightness(2); transform: scale(.82); } }
   .cell.press-glow { animation: pressGlow 1333ms ease-in forwards; z-index: 1; }
   .practice-label { color: var(--accent); font-weight: 700; }
 
@@ -163,6 +169,10 @@
   /* 手順のカード */
   .chain-card { border:1px solid var(--border); border-radius:8px; padding:10px; margin-bottom:10px; background: var(--panel2); }
   .chain-head { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+  /* カードの番号(2026-10-03 本人「どの手順を検討してたか盤面に戻ると分からなくなる」)。見出しより目立たないように小さく灰色で、印と同じ行に並べる */
+  .card-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:-3px 0 3px; }
+  .card-top .adopted-mark { margin-bottom:0; }
+  .card-no { font-size:11px; font-weight:700; color:var(--text-dim); }
   .chain-gain { font-size:20px; font-weight:800; color: var(--accent2); }
   .chain-meta { font-size:12px; color: var(--text-dim); }
   .chain-head .head-nums { flex-basis:100%; }   /* 数字の行(使う手数など)は、どのカードも見出しの次の行に出す */
@@ -301,12 +311,7 @@
     /* 16px より小さい入力欄は、iPhone で押すと画面が拡大されるので大きくする */
     input, select, textarea, .config-item input, .field-row input[type=text] { font-size: 16px; }
     /* シミュレーターは 素材とレベル → 盤面 → 操作 の順に並べる(入力と確定のあいだのスクロールを減らす) */
-    #simPanel { display:flex; flex-direction:column; }
-    #simPanel .panel-head { order: 0; }
-    #simPanel .brush-row { order: 1; }
-    #simPanel .board-wrap { order: 2; align-self: flex-start; margin-bottom: 10px; }
-    #simPanel #gameControls { order: 3; }
-    .board { width: min(calc(100vw - 64px), 360px); max-width: none; }
+
     .brush-row .sw { width:36px; height:34px; }
     .brush-row .lv { min-width:30px; padding:7px 0; }
     .brush-row .row-break { display:block; flex-basis:100%; height:0; }
@@ -318,65 +323,202 @@
     /* ヘッダーのボタンは「設定・リセット」と「記録を書き出す・読み込む」の2行に分ける */
     .toolbar-break { display: block; flex-basis: 100%; height: 0; }
   }
+
+  /* ================= v3.0 の見た目と配置 ================= */
+  html, body { font-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased; }
+  .app { max-width: 1440px; padding: 10px 16px 24px; }
+  h2 { font-size: 15px; font-weight: 800; }
+  /* 上の帯: 名前とアイコン2つ(ヒーロー・メニュー) */
+  header.topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 8px; margin: 0 0 10px; }
+  .brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .brand h1 { font-size: 17px; font-weight: 800; letter-spacing: .2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .egg { flex: none; width: 24px; height: 28px; border-radius: 50% 50% 46% 46% / 58% 58% 42% 42%; background: #fff; box-shadow: inset 0 -3px 0 #f1e6cf, 0 1px 3px #0002; position: relative; }
+  .egg::after { content: ""; position: absolute; left: 6px; top: 10px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+  .top-icons { display: flex; gap: 8px; flex: none; }
+  .icon-btn { width: 42px; height: 42px; padding: 0; border-radius: 14px; display: grid; place-items: center; }
+  .icon-btn .ico { width: 20px; height: 20px; margin: 0; }
+  /* ボタン */
+  button { font-family: inherit; font-size: 13px; font-weight: 700; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 9px 14px; box-shadow: 0 1px 2px #0000000a; }
+  button:hover { border-color: #e2d4b4; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); box-shadow: 0 3px 10px #f5a40033; }
+  button.primary:hover { filter: brightness(1.03); }
+  button.danger { color: var(--danger); border-color: #f4c9c9; background: var(--panel); }
+  button.small { padding: 6px 10px; font-size: 12px; border-radius: 10px; }
+  button.quiet { background: transparent; border-color: transparent; box-shadow: none; color: var(--text-dim); }
+  .toolbar button.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+  input, select, textarea { font-family: inherit; }
+  select, .config-item input, .field-row input[type=text], input[type=number] { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px; }
+  .modal select { background: var(--panel); color: var(--text); border-radius: 10px; padding: 5px 8px; }
+  .note { color: var(--text-dim); }
+  /* 説明のボタンは丸い「?」 */
+  .help-btn { width: 28px; height: 28px; padding: 0; border-radius: 50%; display: inline-grid; place-items: center; background: var(--panel2); border: none; box-shadow: none; color: var(--text-dim); font-weight: 800; font-size: 14px; }
+  /* 3つのゾーン: 枠の箱にせず、見出しと中身だけ */
+  .panel { background: transparent; border: none; border-radius: 0; padding: 0; }
+  .panel-head { margin-bottom: 8px; }
+  .layout { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  .col-left, .col-right { display: contents; }
+  #simPanel { grid-area: sim; } #chainPanel { grid-area: chain; } #patternPanel { grid-area: pattern; }
+  .layout { grid-template-areas: "sim" "chain"; }
+  #patternPanel { display: none; }
+  /* 残り手数と目標MAX布陣の残りの数: 白いカード */
+  #statusArea { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 10px 16px; margin: 0 0 10px; }
+  #statusArea:empty { display: none; }
+  #statusArea .moves-left { margin: 0; align-items: baseline; }
+  #statusArea .moves-left .num { font-size: 34px; color: var(--text); letter-spacing: -1px; }
+  #statusArea .shortage-line { margin: 2px 0 0; font-size: 12.5px; font-weight: 700; }
+  .game-status { color: var(--text-dim); font-size: 12.5px; }
+  /* 盤面 */
+  .board-wrap { display: block; }
+  .board { width: 100%; max-width: 460px; margin: 0 auto; }
+  #board { border-radius: 20px; box-shadow: 0 0 0 1px #d8cfe6; }
+  .cell.empty { background: #f3eee4; border: 2px dashed #d8ccb8 !important; color: #b0a796; }
+  .cell.unknown { background: repeating-linear-gradient(45deg, #4a4458, #4a4458 6px, #554e66 6px, #554e66 12px); color: #ffd36b; border-color: #ffd36b !important; }
+  .cell.x { background: #efe9dd !important; color: #b0a796; }
+  .cell.gone, .cell.drag-origin { background: #efe9dd; }
+  .brush-row { margin: 0 0 10px; }
+  .brush-row .sw { border-radius: 10px; }
+  .brush-row .sw.on { border-color: var(--text); }
+  .brush-row .lv { border-radius: 10px; }
+  .brush-row .lv.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+  /* 入替・削除・ピン・盤面を直す: iPhone の切り替えボタンの形。戻す・進めるは丸いボタン */
+  .mode-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 6px; }
+  .seg { flex: 1; display: flex; background: var(--panel2); border-radius: 14px; padding: 3px; min-width: 0; }
+  .seg button { flex: 1; min-width: 0; border: none; background: transparent; box-shadow: none; border-radius: 11px; padding: 9px 2px; font-size: 13px; color: #6b6458; white-space: nowrap; display: flex; align-items: center; justify-content: center; }
+  .seg button .ico { margin-right: 3px; }
+  .seg button.on { background: var(--panel); color: var(--text); box-shadow: 0 1px 3px #0002; }
+  .round-btn { width: 42px; height: 42px; padding: 0; border-radius: 50%; display: grid; place-items: center; flex: none; }
+  .round-btn .ico { margin: 0; width: 18px; height: 18px; }
+  /* 結果のカード */
+  .chain-card, .pattern-card { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 14px 16px; margin-bottom: 12px; }
+  .chain-gain { color: var(--text); }
+  .card-warn { background: #fff4e5; color: #c2410c; border-radius: 10px; padding: 6px 10px; margin: 4px 0; font-size: 12.5px; }
+  .adopted-mark { color: var(--accent-ink); background: var(--accent); border-radius: 8px; }
+  .warn-note { background: #fff1f0; border-color: #f4c9c9; border-radius: 12px; }
+  .config-item, .cfg-box, .char-row, .char-item, .guide { background: #fbf7ef; border: 1px solid var(--border); border-radius: 14px; }
+  .mini-badge { border-radius: 7px; }
+  /* 小さい画面の部品 */
+  .overlay { background: rgba(45, 42, 38, .32); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+  .modal { background: var(--bg); border: none; border-radius: 24px; box-shadow: 0 20px 50px #0003; padding: 20px; }
+  .sec-h { border-top-color: var(--border); }
+  footer { color: var(--text-dim); }
+  footer .credit { margin-top: 6px; }
+  /* メニュー(≡) */
+  .menu-list { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 4px; }
+  .menu-list button { display: flex; align-items: center; gap: 10px; justify-content: flex-start; padding: 13px 14px; font-size: 14px; border-radius: 14px; text-align: left; }
+  .menu-list button .ico { margin: 0; width: 18px; height: 18px; }
+  .menu-list button.danger { color: var(--danger); }
+  /* 目標MAX布陣を、スマホとタブレットでは下から出す画面で開く */
+  #sheetBackdrop { display: none; position: fixed; inset: 0; z-index: 89; background: rgba(45, 42, 38, .32); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+  body.patterns-open #sheetBackdrop { display: block; }
+  body.patterns-open #patternPanel { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 90; max-height: 86vh; overflow: auto; background: var(--bg); border-radius: 24px 24px 0 0; padding: 18px 16px 28px; box-shadow: 0 -10px 40px #0003; }
+  #btnClosePatterns { display: none; }
+  body.patterns-open #btnClosePatterns { display: inline-block; }
+  /* 画面の下のボタン(スマホだけ。親指が届く所) */
+  #dock { display: none; }
+  /* 古い帯の部品(v3.0 の文の見直しで消す) */
+  header .sub, #quickGuide { display: none; }
+
+  /* 説明の「詳しく」(押すと開く) */
+  details.more { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 10px; }
+  details.more > summary { cursor: pointer; font-weight: 800; font-size: 14px; color: var(--text); }
+  details.more details.more { border-top: none; margin-top: 8px; padding-top: 0; }
+  .info-modal .lead { margin-top: 0; }
+  /* 目標MAX布陣のカードの「その他の操作」 */
+  details.pattern-more { margin-top: 8px; }
+  details.pattern-more > summary { cursor: pointer; font-size: 12px; font-weight: 700; color: var(--text-dim); }
+  /* 残り手数のカード: 右上に「?」、下にゲームモード */
+  #statusArea { position: relative; padding-right: 44px; }
+  #statusArea #btnSimHelp { position: absolute; top: 10px; right: 10px; }
+  #statusArea .rule-note { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
+  #statusArea .rule-note:empty { display: none; }
+  #statusArea .game-status { margin: 4px 0; color: var(--text); font-weight: 700; }
+  #simPanel > .panel-head { display: none; }
+  /* 目標MAX布陣の残りの数: 小さな札 */
+  .short-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 3px; }
+  .short-chips span { background: var(--panel2); border-radius: 999px; padding: 1px 9px; font-size: 11.5px; font-weight: 700; color: #5d564b; }
+  .short-chips span.done { color: var(--text-dim); font-weight: 500; }
+  footer .disclaimer { margin-top: 6px; }
+  /* ---------- スマホ ---------- */
+  @media (max-width: 719px) {
+    .app { padding-bottom: 110px; }
+    #dock:not(:empty) { display: flex; gap: 10px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 70; padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); background: linear-gradient(rgba(255, 250, 240, 0), var(--bg) 38%); }
+    #dock button { height: 56px; border-radius: 18px; font-size: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    #dock button.primary { flex: 1; }
+    #dock button .ico { margin: 0; width: 20px; height: 20px; }
+    #dock button small { font-size: 11px; opacity: .7; }
+    .in-dock { display: none !important; }
+    .fab-round { bottom: 96px; }
+    .fab-pill { bottom: 102px; }
+    .overlay { align-items: flex-end; padding: 0; }
+    .modal { border-radius: 24px 24px 0 0; max-height: 88vh; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+    .board { width: 100%; max-width: none; }
+  }
+  /* ---------- タブレット: 左に盤面、右に結果(盤面は画面に止めておく) ---------- */
+  @media (min-width: 720px) {
+    .layout { grid-template-columns: minmax(330px, 440px) minmax(0, 1fr); grid-template-areas: "sim chain"; align-items: start; }
+    #simPanel { position: sticky; top: 10px; }
+  }
+  /* 「素材」「連鎖」のタブ: 切り替えの形 */
+  #chainList .toolbar:has(> [data-result-tab]) { display: inline-flex; gap: 0; background: var(--panel2); border-radius: 12px; padding: 3px; }
+  button[data-result-tab] { background: transparent; border: none; box-shadow: none; color: #6b6458; border-radius: 9px; padding: 6px 16px; font-size: 13px; }
+  button[data-result-tab].primary { background: var(--panel); color: var(--text); box-shadow: 0 1px 3px #0002; }
+  /* カードの小さい盤面: 手順の盤面と手順の後を並べる(矢印は出さない。見出しの①②で順番が分かる) */
+  .chain-arrow { display: none; }
+  .chain-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .chain-steps .mini-board.chain { width: 100%; }
+  @media (min-width: 720px) { .chain-steps { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  /* タブレットと PC: 「次の手を探す」は結果の上に大きく(スマホは画面の下のボタン) */
+  @media (min-width: 720px) {
+    #btnSearch { flex: 1 1 100%; height: 52px; font-size: 16px; border-radius: 18px; }
+  }
+  /* ---------- PC: 右に目標MAX布陣も並べる ---------- */
+  @media (min-width: 1200px) {
+    .layout { grid-template-columns: 440px minmax(0, 1fr) 320px; grid-template-areas: "sim chain pattern"; }
+    #patternPanel { display: block; position: sticky; top: 10px; }
+    #btnOpenPatterns { display: none; }
+  }
 </style>
 </head>
 <body>
 <div class="app">
-  <header>
-    <div>
-      <h1>スラだんパズルナビゲーター <span class="ver">v2.2.14</span></h1>
-      <div class="credit"><span>created by シナっぷ ／</span> <span>thanks to EGGのみんな</span></div>
-      <div class="sub">ゲームと同じ盤面を入力して1手ずつ進められるシミュレーターです。MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖も探せます。</div>
-    </div>
-    <div class="toolbar">
-      <button id="btnConfig"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.49 10.69L22.14 10.88L22.14 13.12L19.49 13.31L19.42 13.66L18.22 16.37L19.96 18.38L18.38 19.96L16.37 18.22L16.07 18.42L13.31 19.49L13.12 22.14L10.88 22.14L10.69 19.49L10.34 19.42L7.63 18.22L5.62 19.96L4.04 18.38L5.78 16.37L5.58 16.07L4.51 13.31L1.86 13.12L1.86 10.88L4.51 10.69L4.58 10.34L5.78 7.63L4.04 5.62L5.62 4.04L7.63 5.78L7.93 5.58L10.69 4.51L10.88 1.86L13.12 1.86L13.31 4.51L13.66 4.58L16.37 5.78L18.38 4.04L19.96 5.62L18.22 7.63L18.42 7.93Z"/><circle cx="12" cy="12" r="3"/></svg>設定</button>
-      <button id="btnChars"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>ヒーロー</button>
-      <button id="btnResetGame" class="danger" title="盤面を全部「?」に戻し、打った手の記録も消します。目標MAX布陣と設定は残ります。">リセット</button>
-      <span class="toolbar-break"></span>
-      <button id="btnExportGame" class="quiet dim" title="1手以上打つと押せます。"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/></svg>記録を書き出す</button>
-      <button id="btnImportGame" class="quiet" title="書き出した記録を読み込んで、最初の盤面から1手ずつ再現します。"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4"/><path d="M7 8l5-5 5 5"/><path d="M4 20h16"/></svg>記録を読み込む</button>
-      <input type="file" id="importFile" accept=".txt,.json,text/plain,application/json" style="display:none">
+  <header class="topbar">
+    <div class="brand"><span class="egg" aria-hidden="true"></span><h1>EGG Navi <span class="ver">v2.2.23</span></h1></div>
+    <div class="top-icons">
+      <button id="btnChars" class="icon-btn" title="ヒーロー" aria-label="ヒーロー"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></button>
+      <button id="btnMenu" class="icon-btn" title="メニュー" aria-label="メニュー"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     </div>
   </header>
+  <!-- メニュー(≡): 目標MAX布陣・設定・記録・リセット -->
+  <div id="menuOverlay" class="overlay" style="display:none;"><div class="modal" id="menuModal">
+    <h2>メニュー</h2>
+    <div class="menu-list">
+      <button id="btnOpenPatterns"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>目標MAX布陣</button>
+      <button id="btnConfig"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.49 10.69L22.14 10.88L22.14 13.12L19.49 13.31L19.42 13.66L18.22 16.37L19.96 18.38L18.38 19.96L16.37 18.22L16.07 18.42L13.31 19.49L13.12 22.14L10.88 22.14L10.69 19.49L10.34 19.42L7.63 18.22L5.62 19.96L4.04 18.38L5.78 16.37L5.58 16.07L4.51 13.31L1.86 13.12L1.86 10.88L4.51 10.69L4.58 10.34L5.78 7.63L4.04 5.62L5.62 4.04L7.63 5.78L7.93 5.58L10.69 4.51L10.88 1.86L13.12 1.86L13.31 4.51L13.66 4.58L16.37 5.78L18.38 4.04L19.96 5.62L18.22 7.63L18.42 7.93Z"/><circle cx="12" cy="12" r="3"/></svg>設定</button>
+      <button id="btnExportGame" class="dim" title="1手以上打つと押せます。"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/></svg>記録を書き出す</button>
+      <button id="btnImportGame"  title="書き出した記録を読み込んで、最初の盤面から1手ずつ再現します。"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4"/><path d="M7 8l5-5 5 5"/><path d="M4 20h16"/></svg>記録を読み込む</button>
+      <button id="btnResetGame" class="danger" title="盤面を全部「?」に戻し、打った手の記録も消します。目標MAX布陣と設定は残ります。"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></svg>リセット</button>
+    </div>
+    <input type="file" id="importFile" accept=".txt,.json,text/plain,application/json" style="display:none">
+    <div class="modal-actions"><button id="btnMenuClose">閉じる</button></div>
+  </div></div>
+  <div id="sheetBackdrop"></div>
 
-  <details class="guide" id="quickGuide">
-    <summary>初めての方へ（クイックガイド）</summary>
-    <p class="guide-lead">使い方は、目的に合わせて大きく3通りあります。</p>
-    <p class="guide-h">① シミュレーターとして試す</p>
-    <ol>
-      <li>ゲーム画面どおりに盤面と残り手数を入力して、「この盤面で始める」を押します（入力を省いたマスは「?」になります）。</li>
-      <li>「入替」「削除」で1手ずつ打ちます。ドラッグで入替、長押しで削除もできます。</li>
-      <li>補充されたマスを入力して進めます。「1手戻す」で何度でもやり直せます。</li>
-    </ol>
-    <p class="guide-h">② 練習モードで練習する</p>
-    <ol>
-      <li>残り手数にゲームモードの最初の手数を入れて、「ランダムな盤面で練習する」を押します。</li>
-      <li>補充はツールが決めるので、入力はいりません。</li>
-    </ol>
-    <p class="guide-h">③ MAX布陣づくりのサポートに使う</p>
-    <ol>
-      <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.49 10.69L22.14 10.88L22.14 13.12L19.49 13.31L19.42 13.66L18.22 16.37L19.96 18.38L18.38 19.96L16.37 18.22L16.07 18.42L13.31 19.49L13.12 22.14L10.88 22.14L10.69 19.49L10.34 19.42L7.63 18.22L5.62 19.96L4.04 18.38L5.78 16.37L5.58 16.07L4.51 13.31L1.86 13.12L1.86 10.88L4.51 10.69L4.58 10.34L5.78 7.63L4.04 5.62L5.62 4.04L7.63 5.78L7.93 5.58L10.69 4.51L10.88 1.86L13.12 1.86L13.31 4.51L13.66 4.58L16.37 5.78L18.38 4.04L19.96 5.62L18.22 7.63L18.42 7.93Z"/><circle cx="12" cy="12" r="3"/></svg>設定でゲームモードを合わせ、「目標MAX布陣」を選びます（初めは「プリセット」がお勧め）。</li>
-      <li>盤面と残り手数を入力して、「この盤面で始める」を押します。</li>
-      <li>「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>次の手を探す」を押します。素材を集める手順は「素材」、手数が増える連鎖は「連鎖」のタブに出ます。</li>
-      <li>良い手をゲームで打ち、補充された駒を入力して「確定」を押します。</li>
-    </ol>
-    <p class="note">※便利な機能: 「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/></svg>ピン」（動かしたくない駒を固定。ドラッグで運びたいマスも決められる）／「自動：オン」（盤面が変わるたびに自動で探す）／「絞り込み」（「A3が3個以上」などで結果を絞る）<br>※盤面が少しずれたら「盤面を直す」、大きく変わったら「リセット」してください。</p>
-  </details>
 
   <div class="layout">
     <div class="col-left">
       <div class="panel" id="simPanel">
-        <div class="panel-head"><div class="panel-title"><h2>シミュレーター</h2><button id="btnSimHelp" class="small help-btn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.6v.01"/></svg>説明</button></div><span class="note" id="ruleBadge"></span></div>
-        <div id="gameControls"></div>
+        <div class="panel-head"><div class="panel-title"><h2>シミュレーター</h2><button id="btnSimHelp" class="help-btn" title="説明" aria-label="説明">?</button></div><span class="note" id="ruleBadge"></span></div>
+        <div id="statusArea"></div>
         <div class="brush-row" id="brushRow"></div>
         <div class="board-wrap">
           <div class="board" id="board"></div>
         </div>
+        <div id="gameControls"></div>
       </div>
 
       <div class="panel" id="chainPanel">
         <div class="panel-head">
-          <div class="panel-title"><h2>手順を探す</h2><button id="btnHowItWorks" class="small help-btn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.6v.01"/></svg>説明</button></div>
+          <div class="panel-title"><h2>手順を探す</h2><button id="btnHowItWorks" class="help-btn" title="説明" aria-label="説明">?</button></div>
         </div>
         <div class="toolbar" style="margin-top:0;margin-bottom:6px;">
           <button id="btnSearch" class="primary"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>次の手を探す</button>
@@ -393,22 +535,24 @@
     </div>
 
     <div class="col-right">
-      <div class="panel">
+      <div class="panel" id="patternPanel">
         <div class="panel-head">
-          <div class="panel-title"><h2>目標MAX布陣</h2><button id="btnPatternHelp" class="small help-btn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.6v.01"/></svg>説明</button></div>
+          <div class="panel-title"><h2>目標MAX布陣</h2><button id="btnPatternHelp" class="help-btn" title="説明" aria-label="説明">?</button></div>
           <div>
             <button id="btnPickPattern" class="small">プリセット</button>
             <button id="btnAddPattern" class="small primary">＋ 新規追加</button>
+            <button id="btnClosePatterns" class="small">閉じる</button>
           </div>
         </div>
         <div id="patternList"></div>
-        <div class="note" id="patternEmptyNote" style="display:none;">登録されているMAX布陣はありません。登録しなくても「シミュレーター」と「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>次の手を探す」は使えます（手数が増える連鎖を探します）。登録すると、「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>次の手を探す」が目標MAX布陣に必要な素材が増える手順も探すようになります。</div>
+        <div class="note" id="patternEmptyNote" style="display:none;">布陣を登録すると、必要な素材を集める手順も探します。「プリセット」から選ぶのが簡単です。</div>
       </div>
     </div>
   </div>
 
+  <div id="dock"></div>
   <button id="btnJump" class="fab-round" style="display:none;"></button><button id="btnChainCollapse" class="fab-pill" style="display:none;"></button>
-  <footer>ブラウザ内で完結・データはこのブラウザだけに自動保存されます（ブラウザのデータを消すと消えます。残しておきたい対局は「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/></svg>記録を書き出す」で書き出してください）。</footer>
+  <footer>データは、このブラウザの中だけに保存します。残しておきたい対局は、メニューの「記録を書き出す」で書き出してください。<div class="disclaimer">このツールは非公式のファンツールで、ゲームの運営とは関係ありません。ゲームには一切触れないので、アカウントに影響はありません。</div><div class="credit"><span>created by シナっぷ ／</span> <span>thanks to EGGのみんな</span></div></footer>
 </div>
 
 <div id="modalRoot"></div>
@@ -1684,8 +1828,37 @@ function updateJumpBtn() {
   b.style.display = mode ? '' : 'none';
   if (!mode) return;
   b.innerHTML = mode === 'board' ? '<span class="ar">▲</span><span class="t">盤面へ</span>' : '<span class="ar">▼</span><span class="t">結果へ</span>';
-  b.onclick = () => (mode === 'board' ? document.getElementById('simPanel') : document.getElementById('chainPanel')).scrollIntoView({ block: 'start', behavior: 'smooth' });
+  b.onclick = () => {
+    if (mode === 'board') { rememberViewedCard(); document.getElementById('simPanel').scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
+    const el = viewedCardEl();
+    (el || document.getElementById('chainPanel')).scrollIntoView({ block: 'start', behavior: 'smooth' });
+  };
 }
+// ▼結果へで戻るカード(2026-10-03 本人)。結果を見ている間、スクロールが止まったときに、画面の一番上に見えているカードを覚える。
+// 盤面へスクロールで戻る途中に通り過ぎたカードを覚えないように、止まって0.5秒たったときだけ覚える(▲盤面へを押したときは、その場で覚える)。
+// 探し直して結果が新しくなったとき・そのカードが結果からなくなったときは、今までどおり結果の一番上へ
+let viewedCard = null;   // { res: 覚えたときの結果, key: 手順の鍵 }
+function rememberViewedCard() {
+  if (!shownResults) return;
+  const cards = chainListEl.querySelectorAll('.chain-card[data-card]');
+  for (const c of cards) {
+    const r = c.getBoundingClientRect();
+    if (r.bottom > 40 && r.top < window.innerHeight) { viewedCard = { res: shownResults.res, key: c.dataset.card }; return; }
+  }
+}
+function viewedCardEl() {
+  if (!viewedCard || !shownResults || viewedCard.res !== shownResults.res) return null;
+  return Array.from(chainListEl.querySelectorAll('.chain-card[data-card]')).find(c => c.dataset.card === viewedCard.key) || null;
+}
+let viewedTimer = 0;
+window.addEventListener('scroll', () => {
+  clearTimeout(viewedTimer);
+  viewedTimer = setTimeout(() => {
+    // 結果が画面に出ているときだけ覚える(盤面を見ているときは覚え直さない)
+    const r = chainListEl.getBoundingClientRect();
+    if (r.top < window.innerHeight * 0.5 && r.bottom > 80) rememberViewedCard();
+  }, 500);
+}, { passive: true });
 let jumpTimer = 0;   // スクロール中は、50ミリ秒に1回だけ更新する
 const scheduleJumpBtn = () => { if (!jumpTimer) jumpTimer = setTimeout(() => { jumpTimer = 0; updateJumpBtn(); }, 50); };
 window.addEventListener('scroll', scheduleJumpBtn, { passive: true });
@@ -1713,8 +1886,8 @@ function renderChainOptionsInner(list, sec, showAll) {
   }
   if (!list.length) {
     chainListEl.innerHTML = pattern
-      ? `<div class="note"><b>MAX布陣「${esc(pattern.name)}」を崩さずに、手数が増える連鎖は見つかりませんでした。</b>（入替と削除を${chainSearchDepth}手まで組み合わせて調べました。手数が減る手順、${pattern.species}${patternNeedLevel(pattern) + 1}以上を作る手順、補充を入れても素材が減る手順は除いています。${sec}秒）</div>`
-      : `<div class="note">入替と削除を${chainSearchDepth}手まで組み合わせて調べましたが、使う手数以上に手数が増える連鎖は見つかりませんでした。（${sec}秒）</div>`;
+      ? `<div class="note"><b>今目指しているMAX布陣を崩さずに、手数が増える連鎖は見つかりませんでした。</b>（${chainSearchDepth}手まで・${sec}秒）</div>`
+      : `<div class="note"><b>手数が増える連鎖は見つかりませんでした。</b>（${chainSearchDepth}手まで・${sec}秒）</div>`;
     chainShown = [];
     return;
   }
@@ -1763,9 +1936,9 @@ function chainCardHtml(o0, idx, cont) {
   // いま目指しているMAX布陣の起爆(その素材のMAXが増える)の手順は、布陣が役目を終えるので、
   // 1手あたりの素材・減点・そろえたマスの注意と印は出さない(布陣の素材がなくなるのは当然のため)
   const detonate = !!pattern && (() => { const top = state.maxLevels[pattern.species] || 7; const cnt = g => g.reduce((a, row) => a + row.filter(c => c && c.species === pattern.species && c.level === top).length, 0); return cnt(o.final) > cnt(state.board); })();
-  return `<div class="chain-card">${cardMarkHtml(o0, cont)}
+  return `<div class="chain-card"${cardKeyAttr(o0, cont)}>${cardTopHtml(o0, cont)}
     <div class="chain-head">${detonate ? '' : perHtml}<span class="chain-gain">差し引き ${sign}${o.gain.toFixed(1)}手</span>
-      <span class="chain-meta head-nums">使う手数 ${o.path.length} / 手数の増加 平均${o.avg.toFixed(1)}手（補充がマッチしない場合 ${o.sureRec}手・最高${o.bestRec}手）${detonate ? '' : riskSmall(info)}${cont ? '' : otherTabNote(o)}</span></div>
+      <span class="chain-meta head-nums">使う手数 ${o.path.length} / 手数の増加 ${o.avg.toFixed(1)}手（${o.sureRec}〜${o.bestRec}手）${detonate ? '' : riskSmall(info)}${cont ? '' : otherTabNote(o)}</span></div>
     ${cardWarnsHtml([...lossLine, ...laterLossLines(o.final), ...riskLine(info), ...(detonate ? [] : [...breakLine, ...penLine])])}
     <div class="chain-steps">${stepsHtml}<div class="chain-step"><h4>手順の後（補充は ?）</h4>${chainMiniBoard(o.final, { marks: detonate ? [] : (o.breakCells || []), newAligned: newAlignedCells(o.final), pinCells: pc && pc[o.path.length] })}</div></div>
     ${maxHtml}
@@ -1799,6 +1972,7 @@ async function runChainSearchInner() {
   chainSearchDepth = Number(document.getElementById('chainDepth').value) === 4 ? 4 : 3;
   btnSearch.disabled = true;
   btnChainCancel.style.display = '';
+  renderDock();
   chainListEl.innerHTML = '';
   showContOnly();   // 探している間も、今打っている手順の続きのカードは出しておく
   const t0 = performance.now();
@@ -1823,6 +1997,7 @@ async function runChainSearchInner() {
     chainRunKey = null;
     btnSearch.disabled = false;
     btnChainCancel.style.display = 'none';
+    renderDock();
   }
 }
 
@@ -2602,6 +2777,7 @@ const RESULT_TABS = [['gain', '素材'], ['chain', '連鎖']];
 // もう一方のタブにも同じ手順(打つ手の並びがまったく同じ)があるとき、カードの数字の行の最後に小さく「連鎖のタブにもあります（3番目）」。
 // 番号は、もう一方のタブで表示している一覧(絞り込みのあと)の何番目か。renderResults で作り、カードを描くときに使う
 let otherTabIndex = null;   // { name: '連鎖', map: Map(手順の鍵 → 番号) }
+let cardRank = null;        // いま出しているタブの、手順の鍵 → カードの番号(絞り込みの前の一覧での順番)
 const pathKeyOf = path => path.map(m => (m.type === 'swap' ? `s${m.a.x}${m.a.y}${m.b.x}${m.b.y}` : `d${m.pos.x}${m.pos.y}`)).join(',');
 function otherTabNote(o) {
   const n = otherTabIndex && otherTabIndex.map.get(pathKeyOf(o.path));
@@ -2645,7 +2821,9 @@ function renderFilterRow() {
     <select id="filterKey"><option value="">なし</option>${keys.map(k => `<option value="${k}"${k === cur ? ' selected' : ''}>${esc(pieceLabel(k[0], Number(k.slice(1))))}</option>`).join('')}</select>が
     <select id="filterN"${cur ? '' : ' disabled'}>${Array.from({ length: 20 }, (_, i) => i + 1).map(n => `<option value="${n}"${n === state.resultFilter.n ? ' selected' : ''}>${n}</option>`).join('')}</select>個以上</label>`;
   const onChange = () => {
-    state.resultFilter = { key: document.getElementById('filterKey').value, n: Number(document.getElementById('filterN').value) || 1 };
+    // 素材を変えたとき(「なし」にしたときも)は、数を1に戻す(2026-10-03 本人「前の検索の名残が表示されてるのが気になる」)
+    const key = document.getElementById('filterKey').value;
+    state.resultFilter = { key, n: key !== state.resultFilter.key ? 1 : Number(document.getElementById('filterN').value) || 1 };
     saveState();
     renderFilterRow();
     if (shownResults && hasShownResults()) renderResults(shownResults.res, shownResults.sec, false);
@@ -2661,7 +2839,11 @@ function renderResults(res, sec, showAll) {
   const pick = list => (f ? list.filter(o => passesFilter(o, f)) : list);
   const gainList = hasPattern ? pick(res.gain) : res.gain, chainList = pick(res.chain);
   const [list, orig, other] = tab === 'gain' ? [gainList, res.gain, chainList] : [chainList, res.chain, gainList];
-  otherTabIndex = hasPattern ? { name: tab === 'gain' ? '連鎖' : '素材', map: new Map(other.map((o, i) => [pathKeyOf(o.path), i + 1])) } : null;
+  // 番号は、絞り込みの前の一覧での順番。もう片方のタブの「◯番目」も、そのタブのカードの番号とそろえる
+  const rankOf = l => new Map(l.map((o, i) => [pathKeyOf(o.path), i + 1]));
+  const otherOrig = tab === 'gain' ? res.chain : res.gain, otherRank = hasPattern ? rankOf(otherOrig) : null;
+  cardRank = rankOf(orig);
+  otherTabIndex = hasPattern ? { name: tab === 'gain' ? '連鎖' : '素材', map: new Map(other.map(o => [pathKeyOf(o.path), otherRank.get(pathKeyOf(o.path))])) } : null;
   if (f && !list.length && orig.length) {
     // 絞り込みで0件: 出ている一覧の中にないことを、範囲をはっきり書いて出す
     const otherName = tab === 'gain' ? '連鎖' : '素材';
@@ -2735,7 +2917,7 @@ function advanceCardHtml(o0, idx, cont) {
   const o = Object.assign({}, o0, chainDetail(state.board, o0.path));
   const info = pathAccidentInfo(state.board, o.path, pattern);
   // 手数の増加は連鎖のタブと同じ書き方(平均・補充がマッチしない場合・最高)
-  const recText = ` / 手数の増加 平均${o.avgRec.toFixed(1)}手（補充がマッチしない場合 ${o.sureRec}手・最高${o.bestRec}手）`;
+  const recText = ` / 手数の増加 ${o.avgRec.toFixed(1)}手（${o.sureRec}〜${o.bestRec}手）`;
   // 見出しは「素材の増加（1手あたり）(大きく) ／ 差し引き(小さく)」
   const signed = v => (Number(v.toFixed(1)) < 0 ? `−${Math.abs(v).toFixed(1)}` : `+${Math.abs(v).toFixed(1)}`);
   const small = 'font-size:14px;font-weight:700;';
@@ -2753,7 +2935,7 @@ function advanceCardHtml(o0, idx, cont) {
   const stepsHtml = o.steps.map((st, i) =>
     `<div class="chain-step"><h4>${STEP_NUM[off + i] || `${off + i + 1}.`} ${st.move.type === 'swap' ? '入替' : '削除'}</h4>${chainMiniBoard(st.before, { move: st.move, pinCells: pc && pc[i] })}</div><div class="chain-arrow">→</div>`
   ).join('');
-  return `<div class="chain-card">${cardMarkHtml(o0, cont)}
+  return `<div class="chain-card"${cardKeyAttr(o0, cont)}>${cardTopHtml(o0, cont)}
     <div class="chain-head">${headHtml}
       <span class="chain-meta head-nums">使う手数 ${o.path.length}${recText}${riskSmall(info)}${cont ? '' : otherTabNote(o)}</span></div>
     ${cardWarnsHtml([...laterLossLines(o.final), ...riskLine(info), ...breakLine, ...penLine])}
@@ -3209,24 +3391,20 @@ function renderFinalControls(p) {
   const runs = n ? [] : boardRuns(state.board);
   const runText = runs.map(r => `列${r.x + 1}・行${r.y + 1}から${r.len}個`).join('、');
   gameControlsEl.innerHTML = `
-    <div class="moves-left">残り手数（ツールの計算） <span class="num">${expected}</span>
-      <span class="note">（この手: ${describeMove(p.move)} / 補充された駒が絡まない連鎖による増加 ${p.sureChain}）</span>
-      <div class="note" style="margin-top:2px;">この数字は<b>目安</b>です（補充された駒がマッチしなかった場合）。補充された駒次第で、実際はこれより多くなることも、少なくなることもあります。</div></div>
+    <div class="moves-left">残り手数 <span class="num">${expected}</span><span class="note">（目安）</span></div>
     <div class="game-status">${n
-      ? `<b>ゲーム画面のマッチが止まったら</b>、その盤面どおりに入力してください。「?」が補充されたマス（${n}マス）です。補充された駒でマッチが起きて変わったマスも入力し直してください。`
-      : '入力が終わりました。ゲーム画面の残り手数を確かめて「確定」を押してください。'}
+      ? 'マッチが止まった後の盤面と残り手数を、ゲーム画面に合わせてください。'
+      : '残り手数がゲーム画面と同じか確かめて、「確定」を押してください。'}
       ${runs.length ? `<br><b style="color:var(--danger)">まだ3つ以上そろっている並びがあります（${runText}）。ゲーム画面ではマッチしているはずなので、入力間違いがないか確かめてください。${p.confirmRuns ? 'このままでよければ、もう一度「確定」を押してください。' : ''}</b>` : ''}
       ${p.checkMsg && p.checkKey === finalCheckKey(shown) ? `<br><b style="color:var(--danger)">${p.checkMsg}</b>` : ''}
       ${moveNotice ? `<br><b style="color:var(--danger)">${moveNotice}</b>` : ''}</div>
     <div class="toolbar" style="margin-top:0;margin-bottom:8px;align-items:center;">
-      <label class="small">ゲーム画面の残り手数 <input type="number" id="finalLeftInput" min="0" max="999" inputmode="numeric" enterkeyhint="done" value="${shown}" style="width:5em;"></label>
+      <label class="small">残り手数 <input type="number" id="finalLeftInput" min="0" max="999" inputmode="numeric" enterkeyhint="done" value="${shown}" style="width:5em;"></label>
       ${boardReadButtonHtml()}
       <button id="btnFinalCommit" class="primary" ${n ? 'disabled' : ''}>確定</button>
       ${n ? '<button id="btnFinalKeep">「?」のまま確定</button>' : ''}
       <button id="btnFixCancel" class="danger">この手を取り消す</button>
-    </div>
-    <div class="note" style="margin:0 0 8px;">ゲーム画面の残り手数と違っていたら、ゲーム画面の数字に直してから確定してください。</div>
-    ${n ? '<div class="note" style="margin:0 0 8px;"><b>「?」のまま確定</b>すると、入力せずに次の手へ進めます。盤面に「?」が残るので、<b>そこを通る連鎖は見つからず、事故の警告も出せません</b>。</div>' : ''}`;
+    </div>`;
   bindBoardReadButton();
   document.getElementById('finalLeftInput').addEventListener('input', (e) => { const v = parseInt(e.target.value, 10); p.enteredLeft = isNaN(v) ? null : v; p.confirmLow = false; saveState(); });
   const finalCommit = (keepUnknown) => {
@@ -3373,7 +3551,7 @@ function undoLast() {
 function withFutureDropped(then) {
   const g = state.game;
   if (!g.future || !g.future.length) { then(); return; }
-  openAsk(`この先の${g.future.length}手（「1手進める」で進められる手）は消えます。よろしいですか？`, {
+  openAsk(`この先の${g.future.length}手（進めるボタンで進められる手）は消えます。よろしいですか？`, {
     okLabel: '消して進める',
     onOk: () => { g.future = []; then(); },
     onCancel: () => { picked = null; refresh(); },
@@ -3410,7 +3588,7 @@ function startGame() {
 // 最初の盤面と補充をツールがランダムに決める(4種類の素材が同じ確率)。手を打つと、その場で最後まで計算して確定し、
 // マッチの様子(そろったマスに印 → 消える → 詰まって補充)を1ラウンドずつ見せる。打ち直すたびに補充は変わる。
 const ANIM_MS = 400;   // 1場面の長さ
-const ANIM_HINT = '盤面を押すと、途中を省いて、マッチが止まった後の盤面を表示します。';
+const ANIM_HINT = '盤面を押すと、マッチが止まった後まで飛ばせます。';
 let anim = null;       // マッチの様子を見せている間: { frames, k, timer, finalKey }
 function practiceRng() { return makeRng(Math.floor(Math.random() * 4294967296)); }
 // 平坦な盤面を、見せるための盤面に(消えたマス・空きは null)
@@ -3651,6 +3829,13 @@ function isContinuation(o) {
   const p = continuationPath();
   return !!p && p.length === o.path.length && p.every((m, i) => sameMove(m, o.path[i]));
 }
+// カードの一番上の行: 番号と印(印がなければ番号だけ)。続きのカードには番号を付けない
+function cardTopHtml(o, cont) {
+  const n = !cont && cardRank ? cardRank.get(pathKeyOf(o.path)) : null;
+  const h = (n ? `<span class="card-no">${n}番目</span>` : '') + cardMarkHtml(o, cont);
+  return h ? `<div class="card-top">${h}</div>` : '';
+}
+function cardKeyAttr(o, cont) { return cont ? '' : ` data-card="${esc(pathKeyOf(o.path))}"`; }
 function cardMarkHtml(o, cont) {
   if (cont) return `<div class="adopted-mark">今打っている手順の続き（${cont.label}）</div>`;
   return adoptedMarkHtml(o) + (isContinuation(o) ? '<div class="adopted-mark">今打っている手順の続きです</div>' : '');
@@ -3690,6 +3875,7 @@ function showAdoptedCard() {
   const a = adoptedAtHere();
   if (!a || (a.kind !== 'chain' && !currentTargetPattern())) return;
   chainSearchDepth = a.depth;
+  cardRank = null; otherTabIndex = null;   // 前に探した結果の番号は、このカードには当てはまらない
   if (a.kind === 'advance') renderAdvanceOptionsInner([a.card], null, true);
   else if (a.kind === 'place') return;   // 前の版(2.0.6〜2.0.13)の配置のカード。配置の一覧はやめたので出さない
   else renderChainOptionsInner([a.card], null, true);
@@ -3754,7 +3940,7 @@ function renderBrushRow() {
     h += `<button class="lv ${brush.level === lv && !brush.erase ? 'on' : ''}" data-lv="${lv}" ${off ? `disabled title="${why}"` : ''}>${lv}</button>`;
   }
   // 「?」のボタン: 入力を省くマスにする
-  h += `<button class="sw ${brush.erase ? 'on' : ''}" data-erase="1" style="background:#202228;width:auto;padding:0 8px;margin-left:6px;" title="入力を省くマスにします。どの駒ともマッチしない駒として計算します。">?</button>`;
+  h += `<button class="sw ${brush.erase ? 'on' : ''}" data-erase="1" style="background:#4a4458;color:#ffd36b;width:auto;padding:0 8px;margin-left:6px;" title="入力を省くマスにします。どの駒ともマッチしない駒として計算します。">?</button>`;
   // マウスを乗せたときの説明はスマホで見えないので、Lv1 を選べない理由は文でも出す
   if (spMin > 1) h += `<span class="note" style="margin:0 0 0 4px;">（${esc(spLabel(brush.species))}は補充がLv2なのでLv1は選べません）</span>`;
   brushRowEl.innerHTML = h;
@@ -3838,6 +4024,8 @@ function moveSrcLine() {
   return `この場面で打った手：${nx.src === 'card' ? `カードの手順（${nx.step}/${nx.total}手目）` : '自分で選んだ手'}<br>`;
 }
 function moveHintText() {
+  // v3.0: 手を打つときの案内は画面に出さず、シミュレーターの「?」の「使い方」にまとめた
+  return '';
   return moveMode === 'swap'
     ? (picked ? `入れ替える相手のマスをクリック（隣り合うマス${state.diagonal ? '・斜めも可' : ''}）` : '入れ替える2マスを順にクリック、または駒をドラッグ')
     : moveMode === 'delete' ? '削除するマスをクリック、または長押し'
@@ -3848,7 +4036,7 @@ function ruleText() {
   const parts = [];
   if (state.diagonal) parts.push('斜め入替あり');
   const lv2 = SPECIES.filter(sp => (state.refillLevels[sp] || 1) === 2);
-  if (lv2.length) parts.push(`補充Lv2: ${lv2.join('・')}`);
+  if (lv2.length) parts.push(`補充Lv2: ${lv2.map(spLabel).join('・')}`);
   if (state.increasingRecovery) parts.push('連鎖による増加がラウンドごとに増える');
   if (state.pvp) parts.push(`PvP（手数は${PVP_MOVE_CAP}手まで）`);
   return parts.length ? `ゲームモード: ${parts.join(' / ')}` : '';
@@ -3875,7 +4063,7 @@ function shortageHtml() {
   const name = `${esc(p.name)}（${esc(spLabel(p.species))}）`;
   if (short.every(v => v === 0)) return `${name}に必要な素材は盤面にそろっています。`;
   const deadParts = levels.filter(L => deadN[L]).map(L => `${esc(lvLabel(p.species, L))} ${deadN[L]}個`);
-  return `${name}まで あと: ${levels.map((L, i) => `${esc(lvLabel(p.species, L))} ${short[i]}個`).join(' / ')}${deadParts.length ? `（布陣に使えない駒: ${deadParts.join(' / ')}）` : ''}`;
+  return `${name}まで<div class="short-chips">${levels.map((L, i) => `<span class="${short[i] ? '' : 'done'}">${esc(lvLabel(p.species, L))} あと${short[i]}</span>`).join('')}${deadParts.length ? `<span>布陣に使えない駒: ${deadParts.join(' / ')}</span>` : ''}</div>`;
 }
 function updateShortageLine() {
   const el = document.getElementById('shortageLine');
@@ -3885,18 +4073,57 @@ function updateShortageLine() {
   el.style.display = h ? '' : 'none';
 }
 function renderGameControls() {
+  renderGameControlsInner();
+  const area = document.getElementById('statusArea');
+  const help = document.getElementById('btnSimHelp');   // 「?」は描き直しで消えないよう、先に取っておく
+  area.innerHTML = '';
+  const ml = gameControlsEl.querySelector('.moves-left'), sl = gameControlsEl.querySelector('#shortageLine');
+  if (state.game.phase === 'setup') { const gs = gameControlsEl.querySelector('.game-status'); if (gs) area.appendChild(gs); }
+  if (ml) area.appendChild(ml);
+  if (sl) area.appendChild(sl);
+  const rule = document.createElement('div'); rule.className = 'rule-note'; rule.textContent = ruleText(); area.appendChild(rule);
+  area.appendChild(help);
+  renderDock();
+}
+// 画面の下のボタン(スマホだけ。2026-10-03 v3.0)。そのときの大事なボタンを、親指の届く所に大きく出す。
+// 押すと、元のボタン(盤面の下や「手順を探す」にある)を押したのと同じ動きをする。元のボタンは、スマホでは隠す(.in-dock)
+function renderDock() {
+  const dock = document.getElementById('dock');
+  if (!dock) return;
+  document.querySelectorAll('.in-dock').forEach(e => e.classList.remove('in-dock'));
+  const g = state.game, items = [];
+  const mirror = (id, cls, html) => { const el = document.getElementById(id); if (el) items.push({ el, cls, html: html || el.innerHTML }); };
+  const read = document.getElementById('btnReadShot');
+  if (g.phase === 'setup') { if (read) mirror('btnReadShot', ''); mirror('btnStartGame', 'primary'); }
+  else if (g.phase === 'fix') {
+    if (read) mirror('btnReadShot', '');
+    if (document.getElementById('btnFinalCommit')) mirror('btnFinalCommit', 'primary'); else mirror('btnFixNext', 'primary');
+  } else if (g.phase === 'move' && moveMode !== 'edit') {
+    if (document.getElementById('btnQueueNext')) mirror('btnQueueNext', 'primary');
+    else if (btnChainCancel.style.display !== 'none') mirror('btnChainCancel', '');
+    else mirror('btnSearch', 'primary', btnSearch.innerHTML + ` <small>${document.getElementById('chainDepth').value}手</small>`);
+  }
+  dock.innerHTML = '';
+  for (const it of items) {
+    it.el.classList.add('in-dock');
+    const b = document.createElement('button');
+    b.className = it.cls; b.innerHTML = it.html; b.disabled = it.el.disabled;
+    b.addEventListener('click', () => it.el.click());
+    dock.appendChild(b);
+  }
+}
+function renderGameControlsInner() {
   const g = state.game;
-  document.getElementById('ruleBadge').textContent = ruleText();
+  document.getElementById('ruleBadge').textContent = '';
   if (g.phase === 'setup') {
     const u = countUnresolvedCells(state.board);
     gameControlsEl.innerHTML = `
-      <div class="game-status">ゲーム画面どおりに盤面を入力してください（入力を省いたマスは「?」になります）。練習するときは、残り手数にゲームモードの最初の手数を入れて、「ランダムな盤面で練習する」を押してください。</div>
+      <div class="game-status">ゲームと同じ盤面と残り手数を入れてください。</div>
       <div class="toolbar" style="margin-top:0;margin-bottom:8px;align-items:center;">
-        <label class="small">ゲーム画面の残り手数 <input type="number" id="startMovesInput" min="1" max="999" value="${g.start}" style="width:5em;"></label>
+        <label class="small">残り手数 <input type="number" id="startMovesInput" min="1" max="999" value="${g.start}" style="width:5em;"></label>
         <button id="btnStartGame" class="primary">この盤面で始める</button>
         ${boardReadButtonHtml()}
-        <button id="btnStartPractice">ランダムな盤面で練習する</button>
-        <span class="note">${u.total ? `「?」の${u.total}マスは、そのまま「?」として始めます。` : '入力できました。'}</span>
+        <button id="btnStartPractice">練習モードで始める</button>
       </div>
       <div class="shortage-line" id="shortageLine"></div>`;
     updateShortageLine();
@@ -3913,13 +4140,15 @@ function renderGameControls() {
     gameControlsEl.innerHTML = `
       <div class="moves-left" id="movesLeftLine">${movesLeftHtml()}</div>
       <div class="shortage-line" id="shortageLine"></div>
-      <div class="toolbar" style="margin-top:0;margin-bottom:6px;">
-        <button id="modeSwap" class="${moveMode === 'swap' ? 'on' : ''}">入替</button>
-        <button id="modeDelete" class="${moveMode === 'delete' ? 'on' : ''}">削除</button>
-        <button id="modePin" class="${moveMode === 'pin' ? 'on' : ''}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/></svg>ピン</button>
-        ${g.practice ? '' : `<button id="modeEdit" class="${moveMode === 'edit' ? 'on' : ''}">盤面を直す</button>`}
-        <button id="btnUndo" ${g.log.length ? '' : 'disabled'}>1手戻す</button>
-        <button id="btnRedo" ${g.future.length ? '' : 'disabled'}>1手進める</button>
+      <div class="mode-row">
+        <div class="seg">
+          <button id="modeSwap" class="${moveMode === 'swap' ? 'on' : ''}">入替</button>
+          <button id="modeDelete" class="${moveMode === 'delete' ? 'on' : ''}">削除</button>
+          <button id="modePin" class="${moveMode === 'pin' ? 'on' : ''}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/></svg>ピン</button>
+          ${g.practice ? '' : `<button id="modeEdit" class="${moveMode === 'edit' ? 'on' : ''}">盤面を直す</button>`}
+        </div>
+        <button id="btnUndo" class="round-btn" title="1手戻す" aria-label="1手戻す" ${g.log.length ? '' : 'disabled'}><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+        <button id="btnRedo" class="round-btn" title="1手進める" aria-label="1手進める" ${g.future.length ? '' : 'disabled'}><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
       </div>
       <div class="game-status">${targetNotice ? `<b style="color:var(--accent)">${targetNotice}</b><br>` : ''}${moveNotice ? `<b style="color:var(--danger)">${moveNotice}</b><br>` : ''}${moveSrcLine()}<span id="moveHint">${anim ? ANIM_HINT : hint}</span></div>
       ${moveMode === 'edit' ? `<div class="toolbar" style="margin-top:0;margin-bottom:8px;align-items:center;"><label class="small">残り手数 <input type="number" id="editLeftInput" min="0" max="999" value="${currentLeft()}" style="width:5em;"></label><button id="btnEditLeft" class="small">この数字に直す</button><button id="btnClearBoard" class="small danger">盤面をクリア</button>${boardReadButtonHtml('small')}</div>` : ''}
@@ -3962,14 +4191,13 @@ function renderGameControls() {
     <div class="moves-left">残り手数 <span class="num">${currentLeft() - 1 + p.chain}</span>
       <span class="note">（この手: ${describeMove(p.move)} / 今のところ連鎖で増加 ${p.chain}）</span></div>
     <div class="game-status"><b>${p.wave}回目の補充</b>: ${n
-      ? `「?」のマスが${n}マスあります。ゲーム画面を見て、素材とレベルを選んで入力してください。他のマスも入力し直せます。`
+      ? `「?」のマス（${n}マス）を、ゲーム画面に合わせて入れてください。`
       : '「次へ」を押すと、マッチを1回分進めます。もうマッチが起きなければ、この手が確定します。'}</div>
     <div class="toolbar" style="margin-top:0;margin-bottom:8px;">
       <button id="btnFixNext" class="primary" ${n ? 'disabled' : ''}>次へ</button>
       ${n ? '<button id="btnFixKeep">「?」のまま進む</button>' : ''}
       <button id="btnFixCancel" class="danger">この手を取り消す</button>
-    </div>
-    ${n ? '<div class="note" style="margin:0 0 8px;"><b>「?」のまま進む</b>と、入力せずに次の手へ進めます。盤面に「?」が残るので、<b>そこを通る連鎖は見つからず、事故の警告も出せません</b>。</div>' : ''}`;
+    </div>`;
   document.getElementById('btnFixNext').addEventListener('click', () => resolveAfterFix());
   const fixKeepBtn = document.getElementById('btnFixKeep');
   if (fixKeepBtn) fixKeepBtn.addEventListener('click', () => resolveAfterFix(true));
@@ -4132,7 +4360,7 @@ window.addEventListener('pointermove', (ev) => {
     const piece = document.createElement('div');
     piece.className = 'drag-piece';
     piece.style.width = r.width + 'px'; piece.style.height = r.height + 'px';
-    piece.style.background = src.style.background || '#3a3d2a'; piece.style.color = src.style.color || 'var(--accent)';
+    piece.style.background = src.style.background || '#4a4458'; piece.style.color = src.style.color || 'var(--accent)';
     piece.textContent = src.classList.contains('char') ? '' : c && c.species !== '?' ? `${c.species}${c.level}` : '?';
     document.body.appendChild(piece);
     press.pieceEl = piece; press.cx = r.left + r.width / 2; press.cy = r.top + r.height / 2;
@@ -4276,7 +4504,7 @@ function renderPatternListInner() {
     mk('レベル+1', 'MAX布陣の全部のマスのレベルを1つ上げます（上限は設定の最大レベル）。', () => { p.cells = shiftPatternLevels(p.cells, +1, state.maxLevels[p.species] || 7); changed(); });
     mk('レベル−1', 'MAX布陣の全部のマスのレベルを1つ下げます（下限はLv1）。', () => { p.cells = shiftPatternLevels(p.cells, -1, state.maxLevels[p.species] || 7); changed(); });
     mk('プリセットに保存', 'このMAX布陣をプリセットに追加します。', () => openSavePresetModal(p));
-    card.appendChild(head); card.appendChild(tools);
+    card.appendChild(head);
 
     const body = document.createElement('div');
     body.className = 'pattern-card-body';
@@ -4290,6 +4518,11 @@ function renderPatternListInner() {
     body.appendChild(grid); body.appendChild(costWrap);
 
     card.appendChild(body);
+    const more = document.createElement('details');
+    more.className = 'pattern-more';
+    more.innerHTML = '<summary>その他の操作</summary>';
+    more.appendChild(tools);
+    card.appendChild(more);
     patternListEl.appendChild(card);
   });
   updateShortageLine();   // 布陣の順番・形が変わったら、足りない素材の数も直す
@@ -4357,8 +4590,8 @@ function openPatternModal(existingPattern) {
 
   const spRow = document.createElement('div');
   spRow.className = 'field-row';
-  const spLabel = document.createElement('span'); spLabel.textContent = '素材:';
-  spRow.appendChild(spLabel);
+  const spTitle = document.createElement('span'); spTitle.textContent = '素材:';
+  spRow.appendChild(spTitle);
   const spSel = document.createElement('div'); spSel.className = 'species-selector';
   SPECIES.forEach(sp => {
     const b = document.createElement('div');
@@ -4395,7 +4628,7 @@ function openPatternModal(existingPattern) {
     for (let lv = 1; lv <= max; lv++) {
       h += `<button class="sw ${patternBrush === lv ? 'on' : ''}" style="background:${SPECIES_COLOR_HEX[pattern.species]};color:${textOn(SPECIES_COLOR_HEX[pattern.species])};width:auto;min-width:34px;padding:0 4px;" data-plv="${lv}">${pattern.species}${lv}</button>`;
     }
-    h += `<button class="sw ${patternBrush === 'X' ? 'on' : ''}" style="background:#33363f;width:auto;padding:0 8px;" data-plv="X" title="消したマスは X（MAX布陣に関係ないマス）になります。">消す（X）</button>`;
+    h += `<button class="sw ${patternBrush === 'X' ? 'on' : ''}" style="background:#efe9dd;color:#8b8478;width:auto;padding:0 8px;" data-plv="X" title="消したマスは X（MAX布陣に関係ないマス）になります。">消す（X）</button>`;
     patternBrushRow.innerHTML = h;
   }
   patternBrushRow.addEventListener('click', (e) => {
@@ -4656,7 +4889,21 @@ function openInfoModal(html) {
 }
 document.getElementById('btnHowItWorks').addEventListener('click', () => openInfoModal(`
   <h2>手順を探す</h2>
-  <p>今の盤面から3手先（「4手まで」なら4手先）までの手順を全部調べて、良い手順をカードで出します。「自動：オン」にすると、盤面などが変わるたびに自動で探します。</p>
+  <p class="lead">今の盤面から3手先（「4手まで」なら4手先）までの手順を全て調べて、良い手順をカードで出します。</p>
+  <p class="sec-h">使い方</p>
+  <ol>
+    <li>「次の手を探す」を押します。「自動：オン」にすると、盤面が変わるたびに自動で探します。</li>
+    <li>カードを見て、打つ手順を選びます。「素材」のタブは目標MAX布陣の素材が増える手順、「連鎖」のタブは手数が増える手順です。</li>
+    <li>「この手順を打つ」を押すと、盤面に1手目の印が出ます。ゲームで同じ手を打ってから、「① を打つ」を押して進めます。</li>
+  </ol>
+  <p class="sec-h">カードの見方</p>
+  <ul>
+    <li><b>素材の増加 ＋◯個</b>: その手順で増える、目標MAX布陣の素材の見込みです（Lv1に換算。Lv2は3個分）。</li>
+    <li><b>差し引き ＋◯手</b>: 連鎖で増える手数から、使う手数を引いた数です。プラスなら手数が増えます。</li>
+    <li><svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>の行: 事故の確率が高いときなど、注意が必要なことです。</li>
+  </ul>
+  <details class="more"><summary>詳しく</summary>
+
   <p class="sec-h">■ 2つのタブ</p>
   <ul>
     <li><b>素材</b>: 目標MAX布陣に必要な素材が増える手順です。手数消費なしの手順が先で素材の増加の多い順、その後は1手当たりの多い順です。</li>
@@ -4673,15 +4920,9 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
   </ul>
   <p>数字の行</p>
   <ul>
-    <li><b>手数の増加 平均◯手（補充がマッチしない場合 ◯手・最高◯手）</b>: 連鎖で増える手数です。
-      <ul>
-        <li>平均: 補充をいろいろ試した平均。</li>
-        <li>補充がマッチしない場合: 補充された駒がどれともマッチしなかったとき。</li>
-        <li>最高: 試したうちで一番多く増えたとき。</li>
-      </ul>
-    </li>
+    <li><b>手数の増加 ◯手（◯〜◯手）</b>: 連鎖で増える手数の、補充をいろいろ試した平均です。括弧の中は、補充された駒がどれともマッチしなかったときから、試したうちで一番多く増えたときまでの幅です。</li>
     <li><b>事故の確率 ◯%</b>: 補充次第で、布陣の素材が減る・ピンの駒がマッチする・動くなどが起きる確率です。5%以上は下の<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>の行に出ます。</li>
-    <li><b>連鎖のタブにもあります（◯番目）</b>: 同じ手順が、もう一方のタブの上から◯番目にもあります。</li>
+    <li><b>連鎖のタブにもあります（◯番目）</b>: 同じ手順が、もう一方のタブの「◯番目」のカードにもあります。</li>
   </ul>
   <p><svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>の行（注意が必要なこと）</p>
   <ul>
@@ -4693,14 +4934,14 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
   </ul>
   <p>盤面と素材の数</p>
   <ul>
-    <li><b>①②③の盤面</b>: 打つ手の順です。赤い枠の2マスを入れ替え、✕のマスを削除します。ピンの駒は、右上の角が赤くなります。</li>
+    <li><b>①②③の盤面</b>: 打つ手の順です。赤い枠の2マスを入れ替え、✕のマスを削除します。ピンの駒には、ピンの印が付きます。</li>
     <li><b>手順の後（補充は ?）</b>: 打ち終わった後の盤面です。金色の枠は、新しく目標MAX布陣の形どおりにそろうマスです。赤い点線の枠は、目標MAX布陣の形どおりにそろえてあったのに、この手順でそろわなくなるマスです（<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>「そろえたマスを動かします」が出るカードに付きます）。</li>
     <li><b>10MAXの素材: A1 6個→3個（3.8個）</b>: 矢印の左が今の数、矢印の右が手順を打った後の数です。矢印の右の数は、補充で入ってくる駒を数えていません（何が来るか分からないため）。括弧の中は、補充で入ってくる駒も入れた平均の見込みです。</li>
   </ul>
   <p>今打っている手順の続き</p>
   <ul>
     <li><b>「今打っている手順の続き（②③④）」</b>: 「この手順を打つ」で1手以上打つと、一番上に出るカードです。このカードの数字は、残りの手（②③④）を今の盤面から打ったときの見込みです。打ち終えた①は数えません。</li>
-    <li>補充された駒によっては、この数字が変わります。「次の手を探す」を押すと、新しい手順と比べられます。乗り換えるかどうかの目安は、「詳しい仕様を知りたい方へ」の「手順の途中で他の手順に乗り換えない方がよい理由」にあります。</li>
+    <li>補充された駒によっては、この数字が変わります。「次の手を探す」を押すと、新しい手順と比べられます。乗り換えるかどうかの目安は、下の「計算のしくみ」の「手順の途中で他の手順に乗り換えない方がよい理由」にあります。</li>
   </ul>
   <p class="sec-h">■ ピン</p>
   <ul>
@@ -4720,8 +4961,8 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
     </li>
     <li>括弧の中は平均の見込みなので、出たカードでも3個に届くとは限りません。「届く見込みがある」という目安です。</li>
   </ul>
-  <p class="note">※必ず事故になる手順、MAXの駒を削除する手順などは出しません（詳しくは下の「詳しい仕様を知りたい方へ」）。</p>
-  <details class="warn-why" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);"><summary style="font-size:14px;font-weight:700;color:var(--text);">詳しい仕様を知りたい方へ</summary>
+  <p class="note">※必ず事故になる手順、MAXの駒を削除する手順などは出しません（詳しくは下の「計算のしくみ」）。</p>
+  <details class="more"><summary>計算のしくみ（詳しい仕様）</summary>
     <p class="sec-h">■ 計算の流れ</p>
     <p><b>方法論</b>: 手順の候補は総当たり（全探索）で作り、補充の運はモンテカルロ法で平均を出しています。モンテカルロ法は、乱数を使ったシミュレーションを何回も繰り返して、その平均で期待値を求める方法です。</p>
     <ul>
@@ -4800,7 +5041,7 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
       <li>選べるのは、登録した目標MAX布陣で使う素材とレベルです（2番目以降の布陣も含みます）。</li>
       <li>切り上げは、画面に出ている小数点第1位の数字で行います（画面の数字と判定がずれないように）。</li>
       <li>出ている一覧の中だけを絞ります。一覧に出していない手順（上の「表示する手順」）は対象になりません。</li>
-      <li>探し直しはしないので、すぐに絞られます。「◯のタブにもあります」の番号は、絞り込んだ後の番号です。</li>
+      <li>探し直しはしないので、すぐに絞られます。カードの番号は、絞り込む前の一覧の番号のまま変わりません。</li>
     </ul>
     <p class="sec-h">■ 自動で探すとき</p>
     <ul>
@@ -4837,67 +5078,80 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
       <li>そこでこのツールは、コンピューターが得意な「素材の数を数えること」と「補充の運の平均を出すこと」を受け持ちます。駒をどこに置くかの判断は、ご自身でお願いします。動かしたくない駒は「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/></svg>ピン」で固定できます。</li>
     </ul>
   </details>
+  </details>
 `));
 document.getElementById('btnSimHelp').addEventListener('click', () => openInfoModal(`
   <h2>シミュレーター</h2>
-  <p>ゲーム画面と全く同じ盤面を入力して、1手ずつ仮想で打つことができるシミュレーターです。</p>
-  <p class="sec-h">■ 基本の使い方の流れ</p>
+  <p class="lead">この画面では、ゲームと同じ盤面を入れて、1手ずつ打って進められます。</p>
+  <p class="sec-h">使い方</p>
   <ol>
-    <li><b>初めの盤面を入力する</b><br>ゲーム画面どおりに盤面と残り手数を入力し、「この盤面で始める」を押します。<br>（※入力を省いたマスは「?」になります。「?」はどの駒ともマッチしない仮のマスとして扱われます）</li>
-    <li><b>ゲームと同じ手を打つ</b><br>「入替」か「削除」を選んで、シミュレーター上で手を打ちます。実際のゲームと同じように、ドラッグで入替、長押しまたは盤面の外へのドラッグで削除もできます。</li>
-    <li><b>補充されたマスを確定する</b><br>新しく補充された駒（「?」になったマス）を入力し、「確定」を押します。</li>
+    <li>ゲームと同じ盤面と残り手数を入れて、「この盤面で始める」を押します。ゲームのスクショから読み取ることもできます（「スクショから読み取る」）。</li>
+    <li>ゲームで打った手を、ツールでも打ちます。入替は、駒をドラッグするか、2つのマスを順に押します。削除は、駒を長押しするか、「削除」を選んでマスを押します。</li>
+    <li>マッチが止まったら、補充されたマス（「?」のマス）をゲームに合わせて入れて、「確定」を押します。ここでもスクショから読み取れます。</li>
   </ol>
-  <p>※練習モード：1で「ランダムな盤面で練習する」を押すと、入力なしで、実際のゲームと同じ流れで練習できます。やめるときは「リセット」を押してください。</p>
-  <p class="sec-h">■ 盤面で光っている駒は？</p>
-  <p>目標MAX布陣の形どおりに置いた駒のうち、その列の上が全てMAX布陣どおりの駒です。「次の手を探す」で「<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>そろえたマスを動かします」と出るのは、この駒を動かす手順です。光らせたくないときは、「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.49 10.69L22.14 10.88L22.14 13.12L19.49 13.31L19.42 13.66L18.22 16.37L19.96 18.38L18.38 19.96L16.37 18.22L16.07 18.42L13.31 19.49L13.12 22.14L10.88 22.14L10.69 19.49L10.34 19.42L7.63 18.22L5.62 19.96L4.04 18.38L5.78 16.37L5.58 16.07L4.51 13.31L1.86 13.12L1.86 10.88L4.51 10.69L4.58 10.34L5.78 7.63L4.04 5.62L5.62 4.04L7.63 5.78L7.93 5.58L10.69 4.51L10.88 1.86L13.12 1.86L13.31 4.51L13.66 4.58L16.37 5.78L18.38 4.04L19.96 5.62L18.22 7.63L18.42 7.93Z"/><circle cx="12" cy="12" r="3"/></svg>設定」の「画面の表示」でチェックを外してください。</p>
-  <p class="sec-h">■ 残り手数の下の「◯◯まで あと: …」は？</p>
-  <p>今目指しているMAX布陣まで、各レベルの素材があと何個足りないかです。盤面にある駒を数え、置いた場所は見ません。ただし、布陣に使えない駒は数えません（条件は、「手順を探す」の「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.6v.01"/></svg>説明」の「詳しい仕様を知りたい方へ」にあります）。布陣に使えない駒があるときは、その数を最後の括弧の中に出します。入替で運べば使えることもあるので、盤面を見て判断してください。<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.49 10.69L22.14 10.88L22.14 13.12L19.49 13.31L19.42 13.66L18.22 16.37L19.96 18.38L18.38 19.96L16.37 18.22L16.07 18.42L13.31 19.49L13.12 22.14L10.88 22.14L10.69 19.49L10.34 19.42L7.63 18.22L5.62 19.96L4.04 18.38L5.78 16.37L5.58 16.07L4.51 13.31L1.86 13.12L1.86 10.88L4.51 10.69L4.58 10.34L5.78 7.63L4.04 5.62L5.62 4.04L7.63 5.78L7.93 5.58L10.69 4.51L10.88 1.86L13.12 1.86L13.31 4.51L13.66 4.58L16.37 5.78L18.38 4.04L19.96 5.62L18.22 7.63L18.42 7.93Z"/><circle cx="12" cy="12" r="3"/></svg>設定で消せます。</p>
-  <p class="sec-h">■ ゲームとずれたり、間違えたときは？</p>
+  <p class="sec-h">困ったとき</p>
   <ul>
-    <li>入力間違いを直したい → 「盤面を直す」で修正できます。</li>
-    <li>盤面を全部入れ直したい → 「盤面を直す」の中の「盤面をクリア」で、盤面を全て「?」にできます（残り手数と打った手の記録は残ります）。</li>
-    <li>1手前の状態に戻したい → 「1手戻す」で戻れます。</li>
-    <li>赤い点線の枠が出た → 「確定」を押した際、ツールが「ありえない盤面（入力ミス）」を検知しました。赤枠のマスを確認し、入力し直してください。そのままもう一度「確定」を押せば、無視して進めることもできます。</li>
-    <li>赤枠は「ここを直せばつじつまが合う」という候補で、間違えた場所そのものとは限りません。枠のマスが合っていても、盤面のどこかがゲームとずれていることがあります。</li>
+    <li>盤面がゲームとずれた → 「盤面を直す」で直せます。全て入れ直すときは、「盤面を直す」の中の「盤面をクリア」を押します。</li>
+    <li>1手前に戻りたい → 戻すボタン（↶）で戻れます。</li>
+    <li>赤い点線の枠が出た → 入れた盤面か残り手数が、ゲームと合っていない可能性があります。枠のマスをゲーム画面と見比べてください。合っていれば、もう一度「確定」を押すと進めます。</li>
   </ul>
-  <p class="sec-h">■ ヒーローの絵</p>
-  <ul>
-    <li>「ヒーロー」の画面でヒーローを選ぶと、盤面のその素材の駒を、ゲームと同じ絵で表示します。ゲームの画面と見比べやすくするためです。</li>
-    <li>このツールには、ゲームの画像は入っていません。表示するのは、使う人が自分の端末で登録した絵だけです。</li>
-    <li>ヒーローの絵は、ゲームのスキン画面にある「ステージ画像プレビュー」を、LV1から最後のレベルまで1枚ずつスクショして、「ヒーローを登録」で選んで登録します。</li>
-    <li>その端末で初めて登録するときは、枠をヒーローの絵に合わせます。次からは、同じ位置で切り出します。</li>
-    <li>登録に使ったスクショは、登録した後に消して構いません。</li>
-    <li>登録した絵は、この端末のブラウザの中だけに保存します。ブラウザのデータを消したときや、機種を変えたときは消えるので、「控えを書き出す」で控えのファイルを作っておいてください。</li>
-    <li>絵を登録していないレベルの駒は、今までどおり「A1」のような文字と色で表示します。</li>
-  </ul>
-  <p class="sec-h">■ その他の機能</p>
-  <ul>
-    <li><b><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/></svg>ピン</b>: 駒を固定します。ドラッグで運びたいマスも決められます（詳しくは「手順を探す」の「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.6v.01"/></svg>説明」）。</li>
-    <li><b>リセット</b>: 盤面を全て「?」に戻し、記録を消去します（設定と目標MAX布陣は残ります）。</li>
-    <li><b>記録の書き出し／読み込み</b>: 打った手と盤面を1局分まるごとファイル（.txt）に保存・復元できます。</li>
-    <li><b>▲ 盤面へ／▼ 結果へ</b>: 盤面と「次の手を探す」の結果が1画面に収まらないとき、画面の右下に丸いボタンで出ます。押すと、盤面と結果の間を移動できます。</li>
-    <li><b><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.49 10.69L22.14 10.88L22.14 13.12L19.49 13.31L19.42 13.66L18.22 16.37L19.96 18.38L18.38 19.96L16.37 18.22L16.07 18.42L13.31 19.49L13.12 22.14L10.88 22.14L10.69 19.49L10.34 19.42L7.63 18.22L5.62 19.96L4.04 18.38L5.78 16.37L5.58 16.07L4.51 13.31L1.86 13.12L1.86 10.88L4.51 10.69L4.58 10.34L5.78 7.63L4.04 5.62L5.62 4.04L7.63 5.78L7.93 5.58L10.69 4.51L10.88 1.86L13.12 1.86L13.31 4.51L13.66 4.58L16.37 5.78L18.38 4.04L19.96 5.62L18.22 7.63L18.42 7.93Z"/><circle cx="12" cy="12" r="3"/></svg>設定</b>: ゲームモード（補充のレベル・斜め入替・PvPなど）をゲームに合わせてください。残り手数の計算や手順の探し方が変わります。他のゲームモードを試したいときも、ここで切り替えます。</li>
-  </ul>
+  <details class="more"><summary>詳しく</summary>
+    <p class="sec-h">練習モード</p>
+    <p>始める前に残り手数を入れて「練習モードで始める」を押すと、ランダムな盤面で練習できます。補充はツールが決めるので、入力は要りません。やめるときは、メニューの「リセット」を押してください。</p>
+    <p class="sec-h">「?」のマス</p>
+    <p>入力を省いたマスと、補充されたマスは「?」になります。「?」は、どの駒ともマッチしない駒として扱います。「「?」のまま確定」を押すと、補充されたマスを入れずに進められます。ただし、盤面に「?」が残るので、そこを通る連鎖は見つからず、事故の注意も出せません。</p>
+    <p class="sec-h">盤面で光っている駒</p>
+    <p>目標MAX布陣の形どおりに置いた駒のうち、その列の上も全て形どおりの駒です。「次の手を探す」で「<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>そろえたマスを動かします」と出るのは、この駒を動かす手順です。光らせたくないときは、設定の「画面の表示」でチェックを外してください。</p>
+    <p class="sec-h">残り手数の下の「◯◯まで」</p>
+    <p>今目指している目標MAX布陣まで、レベルごとに素材があと何個足りないかです。盤面の駒を数え、置いた場所は見ません。ただし、布陣に使えない駒は数えません（条件は、「手順を探す」の「?」の「詳しく」にあります）。布陣に使えない駒があるときは、その数も出します。入替で運べば使えることもあるので、盤面を見て判断してください。この表示は設定で消せます。</p>
+    <p class="sec-h">赤い点線の枠</p>
+    <p>「確定」を押したときに、打った手とつじつまが合わない盤面を見つけると、枠を出します。枠は「ここを直せばつじつまが合う」という候補で、間違えた場所そのものとは限りません。枠のマスが合っていても、盤面のどこかがゲームとずれていることがあります。</p>
+    <p class="sec-h">スクショから読み取る</p>
+    <p>ヒーローの画面で、A〜Dの4つ全てにヒーローを選んでいるときに使えます。読み取れなかったマスは「?」になるので、ゲーム画面を見て入れてください。</p>
+    <p class="sec-h">ヒーローの絵</p>
+    <ul>
+      <li>右上のヒーローのボタン（人の絵）の画面でヒーローを選ぶと、盤面のその素材の駒を、ゲームと同じ絵で出します。</li>
+      <li>このツールには、ゲームの画像は入っていません。出すのは、使う人が自分の端末で登録した絵だけです。</li>
+      <li>登録は、ゲームのスキン画面にある「ステージ画像プレビュー」を、LV1から最後のレベルまで1枚ずつスクショして、「ヒーローを登録」で選ぶだけです。登録に使ったスクショは、登録した後に消して構いません。</li>
+      <li>登録した絵は、この端末のブラウザの中だけに保存します。ブラウザのデータを消したときや機種を変えたときに備えて、「控えを書き出す」で控えのファイルを作っておいてください。</li>
+    </ul>
+    <p class="sec-h">メニュー（右上の ≡）</p>
+    <ul>
+      <li>目標MAX布陣: 作りたいMAX布陣を登録します（PCでは、画面の右に出ます）。</li>
+      <li>設定: ゲームモード（補充のレベル・斜め入替・PvPなど）を、ゲームに合わせます。残り手数の計算と、手順の探し方が変わります。</li>
+      <li>記録を書き出す・読み込む: 打った手と盤面を、1局分まるごとファイル（.txt）に保存して、読み込んで再現できます。</li>
+      <li>リセット: 盤面を全て「?」に戻して、打った手の記録を消します。目標MAX布陣と設定は残ります。</li>
+    </ul>
+    <p class="sec-h">▲ 盤面へ・▼ 結果へ</p>
+    <p>スマホで、盤面と「次の手を探す」の結果が1画面に収まらないときに、画面の右下に出ます。押すと、盤面と、最後に見ていた結果のカードの間を移動できます。</p>
+  </details>
 `));
 document.getElementById('btnPatternHelp').addEventListener('click', () => openInfoModal(`
   <h2>目標MAX布陣</h2>
-  <p>今作ろうとしている最終的な盤面の形（目標MAX布陣）を登録します。</p>
-  <p class="sec-h">■ 登録するメリット</p>
-  <p>登録は任意ですが、登録することで以下の機能が使えるようになります。</p>
+  <p class="lead">作りたいMAX布陣の形を登録します。登録すると、「次の手を探す」が、その布陣に必要な素材を集める手順も探すようになります。</p>
+  <p class="sec-h">使い方</p>
   <ol>
-    <li>「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>次の手を探す」が、目標に必要な素材が効率よく増える手順を探すようになります。</li>
-    <li>必要な素材が勝手にそろって消えてしまう「事故」の確率を事前に警告してくれます。</li>
-    <li>今目指しているMAX布陣に必要な素材が減る手順や連鎖を除外してくれます（連鎖は、補充を入れた平均で素材が減らないものは注意を付けて出します）。</li>
+    <li>「プリセット」から、作りたいMAX布陣を選びます。自分で形を作るときは、「＋ 新規追加」を押します。</li>
+    <li>2つ以上登録すると、上から順に目指します。1つ目を起爆すると、自動で次の布陣に切り替わります。順番は ↑↓ で入れ替えられます。</li>
   </ol>
-  <p class="sec-h">■ 初めての方は「プリセット」がお勧め</p>
-  <p>よく使われるMAX布陣が用意されています（斜め移動なし: 3・4・7・8・10・12MAX ／ 斜め移動あり: 3・4・6・12・18MAX）。まずはここから選んでみてください。（ご自身で作った布陣をプリセットとして保存することも可能です）</p>
-  <p class="sec-h">■ 複数の目標を登録した場合</p>
-  <p>上から順番に目指します（順番は ↑↓ ボタンで入れ替え可能）。<br>1つ目が起爆（完成）すると、自動的に次の目標に切り替わります。次に目指すMAX布陣（2番目以降の布陣）の素材が減る手順や、使わないレベルの駒ができる手順も表示します。Lv3以上の素材が減るときと、使わないレベルの駒ができるときは、カードに<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>を付けて知らせます。</p>
-  <p class="sec-h">■ ボタンの機能</p>
+  <p class="sec-h">登録すると使えること</p>
   <ul>
-    <li><b>左右反転</b>: 盤面を左右反転します（反転でMAX数が減る場合があるので、起爆の確認に注意してください）。</li>
-    <li><b>レベル+1 / −1</b>: 盤面全体のレベルを一括で上げ下げします。</li>
+    <li>目標の素材が効率よく増える手順を探します（「素材」のタブ）。</li>
+    <li>必要な素材が補充しだいで消えてしまう「事故」の確率を、カードで知らせます。</li>
+    <li>今目指している布陣の素材が減る手順は出しません（連鎖は、補充を入れた平均で素材が減らないものだけ、注意を付けて出します）。</li>
   </ul>
+  <details class="more"><summary>詳しく</summary>
+    <p class="sec-h">プリセット</p>
+    <p>よく使われるMAX布陣が入っています（斜め入替なし: 3・4・7・8・10・12MAX ／ 斜め入替あり: 3・4・6・12・18MAX）。自分で作った布陣も、プリセットとして保存できます。</p>
+    <p class="sec-h">2番目以降の布陣</p>
+    <p>次に目指す布陣の素材が減る手順や、使わないレベルの駒ができる手順にも、カードに<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>を付けて知らせます（Lv3以上の素材が減るときと、使わないレベルの駒ができるとき）。</p>
+    <p class="sec-h">カードの「その他の操作」</p>
+    <ul>
+      <li>左右反転: 布陣の形を左右反転します。反転するとMAXの数が減ることがあるので、起爆の位置を確かめてください。</li>
+      <li>レベル+1・−1: 布陣の全てのマスのレベルを、1つずつ上げ下げします。</li>
+      <li>プリセットに保存: この布陣をプリセットに加えます。</li>
+    </ul>
+  </details>
 `));
 
 /* ============================== 設定 ============================== */
@@ -4957,6 +5211,7 @@ function charRemove(name) {
   charMemDelete(name);
   for (const sp of SPECIES) if (state.speciesChars[sp] === name) state.speciesChars[sp] = null;
   saveState();
+  refreshCharUi();
   return charDbRun('readwrite', st => st.delete(name)).catch(() => {});
 }
 function charRename(from, to) {
@@ -4965,13 +5220,18 @@ function charRename(from, to) {
   charMemDelete(from); charMemSet({ name: to, levels: rec.levels });
   for (const sp of SPECIES) if (state.speciesChars[sp] === from) state.speciesChars[sp] = to;
   saveState();
+  refreshCharUi();
   return charDbRun('readwrite', st => { st.delete(from); return st.put({ name: to, levels: rec.levels }); }).catch(() => {});
+}
+// 絵や名前を出す所を全て描き直す(盤面・素材のボタン・盤面の下のボタンと文(読み取りのボタン)・目標MAX布陣の行と札・絞り込み)。
+// ヒーローの絵の読み込み・登録・削除・名前の変更・控えの読み込みのあとに呼ぶ
+function refreshCharUi() {
+  renderGameControls(); renderBrushRow(); renderBoard(); updateShortageLine(); renderPatternList(); renderFilterRow();
 }
 function loadChars() {
   return charDbRun('readonly', st => st.getAll()).then(list => {
     (list || []).forEach(r => { if (r && typeof r.name === 'string' && Array.isArray(r.levels)) charMemSet(r); });
-    // 絵と名前が読み込めたので、絵や名前を出す所を描き直す(盤面・素材のボタン・目標MAX布陣の行と札・絞り込み)
-    renderBoard(); renderBrushRow(); updateShortageLine(); renderPatternList(); renderFilterRow();
+    refreshCharUi();
   }).catch(() => {});
 }
 // 素材とレベルの駒の絵(blob URL)。ヒーローを選んでいない・そのレベルの絵がないときは null
@@ -5288,6 +5548,7 @@ function bindBoardReadButton() {
   const btn = document.getElementById('btnReadShot');
   if (!btn) return;
   btn.addEventListener('click', () => {
+    if (!boardReadReady()) { refresh(); return; }
     const fi = document.createElement('input');
     fi.type = 'file'; fi.accept = 'image/*';
     fi.addEventListener('change', async () => {
@@ -5376,7 +5637,7 @@ function openCharsModal(msg) {
   const { overlay, modal, close } = newOverlay();
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
   const names = Array.from(charStore.keys()).sort((a, b) => a.localeCompare(b, 'ja'));
-  let h = '<h2>素材のヒーロー</h2><div class="note">ゲームのヒーローの絵を登録すると、盤面の駒をその絵で表示します。登録した絵は、この端末のブラウザの中だけに保存します。</div><div class="char-rows">';
+  let h = '<h2>素材のヒーロー</h2><div class="note">ゲームのヒーローの絵を登録すると、盤面の駒をその絵で出します。登録した絵は、この端末のブラウザの中だけに保存します。機種を変えたときなどに備えて、「控えを書き出す」で控えを作っておいてください。</div><div class="char-rows">';
   for (const sp of SPECIES) {
     const cur = state.speciesChars[sp] && charStore.has(state.speciesChars[sp]) ? state.speciesChars[sp] : '';
     h += `<div class="char-row"><label><span class="species-pill" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${sp}</span> のヒーロー</label>` +
@@ -5385,7 +5646,6 @@ function openCharsModal(msg) {
   }
   h += `</div><div class="note char-msg" id="chMaxMsg">${typeof msg === 'string' ? esc(msg) : ''}</div>`;
   h += '<div class="char-buttons"><button id="chRegister" class="primary">ヒーローを登録</button><button id="chList">登録したヒーロー</button><button id="chExport">控えを書き出す</button><button id="chImport">控えを読み込む</button><input type="file" id="chImportFile" accept=".json,application/json" style="display:none"></div>';
-  h += '<div class="note">ブラウザのデータを消したときや、機種を変えたときは、登録した絵が消えます。控えを書き出しておけば、その控えを読み込むだけで、登録した絵を元に戻せます。</div>';
   h += '<div class="modal-actions"><button id="chClose">閉じる</button></div>';
   modal.innerHTML = h;
   modal.querySelectorAll('[data-char]').forEach(sel => sel.addEventListener('change', () => {
@@ -5428,7 +5688,7 @@ function openCharRegister() {
     return true;
   };
   const stepPick = (msg) => {
-    modal.innerHTML = '<h2>ヒーローを登録</h2><p>ゲームのスキン画面にある「ステージ画像プレビュー」を、LV1から最後のレベルまで1枚ずつスクショしてください。撮ったスクショを全部選んでください。</p>' +
+    modal.innerHTML = '<h2>ヒーローを登録</h2><p>ゲームのスキン画面にある「ステージ画像プレビュー」を、LV1から最後のレベルまで1枚ずつスクショしてください。撮ったスクショを全部選んでください。最後のレベルまで登録すると、その素材の最大レベルは、登録したレベルの数で決まります。途中のレベルまでしか登録しないと、最大レベルがゲームより小さくなるので、必ず最後のレベルまで撮ってください。</p>' +
       `<div class="note char-msg">${esc(msg || '')}</div>` +
       '<div class="modal-actions"><button id="crCancel">やめる</button><button id="crPick" class="primary">スクショを選ぶ</button></div><input type="file" id="crFiles" accept="image/*" multiple style="display:none">';
     const fi = modal.querySelector('#crFiles');
@@ -5569,11 +5829,15 @@ function importChars(file) {
     let data = null;
     try { data = JSON.parse(String(r.result)); } catch (e) { data = null; }
     const ok = data && data.type === 'puzzle-navi-chars' && Array.isArray(data.chars);
-    const list = ok ? data.chars.filter(c => c && typeof c.name === 'string' && c.name.trim() && Array.isArray(c.levels) && c.levels.length && c.levels.every(u => typeof u === 'string' && /^data:image\//.test(u))) : [];
+    const imgOk = u => typeof u === 'string' && /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/]+=*$/.test(u);
+    const list = ok ? data.chars.filter(c => c && typeof c.name === 'string' && c.name.trim() && Array.isArray(c.levels) && c.levels.length && c.levels.every(imgOk)) : [];
     if (!list.length) { openNotice('控えのファイルではありません。', openCharsModal); return; }
-    for (const c of list) await charSave({ name: c.name.trim().slice(0, 40), levels: c.levels.slice(0, LEVEL_LIMIT) });
-    renderBoard();
-    openNotice(`控えを読み込みました（${list.length}体）。同じ名前のヒーローは、控えの絵に置き換えました。`, openCharsModal);
+    try { for (const c of list) await charSave({ name: c.name.trim().slice(0, 40), levels: c.levels.slice(0, LEVEL_LIMIT) }); }
+    catch (e) { refreshCharUi(); openNotice('控えのファイルではありません。', openCharsModal); return; }
+    const m = SPECIES.map(syncMaxLevelToChar).filter(Boolean).join('');
+    if (m) onBoardChanged();
+    refreshCharUi();
+    openNotice(`控えを読み込みました（${list.length}体）。同じ名前のヒーローは、控えの絵に置き換えました。`, () => openCharsModal(m));
   };
   r.onerror = () => openNotice('控えのファイルではありません。', openCharsModal);
   r.readAsText(file);
@@ -5587,7 +5851,21 @@ document.getElementById('btnConfig').addEventListener('click', () => {
   modal.className = 'modal';
   modal.addEventListener('click', (e) => e.stopPropagation());
   let h = '<h2>設定</h2>';
-  h += '<p class="sec-h">■ 素材の色</p><div class="note">ゲーム画面の素材の色に合わせて変えられます。最大レベルに近づくほど色が濃くなります。</div><div class="config-grid">';
+  // ゲームのルールに合わせる設定(連鎖による手数の増加・斜め入替・PvP)は見出し「ゲームモード」1つにまとめ、一番上に置く(v3.0。一番大事な設定のため)
+  h += '<p class="sec-h">■ ゲームモード</p>' +
+    '<div class="cfg-box"><div class="cfg-sub">連鎖による手数の増加</div>' +
+    `<label class="opt"><input type="radio" name="cfgRecovery" value="normal" ${state.increasingRecovery ? '' : 'checked'}> 通常</label>` +
+    `<label class="opt"><input type="radio" name="cfgRecovery" value="increasing" ${state.increasingRecovery ? 'checked' : ''}> ラウンドごとに増える</label>` +
+    '<div class="note">1手の中でマッチが起きる回を、ラウンド1・2・3…と数えます。通常は、ラウンド2以降のマッチ1回につき1手増えます。ラウンドごとに増えるは、ラウンド2で1手、ラウンド3で2手…と増えます。</div></div>';
+  h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgDiagonal" ${state.diagonal ? 'checked' : ''}> 斜め入替（斜めに隣り合うマスとも入れ替えられる）</label>` +
+    '<div class="note">オンにすると「次の手を探す」で調べる手が増えるので、計算に時間が掛かります。</div></div>';
+  h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgPvp" ${state.pvp ? 'checked' : ''}> PvPモード</label>` +
+    `<div class="note">打った手と残り手数の合計が${PVP_MOVE_CAP}手に届くと、連鎖が起きても手数が増えなくなります。</div></div>`;
+  // ヒーローを選んでいる素材は、色(盤面に絵を出すので使わない)と最大レベル(登録した絵で決まる)の行を出さない。全部選んでいれば項目ごと出さない
+  const plainSp = SPECIES.filter(sp => !heroNameOf(sp)), someHero = plainSp.length < SPECIES.length;
+  // 最大レベルの行: ヒーローを選んでいない素材と、記録を読み込んだときなどに、絵のレベルの数と最大レベルが違ってしまった素材
+  const maxSp = SPECIES.filter(sp => !heroNameOf(sp) || charStore.get(heroNameOf(sp)).levels.length !== state.maxLevels[sp]);
+  if (plainSp.length) h += '<p class="sec-h">■ 素材の色</p><div class="note">ゲーム画面の素材の色に合わせて変えられます。最大レベルに近づくほど色が濃くなります。' + (someHero ? 'ヒーローを選んでいる素材は、盤面に絵を出すので、ここには出しません。' : '') + '</div><div class="config-grid">';
   const famOptions = cur => Object.keys(COLOR_FAMILIES).map(k => `<option value="${k}" ${cur === k ? 'selected' : ''}>${COLOR_FAMILIES[k].name}</option>`).join('');
   const famPreview = k => [0, 0.25, 0.5, 0.75, 1].map(t => {
     const st = COLOR_FAMILIES[k].stops.map(hexToRgb);
@@ -5595,17 +5873,17 @@ document.getElementById('btnConfig').addEventListener('click', () => {
     const c = `rgb(${[0, 1, 2].map(i => Math.round(a[i] + (b[i] - a[i]) * u)).join(',')})`;
     return `<span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${c};border:1px solid #0003;"></span>`;
   }).join('');
-  for (const sp of SPECIES) {
+  for (const sp of plainSp) {
     const cur = state.speciesColors[sp];
     h += `<div class="config-item"><label>${esc(spLabel(sp))} の色</label><select data-color="${sp}">${famOptions(cur)}</select> <span data-color-preview="${sp}">${famPreview(cur)}</span></div>`;
   }
-  h += '</div><div class="note" id="cfgColorWarn" style="color:var(--danger);"></div>';
-  h += '<p class="sec-h">■ 素材ごとの最大レベル</p><div class="note">このレベルに達した駒は、それ以上マッチしません。ヒーローを選んでいる素材の最大レベルは、登録した絵のレベルの数に合わせて変わります。</div><div class="config-grid">';
-  for (const sp of SPECIES) {
+  h += (plainSp.length ? '</div>' : '') + '<div class="note" id="cfgColorWarn" style="color:var(--danger);"></div>';
+  if (maxSp.length) h += '<p class="sec-h">■ 素材ごとの最大レベル</p><div class="note">このレベルに達した駒は、それ以上マッチしません。' + (someHero ? 'ヒーローを選んでいる素材は、登録した絵のレベルの数で決まるので、ここには出しません。' : '') + '</div><div class="config-grid">';
+  for (const sp of maxSp) {
     h += `<div class="config-item"><label><span class="species-pill${heroNameOf(sp) ? ' named' : ''}" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${esc(spLabel(sp))}</span> 最大Lv</label>` +
       `<input type="number" min="2" max="15" data-max="${sp}" value="${state.maxLevels[sp]}"></div>`;
   }
-  h += '</div><p class="sec-h">■ 補充される駒のレベル</p><div class="note">駒が消えた後補充される駒のレベルです。「補充される駒がLv2になる」ゲームモードでは、その素材をLv2にしてください。</div><div class="config-grid">';
+  h += (maxSp.length ? '</div>' : '') + '<p class="sec-h">■ 補充される駒のレベル</p><div class="note">駒が消えた後に補充される駒のレベルです。補充がLv2になるゲームモードでは、その素材をLv2にしてください。</div><div class="config-grid">';
   for (const sp of SPECIES) {
     const v = state.refillLevels[sp] || 1;
     h += `<div class="config-item"><label><span class="species-pill${heroNameOf(sp) ? ' named' : ''}" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${esc(spLabel(sp))}</span> 補充</label>` +
@@ -5614,24 +5892,13 @@ document.getElementById('btnConfig').addEventListener('click', () => {
   // 盤面の見え方を変える項目(そろえたマスの光・足りない素材の数)は「画面の表示」にまとめる(2026-09-29 本人)
   h += '</div><p class="sec-h">■ 画面の表示</p>';
   h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgAlignedGlow" ${state.alignedGlow ? 'checked' : ''}> 目標MAX布陣にそろえたマスをゆっくり光らせる</label>` +
-    '<div class="note">今目指しているMAX布陣の形どおりに置いた駒のうち、その列の上が全てMAX布陣どおりの駒を、盤面で光らせます。「この盤面で始める」を押した後に適用されます。</div></div>';
+    '<div class="note">目標MAX布陣の形どおりに置いた駒（その列の上も形どおりの駒）を、盤面で光らせます。</div></div>';
   h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgShowShortage" ${state.showShortage ? 'checked' : ''}> 目標MAX布陣まで足りない素材の数を出す</label>` +
-    '<div class="note">残り手数の下に、今目指しているMAX布陣まであと何個足りないかを、レベルごとに出します。置いた場所は見ません。布陣に使えない駒は数えず、その数を括弧の中に出します。</div></div>';
-  // ゲームのルールに合わせる設定(連鎖による手数の増加・斜め入替・PvP)は見出し「ゲームモード」1つにまとめ、ツールの入力のしかたは最後に置く
-  h += '<p class="sec-h">■ ゲームモード</p>' +
-    '<div class="cfg-box"><div class="cfg-sub">連鎖による手数の増加</div>' +
-    `<label class="opt"><input type="radio" name="cfgRecovery" value="normal" ${state.increasingRecovery ? '' : 'checked'}> 通常（魔神とーばつ・PvPなど）</label>` +
-    `<label class="opt"><input type="radio" name="cfgRecovery" value="increasing" ${state.increasingRecovery ? 'checked' : ''}> ラウンドごとに増える（勇者しゅーらいなど）</label>` +
-    '<div class="note">通常は、ラウンド2以降のマッチ1回につき+1です。ラウンドごとに増えるは、ラウンド2は+1、ラウンド3は+2…と増えます。ラウンドは1手の中でマッチが起きる回ごとの数え方で、入替で直接そろったマッチと、削除の後最初のマッチがラウンド1です。</div></div>';
-  h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgDiagonal" ${state.diagonal ? 'checked' : ''}> 斜め入替（斜めに隣り合うマスとも入れ替えられる）</label>` +
-    '<div class="note">オンにすると「次の手を探す」で調べる手が増えるので、計算に時間が掛かります。</div></div>';
-  h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgPvp" ${state.pvp ? 'checked' : ''}> PvPモード</label>` +
-    `<div class="note">打った手と残り手数の合計が${PVP_MOVE_CAP}手に届くと、連鎖が起きても手数が増えなくなります。</div></div>`;
-  h += '<p class="sec-h">■ 補充の入力のしかた</p>' +
+    '<div class="note">残り手数の下に、目標MAX布陣まであと何個足りないかを、レベルごとに出します。</div></div>';
+  h += '<details class="more"><summary>詳しい設定</summary><p class="sec-h">■ 補充の入力のしかた</p>' +
     `<div class="cfg-box"><label class="opt"><input type="radio" name="cfgRefillInput" value="final" ${state.refillInputMode === 'waves' ? '' : 'checked'}> 最後の盤面だけ</label>` +
     `<label class="opt"><input type="radio" name="cfgRefillInput" value="waves" ${state.refillInputMode === 'waves' ? 'checked' : ''}> 補充の回ごと</label>` +
-    '<div class="note">最後の盤面だけは、マッチが止まった後の盤面を入力して、ゲーム画面の残り手数を確かめて確定します。補充の回ごとは、補充されるたびに補充されたマスを入力します（通常プレイでは非推奨。他人の手を動画などで追うとき用）。</div></div>';
-  h += '<div class="note" style="margin-top:12px;">「初期設定に戻す」を押すと、この画面の項目が初期の設定に戻ります。「保存」を押すまでは決まりません。</div>';
+    '<div class="note">最後の盤面だけ: マッチが止まった後の盤面を入れて確定します（ふだんはこちら）。補充の回ごと: 補充されるたびに、補充されたマスを入れます（動画などで他の人の手を追うとき用）。</div></div></details>';
   h += '<div class="modal-actions"><button id="cfgDefaults" style="margin-right:auto;" title="この画面の項目を初期設定に戻します。「保存」を押すまでは決まりません。">初期設定に戻す</button><button id="cfgCancel">キャンセル</button><button id="cfgSave" class="primary">保存</button></div>';
   modal.innerHTML = h;
   overlay.appendChild(modal);
@@ -5736,7 +6003,7 @@ function exportGameRecord() {
   const boardText = g => g.map(row => '  ' + row.map(cellText).join(' ')).join('\r\n');
   const target = currentTargetPattern();
   const lines = [
-    'スラだんパズルナビゲーター 1局の記録',
+    'EGG Navi 1局の記録',
     `書き出した日時: ${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`,
     ...(g.practice ? ['練習モード: 最初の盤面と補充は、ツールがランダムに決めました。'] : []),
     `始めの残り手数: ${g.start} / 打った手: ${log.length}手 / 連鎖で増加: ${chainAll}手${adjustAll ? ` / 手数の直し: ${adjustAll > 0 ? '+' : ''}${adjustAll}手` : ''} / 最後の残り手数: ${left}`,
@@ -5819,7 +6086,7 @@ function applyRecord(rec) {
   state.board = cloneGrid(rec.init);
   picked = null; lastSearch = null;
   renderPatternList();
-  moveNotice = '記録を読み込みました。「1手進める」で1手ずつ進められます。';
+  moveNotice = '記録を読み込みました。進めるボタンで1手ずつ進められます。';
   onBoardChanged();
   showAdoptedCard();
 }
@@ -5848,6 +6115,15 @@ document.getElementById('btnResetGame').addEventListener('click', () => {
 
 /* ============================== 初期化 ============================== */
 btnSearch.addEventListener('click', () => { runChainSearch(); });
+// メニュー(≡)。中のボタンを押したら閉じる(設定・記録などは、それぞれの画面を開く)
+const menuOverlay = document.getElementById('menuOverlay');
+document.getElementById('btnMenu').addEventListener('click', () => { menuOverlay.style.display = ''; });
+menuOverlay.addEventListener('click', e => { if (e.target === menuOverlay || e.target.closest('.menu-list button, #btnMenuClose')) menuOverlay.style.display = 'none'; });
+// 目標MAX布陣(スマホとタブレットでは、下から出す画面で開く)
+const closePatterns = () => document.body.classList.remove('patterns-open');
+document.getElementById('btnOpenPatterns').addEventListener('click', () => document.body.classList.add('patterns-open'));
+document.getElementById('btnClosePatterns').addEventListener('click', closePatterns);
+document.getElementById('sheetBackdrop').addEventListener('click', closePatterns);
 document.getElementById('btnAutoSearch').addEventListener('click', () => {
   state.autoSearch = !state.autoSearch;
   saveState();
@@ -5856,7 +6132,7 @@ document.getElementById('btnAutoSearch').addEventListener('click', () => {
   autoSkipKey = null;
   autoSearchAfterMove();
 });
-document.getElementById('chainDepth').addEventListener('change', () => autoSearchAfterMove());   // 探す手数を変えたら、「自動：オン」なら探し直す
+document.getElementById('chainDepth').addEventListener('change', () => { renderDock(); autoSearchAfterMove(); });   // 探す手数を変えたら、「自動：オン」なら探し直す
 renderAutoSearchBtn();
 refresh();
 renderPatternList();
