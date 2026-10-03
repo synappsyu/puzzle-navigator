@@ -321,7 +321,7 @@
 <div class="app">
   <header>
     <div>
-      <h1>スラだんパズルナビゲーター <span class="ver">v2.2.10</span></h1>
+      <h1>スラだんパズルナビゲーター <span class="ver">v2.2.11</span></h1>
       <div class="credit"><span>created by シナっぷ ／</span> <span>thanks to EGGのみんな</span></div>
       <div class="sub">ゲームと同じ盤面を入力して1手ずつ進められるシミュレーターです。MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖も探せます。</div>
     </div>
@@ -3205,12 +3205,14 @@ function renderFinalControls(p) {
       ${moveNotice ? `<br><b style="color:var(--danger)">${moveNotice}</b>` : ''}</div>
     <div class="toolbar" style="margin-top:0;margin-bottom:8px;align-items:center;">
       <label class="small">ゲーム画面の残り手数 <input type="number" id="finalLeftInput" min="0" max="999" inputmode="numeric" enterkeyhint="done" value="${shown}" style="width:5em;"></label>
+      ${boardReadButtonHtml()}
       <button id="btnFinalCommit" class="primary" ${n ? 'disabled' : ''}>確定</button>
       ${n ? '<button id="btnFinalKeep">「?」のまま確定</button>' : ''}
       <button id="btnFixCancel" class="danger">この手を取り消す</button>
     </div>
     <div class="note" style="margin:0 0 8px;">ゲーム画面の残り手数と違っていたら、ゲーム画面の数字に直してから確定してください。</div>
     ${n ? '<div class="note" style="margin:0 0 8px;"><b>「?」のまま確定</b>すると、入力せずに次の手へ進めます。盤面に「?」が残るので、<b>そこを通る連鎖は見つからず、事故の警告も出せません</b>。</div>' : ''}`;
+  bindBoardReadButton();
   document.getElementById('finalLeftInput').addEventListener('input', (e) => { const v = parseInt(e.target.value, 10); p.enteredLeft = isNaN(v) ? null : v; p.confirmLow = false; saveState(); });
   const finalCommit = (keepUnknown) => {
     if (p.checking) return;
@@ -3874,6 +3876,7 @@ function renderGameControls() {
       <div class="toolbar" style="margin-top:0;margin-bottom:8px;align-items:center;">
         <label class="small">ゲーム画面の残り手数 <input type="number" id="startMovesInput" min="1" max="999" value="${g.start}" style="width:5em;"></label>
         <button id="btnStartGame" class="primary">この盤面で始める</button>
+        ${boardReadButtonHtml()}
         <button id="btnStartPractice">ランダムな盤面で練習する</button>
         <span class="note">${u.total ? `「?」の${u.total}マスは、そのまま「?」として始めます。` : '入力できました。'}</span>
       </div>
@@ -3882,6 +3885,7 @@ function renderGameControls() {
     document.getElementById('startMovesInput').addEventListener('input', (e) => { const v = parseInt(e.target.value, 10); if (v > 0) { g.start = v; saveState(); } });
     document.getElementById('btnStartGame').addEventListener('click', startGame);
     document.getElementById('btnStartPractice').addEventListener('click', startPractice);
+    bindBoardReadButton();
     return;
   }
   if (g.phase === 'move') {
@@ -3900,7 +3904,7 @@ function renderGameControls() {
         <button id="btnRedo" ${g.future.length ? '' : 'disabled'}>1手進める</button>
       </div>
       <div class="game-status">${targetNotice ? `<b style="color:var(--accent)">${targetNotice}</b><br>` : ''}${moveNotice ? `<b style="color:var(--danger)">${moveNotice}</b><br>` : ''}${moveSrcLine()}<span id="moveHint">${anim ? ANIM_HINT : hint}</span></div>
-      ${moveMode === 'edit' ? `<div class="toolbar" style="margin-top:0;margin-bottom:8px;align-items:center;"><label class="small">残り手数 <input type="number" id="editLeftInput" min="0" max="999" value="${currentLeft()}" style="width:5em;"></label><button id="btnEditLeft" class="small">この数字に直す</button><button id="btnClearBoard" class="small danger">盤面をクリア</button></div>` : ''}
+      ${moveMode === 'edit' ? `<div class="toolbar" style="margin-top:0;margin-bottom:8px;align-items:center;"><label class="small">残り手数 <input type="number" id="editLeftInput" min="0" max="999" value="${currentLeft()}" style="width:5em;"></label><button id="btnEditLeft" class="small">この数字に直す</button><button id="btnClearBoard" class="small danger">盤面をクリア</button>${boardReadButtonHtml('small')}</div>` : ''}
       ${q ? `<div class="toolbar" style="margin-top:0;margin-bottom:8px;">
         <button id="btnQueueNext" class="primary">${['①', '②', '③', '④'][(g.queueTotal || g.queue.length) - g.queue.length] || ''} を打つ（${(g.queueTotal || g.queue.length) - g.queue.length + 1}/${g.queueTotal || g.queue.length}手目）: ${describeMove(q)}</button>
         <button id="btnQueueStop" class="small">手順をやめる</button></div>` : ''}`;
@@ -3912,6 +3916,7 @@ function renderGameControls() {
     if (!g.practice) document.getElementById('modeEdit').addEventListener('click', () => setMode('edit'));
     document.getElementById('btnUndo').addEventListener('click', undoLast);
     document.getElementById('btnRedo').addEventListener('click', redoNext);
+    bindBoardReadButton();
     const clearBtn = document.getElementById('btnClearBoard');
     if (clearBtn) clearBtn.addEventListener('click', () => {
       openAsk('盤面の36マスを全て「?」にします。残り手数と打った手の記録は残ります。よろしいですか？', {
@@ -5050,6 +5055,263 @@ function loadImageFile(file) {
     im.onerror = () => { URL.revokeObjectURL(url); reject(new Error('bad image')); };
     im.src = url;
   });
+}
+/* ---------- スクショから盤面を読み取る(2026-10-03 本人「ヒーローを登録したら盤面の読み取り機能を使えるようにしたい」) ----------
+ * A〜Dの4体全てにヒーローを選んでいるときだけ使える。登録したヒーローの絵(全レベル)と、スクショの盤面のマスを1マスずつ見比べる。
+ * 本人の盤面のスクショ8枚を、画面の大きさを変えた6通りで試して、全てのマスを正しく読めた(試しは tools/board_read/)。 */
+// 1. 盤面の位置: マスの地の色(2色の市松模様)から、6×6のマスの位置と大きさを探す
+// 2. 駒: マスごとに、登録したヒーローの絵(全レベル)と見比べて、一番近いものを選ぶ
+const RD_C = 48;   // 見比べるときのマスの大きさ(ピクセル)
+
+function rdPixels(img, sx, sy, sw, sh, dw, dh) {
+  const cv = document.createElement('canvas'); cv.width = dw; cv.height = dh;
+  const g = cv.getContext('2d', { willReadFrequently: true }); g.imageSmoothingQuality = 'high';
+  g.drawImage(img, sx, sy, sw, sh, 0, 0, dw, dh);
+  return g.getImageData(0, 0, dw, dh).data;
+}
+
+// 盤面の位置。返り値 { x0, y0, s, good }(元の画像のピクセル。s はマスの大きさ)。見つからなければ null
+function rdFindBoard(im) {
+  const W0 = im.naturalWidth || im.width, H0 = im.naturalHeight || im.height;
+  const dist = (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]);
+  const scan = (SW, sList, dxList, y0List) => {
+    const k = SW / W0, SH = Math.round(H0 * k), d = rdPixels(im, 0, 0, W0, H0, SW, SH);
+    const col = (x, y) => { x = Math.round(x); y = Math.round(y); const q = (y * SW + x) * 4; return [d[q], d[q + 1], d[q + 2]]; };
+    const all = [];
+    for (const sO of sList(W0)) {
+      const s = sO * k;
+      for (const dxO of dxList) {
+        const x0 = (SW - 6 * s) / 2 + dxO * k;
+        if (x0 < 0 || x0 + 6 * s > SW - 1) continue;
+        for (const y0O of y0List(sO)) {
+          const y0 = y0O * k;
+          if (y0 < 0 || y0 + 6 * s > SH - 1) continue;
+          const ins = s * 0.07, cells = [];
+          for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) {
+            const cx = x0 + c * s, cy = y0 + r * s;
+            cells.push([col(cx + ins, cy + ins), col(cx + s - ins, cy + ins), col(cx + ins, cy + s - ins), col(cx + s - ins, cy + s - ins)]);
+          }
+          const sum = [[0, 0, 0, 0], [0, 0, 0, 0]];
+          cells.forEach((cs, i) => {
+            if (Math.max(dist(cs[0], cs[1]), dist(cs[0], cs[2]), dist(cs[0], cs[3])) >= 30) return;
+            const p = ((i / 6 | 0) + i % 6) % 2; for (let t = 0; t < 3; t++) sum[p][t] += cs[0][t]; sum[p][3]++;
+          });
+          if (sum[0][3] < 10 || sum[1][3] < 10) continue;
+          const m = sum.map(a => [a[0] / a[3], a[1] / a[3], a[2] / a[3]]);
+          if (dist(m[0], m[1]) < 12) continue;
+          let good = 0;
+          cells.forEach((cs, i) => { const p = ((i / 6 | 0) + i % 6) % 2; good += cs.filter(c => dist(c, m[p]) < 18 && dist(c, m[1 - p]) > dist(c, m[p])).length; });
+          all.push({ good, s: sO, x0: (SW - 6 * s) / 2 / k + dxO, y0: y0O, dx: dxO, bg: m });
+        }
+      }
+    }
+    return all.sort((a, b) => b.good - a.good);
+  };
+  const range = (a, b, st) => { const r = []; for (let v = a; v <= b + 1e-9; v += st) r.push(v); return r; };
+  // 粗く探す(横幅240ピクセルに縮めて)。上位10件の候補を、細かく(横幅360ピクセルで)探し直す。
+  // 180ピクセルでは、左右に余白のある画面(タブレットなど)で盤面が小さくなり、1マスずれた位置を選んだ
+  const SW1 = 240, u1 = W0 / SW1, SW2 = 360, u2 = W0 / SW2;
+  const c1 = scan(SW1, W => range(W * 0.08, W * 0.1667, u1 * 0.5), range(-0.02 * W0, 0.02 * W0, u1 * 2), s => range(0, H0 - 6 * s, u1));
+  const picks = [];
+  for (const c of c1) { if (picks.length >= 10) break; if (picks.every(p => Math.abs(p.y0 - c.y0) > u1 * 3 || Math.abs(p.s - c.s) > u1)) picks.push(c); }
+  let b = null;
+  for (const c of picks) {
+    const c2 = scan(SW2, () => range(c.s - u1, c.s + u1, u2 * 0.25), range(c.dx - u1 * 2.5, c.dx + u1 * 2.5, u2), () => range(c.y0 - u1 * 1.5, c.y0 + u1 * 1.5, u2))[0];
+    if (c2 && (!b || c2.good > b.good)) b = c2;
+  }
+  return b && b.good >= 100 ? b : null;   // 144か所のうち100か所以上が市松模様に合うこと
+}
+
+// 絵(160四方、透明あり)を、マスの L 倍の大きさにしたときの、見比べる点の一覧
+function rdTemplate(spr, L, step = 2) {
+  const n = Math.max(4, Math.round(L * RD_C));
+  const d = rdPixels(spr, 0, 0, spr.naturalWidth || spr.width, spr.naturalHeight || spr.height, n, n);
+  const pts = [];
+  for (let y = 0; y < n; y += step) for (let x = (y / step) % 2 ? 1 : 0; x < n; x += step) {
+    const q = (y * n + x) * 4; if (d[q + 3] > 200) pts.push(x - n / 2, y - n / 2, d[q], d[q + 1], d[q + 2]);
+  }
+  return pts;
+}
+function rdScore(cd, pts, ox, oy) {
+  let s = 0, n = 0;
+  for (let i = 0; i < pts.length; i += 5) {
+    const x = Math.round(RD_C / 2 + ox + pts[i]), y = Math.round(RD_C / 2 + oy + pts[i + 1]);
+    n++;
+    if (x < 0 || y < 0 || x >= RD_C || y >= RD_C) { s += 200; continue; }
+    const q = (y * RD_C + x) * 4;
+    s += Math.abs(cd[q] - pts[i + 2]) + Math.abs(cd[q + 1] - pts[i + 3]) + Math.abs(cd[q + 2] - pts[i + 4]);
+  }
+  return s / n;
+}
+// ずれを粗く(2ピクセルおき)探してから、その周りを細かく探す。
+// 3ピクセルおきでは、線の細い駒(雪の結晶)で合う位置を飛び越えた(2026-10-03、本人の盤面のスクショで)
+function rdBest(cd, pts, R = 9, st = 2) {
+  let b = { v: 1e9, ox: 0, oy: 0 };
+  for (let oy = -R; oy <= R; oy += st) for (let ox = -R; ox <= R; ox += st) { const v = rdScore(cd, pts, ox, oy); if (v < b.v) b = { v, ox, oy }; }
+  const c = b, f = st - 1;
+  for (let oy = c.oy - f; oy <= c.oy + f; oy++) for (let ox = c.ox - f; ox <= c.ox + f; ox++) { const v = rdScore(cd, pts, ox, oy); if (v < b.v) b = { v, ox, oy }; }
+  return b;
+}
+function rdCells(im, g) {
+  const cells = [];
+  for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) cells.push(rdPixels(im, g.x0 + c * g.s, g.y0 + r * g.s, g.s, g.s, RD_C, RD_C));
+  return cells;
+}
+// ヒーローごとに、絵の大きさ(マスの何倍か)を決める: 盤面の中で一番よく合うマスの近さが最も小さくなる大きさ
+function rdFitScale(cells, sprites) {
+  // 絵の大きさ(マスの何倍か)。本人のヒーロー4体では1.03〜1.09倍だった(一番大きいレベルの絵が、マスとほぼ同じ大きさ)
+  let best = null;
+  for (let L = 0.95; L <= 1.1501; L += 0.05) {
+    const tms = sprites.map(sp => rdTemplate(sp, L, 3));
+    const v = cells.map(cd => Math.min(...tms.map(p => rdBest(cd, p, 6).v))).sort((a, b) => a - b);
+    const top = v[0] + v[1] + v[2];
+    if (!best || top < best.top) best = { L, top };
+  }
+  return best;
+}
+
+// 盤面全体を読む。heroes: [{ sprites: [LV1から] }](A〜Dの順)
+// 返り値: { grid: 36マスの { h: ヒーローの番号, lv: レベル, v: 近さ(小さいほど似ている), moved: 動いている駒として読んだか } か null(読めない),
+//           board: 盤面の位置, ms: 時間 }
+const RD_OK = 115;     // 近さの数字がこれ以下なら、その駒と読む(本人の盤面のスクショ3枚で: 正しい駒は105以下、登録していない駒は138以上)
+const RD_MOVE_OK = 80; // 駒が抜けたマスを探し直したときに、見えている7割の点の近さがこれ以下なら、その駒と読む
+function rdRead(im, heroes) {
+  const t0 = performance.now();
+  const g = rdFindBoard(im);
+  if (!g) return { grid: null, ms: performance.now() - t0 };
+  const cells = rdCells(im, g);
+  const t1 = performance.now();
+  const tms = heroes.map(h => { const L = rdFitScale(cells, h.sprites).L; return { L, t: h.sprites.map(sp => rdTemplate(sp, L)) }; });
+  const t2 = performance.now();
+  const grid = cells.map(cd => {
+    let b = null;
+    tms.forEach((h, hi) => h.t.forEach((p, li) => { const r = rdBest(cd, p); if (!b || r.v < b.v) b = { h: hi, lv: li + 1, v: r.v, ox: r.ox, oy: r.oy }; }));
+    return b;
+  });
+  const t3 = performance.now();
+  // 読めなかったマス: 動いている途中の駒かもしれないので、周りのマスの方までずらして探し直す。
+  // 駒は、マスの中で決まった位置に描かれる(絵ごとに少しずれる)ので、その位置から横か縦にずらす。ずらす幅はマスの0.6倍まで、1ピクセルおき
+  const base = tms.map(h => h.t.map(() => []));
+  grid.forEach(b => { if (b.v <= RD_OK) base[b.h][b.lv - 1].push([b.ox, b.oy]); });
+  const all = [].concat(...base.map(h => [].concat(...h)));
+  const med = a => { const s = a.slice().sort((x, y) => x - y); return s.length ? s[s.length >> 1] : 0; };
+  const allOff = [med(all.map(o => o[0])), med(all.map(o => o[1]))];
+  const offOf = (hi, li) => base[hi][li].length ? [med(base[hi][li].map(o => o[0])), med(base[hi][li].map(o => o[1]))] : allOff;
+  const W = RD_C * 2.2 | 0, M = Math.round(RD_C * 0.6), redo = [];
+  grid.forEach((b, i) => {
+    const r = i / 6 | 0, c = i % 6, empty = rdEmptyRate(cells[i], g.bg[(r + c) % 2]) > 0.9;   // 駒が動いて抜けたマス(本人の盤面のスクショで: 抜けたマス0.99、駒があるマスは0.73以下)
+    if (empty || b.v > RD_OK) redo.push({ i, empty });
+  });
+  // 読めないマスがとても多いときは、選んだヒーローが盤面と合っていない。探し直さずに「?」にする
+  for (const { i, empty } of redo) {
+    grid[i] = null;
+    if (redo.length > 8) continue;
+    const r = i / 6 | 0, c = i % 6;
+    const d = rdPixels(im, g.x0 + (c - 0.6) * g.s, g.y0 + (r - 0.6) * g.s, g.s * 2.2, g.s * 2.2, W, W);
+    let best = null;
+    tms.forEach((h, hi) => h.t.forEach((p, li) => {
+      const [bx, by] = offOf(hi, li);
+      for (let k = -M; k <= M; k++) for (let j = -1; j <= 1; j++) for (const [dx, dy] of [[k, j], [j, k]]) {
+        const cx = W / 2 + bx + dx, cy = W / 2 + by + dy;
+        const v = rdRobust(d, W, p, cx, cy, 1), t = empty ? rdRobust(d, W, p, cx, cy, 0.7) : 1e9;
+        // 駒がずれただけなら、全部の点で近い。駒が抜けたマスに隣の駒が入りかけているときは、他の駒と重なるので、見えている7割の点で比べる
+        const ok = v <= RD_OK || t <= RD_MOVE_OK, score = Math.min(v, t);
+        if (ok && (!best || score < best.v)) best = { h: hi, lv: li + 1, v: score, moved: true, dx, dy };
+      }
+    }));
+    grid[i] = best;
+  }
+  return { grid, board: g, ms: [t1 - t0, t2 - t1, t3 - t2, performance.now() - t3].map(Math.round), L: tms.map(h => h.L.toFixed(2)) };
+}
+// マスの真ん中の部分のうち、マスの地の色(bg)に近い点の割合。駒が動いて抜けたマスは、この割合が大きい
+function rdEmptyRate(cd, bg) {
+  let n = 0, e = 0;
+  for (let y = RD_C * 0.2 | 0; y < RD_C * 0.8; y++) for (let x = RD_C * 0.2 | 0; x < RD_C * 0.8; x++) {
+    const q = (y * RD_C + x) * 4; n++;
+    if (Math.abs(cd[q] - bg[0]) + Math.abs(cd[q + 1] - bg[1]) + Math.abs(cd[q + 2] - bg[2]) < 40) e++;
+  }
+  return e / n;
+}
+// 見えている部分だけで見比べる: 差の小さい割合 keep の点の平均(重なった別の駒の部分を除く)
+function rdRobust(d, W, pts, cx, cy, keep = 0.7) {
+  const diffs = [];
+  for (let i = 0; i < pts.length; i += 5) {
+    const x = Math.round(cx + pts[i]), y = Math.round(cy + pts[i + 1]);
+    if (x < 0 || y < 0 || x >= W || y >= W) { diffs.push(200); continue; }
+    const q = (y * W + x) * 4;
+    diffs.push(Math.abs(d[q] - pts[i + 2]) + Math.abs(d[q + 1] - pts[i + 3]) + Math.abs(d[q + 2] - pts[i + 4]));
+  }
+  diffs.sort((a, b) => a - b);
+  const n = Math.max(1, Math.round(diffs.length * keep));
+  let s = 0; for (let i = 0; i < n; i++) s += diffs[i];
+  return s / n;
+}
+
+// ヒーローの絵(blob URL)を画像にする。読み取りのたびに作り直さないように覚えておく
+const rdImageCache = new Map();
+function rdLoadImage(url) {
+  if (rdImageCache.has(url)) return rdImageCache.get(url);
+  const p = new Promise((resolve, reject) => { const im = new Image(); im.onload = () => resolve(im); im.onerror = reject; im.src = url; });
+  rdImageCache.set(url, p);
+  return p;
+}
+// A〜Dの4体全てにヒーローを選んでいるか(読み取りのボタンを出す条件)
+function boardReadReady() {
+  return SPECIES.every(sp => state.speciesChars && state.speciesChars[sp] && charStore.has(state.speciesChars[sp]));
+}
+function boardReadButtonHtml(cls = '') {
+  return boardReadReady() ? `<button id="btnReadShot"${cls ? ` class="${cls}"` : ''}>スクショから読み取る</button>` : '';
+}
+// 「スクショから読み取る」: スクショを選ぶ → 読み取る → 盤面を置き換える
+function bindBoardReadButton() {
+  const btn = document.getElementById('btnReadShot');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const fi = document.createElement('input');
+    fi.type = 'file'; fi.accept = 'image/*';
+    fi.addEventListener('change', async () => {
+      const f = fi.files && fi.files[0];
+      if (!f) return;
+      btn.disabled = true; btn.textContent = '読み取り中…';
+      let shot = null;
+      try {
+        shot = await loadImageFile(f);
+        const heroes = await Promise.all(SPECIES.map(sp => Promise.all(charStore.get(state.speciesChars[sp]).urls.map(rdLoadImage)).then(sprites => ({ sprites }))));
+        await new Promise(r => setTimeout(r, 30));   // 「読み取り中…」を画面に出してから読む
+        const t0 = performance.now();
+        const res = rdRead(shot.img, heroes);
+        applyBoardRead(res, (performance.now() - t0) / 1000);
+      } catch (e) {
+        openNotice('スクショを読み込めませんでした。別のスクショを選んでください。');
+      } finally {
+        if (shot) URL.revokeObjectURL(shot.url);
+        refresh();
+      }
+    });
+    fi.click();
+  });
+}
+function applyBoardRead(res, sec) {
+  // 試しの版(test.html)だけ、スマホでの時間を測るために、かかった時間を出す
+  const time = /test\.html$/.test(location.pathname) ? `（読み取りにかかった時間: ${sec.toFixed(1)}秒）` : '';
+  if (!res.grid) { openNotice('スクショの中に盤面が見つかりませんでした。ゲームの盤面が全て写っているスクショを選んでください。' + time); return; }
+  // 読めた駒でも、その素材で盤面に出ないレベル(設定の最大レベルより上など)は「?」にする
+  const cells = res.grid.map(b => {
+    if (!b) return null;
+    const sp = SPECIES[b.h];
+    return b.lv >= minBoardLevelOf(sp) && b.lv <= (state.maxLevels[sp] || 7) ? { species: sp, level: b.lv } : null;
+  });
+  const unread = cells.filter(c => !c).length;
+  if (unread >= 9) { openNotice('多くのマスを読み取れませんでした。「ヒーロー」の画面で、A〜Dにこの盤面のヒーローを選んでいるか確かめてください。' + time); return; }
+  const g = state.game;
+  const apply = () => {
+    for (let i = 0; i < SIZE * SIZE; i++) state.board[i / SIZE | 0][i % SIZE] = cells[i] || { species: '?', level: 1 };
+    if (g.phase === 'move') g.queue = [];
+    onBoardChanged();
+    openNotice('スクショから盤面を読み取りました。ゲーム画面と見比べて、違うマスがあれば直してください。' +
+      (unread ? `読み取れなかった${unread}マスは「?」にしました。ゲーム画面を見て入力してください。` : '') + time);
+  };
+  if (g.phase === 'move' && g.future.length) withFutureDropped(apply); else apply();
 }
 function charThumbsHtml(levels, size = 30, selected = -1) {
   return levels.map((u, i) => `<span class="char-thumb${i === selected ? ' sel' : ''}" data-i="${i}" style="width:${size}px;height:${size}px;background:${CHECKER[i % 2]} url('${u}') center / 92% auto no-repeat;" title="LV${i + 1}"></span>`).join('');
