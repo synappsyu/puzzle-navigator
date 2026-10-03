@@ -189,7 +189,18 @@
   .config-item label { display:flex; align-items:center; gap:6px; font-weight:700; }
   .config-item input { width:56px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:4px 6px; font-size:13px; }
 
-  /* キャラの絵(2026-10-03) */
+  /* 盤面は、ゲームと同じく市松模様の板の上に駒を置く形(2026-10-03 本人と決めた。ヒーローを選んでいてもいなくても同じ)。
+     板の色は .board の背景(2マス×2マスの模様をくり返す)、駒はマスより一回り小さく置く(マスの外側のすき間に板が見える) */
+  #board, .mini-board.chain { gap: 0; background: repeating-conic-gradient(#cdc4db 0 25%, #e7e1ef 0 50%) 0 0 / calc(100% / 3) calc(100% / 3); }
+  #board { border-radius: 14px; }
+  .mini-board.chain { border-radius: 5px; }
+  #board .cell { margin: 7%; }
+  .mini-board.chain .cell { margin: 6%; }
+  #board .cell.gone { background: transparent; }
+  #board .cell.drag-origin { background: transparent !important; }
+  /* 明るい板の上でも、ピンの白い点線と行き先の白い枠が見えるように、外側に細い濃い縁を足す */
+  #board .cell.pinned, #board .cell.pin-dest { outline: 1px solid rgba(50, 30, 80, .6); }
+  /* ヒーローの絵(2026-10-03) */
   .cell.char { text-shadow: none; }
   .char-rows { display:flex; flex-direction:column; gap:8px; margin:10px 0; }
   .char-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:var(--panel2); border:1px solid var(--border); border-radius:8px; padding:8px 10px; }
@@ -300,7 +311,7 @@
     </div>
     <div class="toolbar">
       <button id="btnConfig">⚙ 設定</button>
-      <button id="btnChars">🖼 キャラ</button>
+      <button id="btnChars">🖼 ヒーロー</button>
       <button id="btnResetGame" class="danger" title="盤面を全部「?」に戻し、打った手の記録も消します。目標MAX布陣と設定は残ります。">リセット</button>
       <span class="toolbar-break"></span>
       <button id="btnExportGame" class="quiet dim" title="1手以上打つと押せます。">📝 記録を書き出す</button>
@@ -910,8 +921,8 @@ function defaultState() {
     patterns: [],                                 // 最初は何も登録しない(登録すると連鎖を探すの結果が絞られるため)
     currentPatternId: null,                       // 今目指している目標MAX布陣(null なら一覧の1番目)
     speciesColors: Object.assign({}, DEFAULT_SPECIES_COLORS),   // 素材ごとの色の系統
-    speciesChars: { A: null, B: null, C: null, D: null },        // 素材ごとに選んだキャラの名前(絵は IndexedDB。null なら文字と色)
-    cropFrames: {},                                               // スクショの大きさ(「横x縦」)ごとの、絵を切り出す枠 { x, y, s }
+    speciesChars: { A: null, B: null, C: null, D: null },        // 素材ごとに選んだヒーローの名前(絵は IndexedDB。null なら文字と色)
+    cropFrames: {},                                               // スクショの大きさ(「横x縦」)ごとの、絵を探す範囲 { x, y, w, h }(横幅・高さに対する割合)
     presets: defaultPresets(),                    // プリセット(利用者が追加・削除できる)
     presetsOffered: ADDED_PRESETS.slice(),        // あとで足したプリセットのうち、一覧に足し終えたもの(ADDED_PRESETS)
     game: defaultGame(),
@@ -941,7 +952,7 @@ function normalizeState(s) {
   for (const sp of SPECIES) s.speciesChars[sp] = typeof sc[sp] === 'string' && sc[sp] ? sc[sp] : null;
   const cf = s.cropFrames && typeof s.cropFrames === 'object' ? s.cropFrames : {};
   s.cropFrames = {};
-  for (const k of Object.keys(cf)) { const v = cf[k]; if (/^\d+x\d+$/.test(k) && v && [v.x, v.y, v.s].every(n => typeof n === 'number' && isFinite(n))) s.cropFrames[k] = { x: v.x, y: v.y, s: v.s }; }
+  for (const k of Object.keys(cf)) { const v = cf[k]; if (/^\d+x\d+$/.test(k) && v && [v.x, v.y, v.w, v.h].every(n => typeof n === 'number' && isFinite(n))) s.cropFrames[k] = { x: v.x, y: v.y, w: v.w, h: v.h }; }
   s.presets = Array.isArray(s.presets) ? keepClean(s.presets, cleanPattern) : defaultPresets();
   // あとで足したプリセットを、まだ足していなければ、最初からあるプリセットの並び順どおりの場所(12MAX なら 10MAX の次)に一度だけ足す
   const offered = Array.isArray(s.presetsOffered) ? s.presetsOffered.filter(x => typeof x === 'string') : [];
@@ -1530,6 +1541,7 @@ function chainMiniBoard(grid, opts) {
     let style = '';
     let text = '';
     if (!cell || cell.species === '?') { cls.push('x'); text = '?'; }
+    else if (charImage(cell.species, cell.level)) { cls.push('char'); style = `background:url('${charImage(cell.species, cell.level)}') center 40% / 100% auto no-repeat, ${CHAR_SHADOW}`; }   // ヒーローの絵
     else { const bg = levelShade(cell.species, cell.level, state.maxLevels[cell.species] || 7); style = `background:${bg};color:${textOn(bg)}`; text = `${cell.species}${cell.level}`; }
     let extra = '';
     const m = opts && opts.move;
@@ -3751,7 +3763,7 @@ function renderBoard() {
     const div = document.createElement('div');
     div.className = 'cell';
     if (!cell || cell.species === '?') { div.classList.add('unknown'); div.textContent = '?'; }
-    else if (paintCharCell(div, cell.species, cell.level, x, y)) { /* キャラの絵 */ }
+    else if (paintCharCell(div, cell.species, cell.level, x, y)) { /* ヒーローの絵 */ }
     else {
       div.style.background = levelShade(cell.species, cell.level, state.maxLevels[cell.species]);
       div.style.color = textOn(div.style.background);
@@ -4807,12 +4819,12 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
     <li>赤い点線の枠が出た → 「確定」を押した際、ツールが「ありえない盤面（入力ミス）」を検知しました。赤枠のマスを確認し、入力し直してください。そのままもう一度「確定」を押せば、無視して進めることもできます。</li>
     <li>赤枠は「ここを直せばつじつまが合う」という候補で、間違えた場所そのものとは限りません。枠のマスが合っていても、盤面のどこかがゲームとずれていることがあります。</li>
   </ul>
-  <p class="sec-h">■ キャラの絵</p>
+  <p class="sec-h">■ ヒーローの絵</p>
   <ul>
-    <li>「🖼 キャラ」の画面でキャラを選ぶと、盤面のその素材の駒を、ゲームと同じ絵で表示します。ゲームの画面と見比べやすくするためです。</li>
+    <li>「🖼 ヒーロー」の画面でヒーローを選ぶと、盤面のその素材の駒を、ゲームと同じ絵で表示します。ゲームの画面と見比べやすくするためです。</li>
     <li>このツールには、ゲームの画像は入っていません。表示するのは、使う人が自分の端末で登録した絵だけです。</li>
-    <li>キャラの絵は、ゲームのスキン画面にある「ステージ画像プレビュー」を、LV1から最後のレベルまで1枚ずつスクショして、「キャラを登録」で選んで登録します。</li>
-    <li>その端末で初めて登録するときは、枠をキャラの絵に合わせます。次からは、同じ位置で切り出します。</li>
+    <li>ヒーローの絵は、ゲームのスキン画面にある「ステージ画像プレビュー」を、LV1から最後のレベルまで1枚ずつスクショして、「ヒーローを登録」で選んで登録します。</li>
+    <li>その端末で初めて登録するときは、枠をヒーローの絵に合わせます。次からは、同じ位置で切り出します。</li>
     <li>登録に使ったスクショは、登録した後に消して構いません。</li>
     <li>登録した絵は、この端末のブラウザの中だけに保存します。ブラウザのデータを消したときや、機種を変えたときは消えるので、「控えを書き出す」で控えのファイルを作っておいてください。</li>
     <li>絵を登録していないレベルの駒は、今までどおり「A1」のような文字と色で表示します。</li>
@@ -4848,14 +4860,16 @@ document.getElementById('btnPatternHelp').addEventListener('click', () => openIn
 `));
 
 /* ============================== 設定 ============================== */
-/* ============================== キャラの絵(使う人が登録する。2026-10-03) ==============================
+/* ============================== ヒーローの絵(使う人が登録する。2026-10-03) ==============================
  * 使う人が、ゲームのスキン画面の「ステージ画像プレビュー」のスクショ(LV1〜最後のレベル)から、駒の絵を切り出して登録する。
  * ツールにはゲームの画像を一切入れない。絵はこの端末のブラウザの中(IndexedDB)だけに保存し、控えをファイルに書き出せる。
- * A〜Dにキャラを選ぶと(state.speciesChars)、盤面のその素材の駒を、市松模様の背景の上に絵で出す。絵がないレベルは今までどおり文字と色。
+ * A〜Dにヒーローを選ぶと(state.speciesChars)、盤面のその素材の駒を、市松模様の背景の上に絵で出す。絵がないレベルは今までどおり文字と色。
  * 切り出す位置(枠)は、スクショの大きさ(縦横のピクセル数)ごとに覚える(state.cropFrames)。端末が変わると画面の大きさが変わるため。 */
 const CHAR_DB_NAME = STORAGE_KEY + '_chars';
 const CHAR_OUT = 160;   // 切り出した絵の大きさ(ピクセル)
-const CHAR_FRAME_DEFAULT = { x: 0.5 - 0.14, y: 0.318 - 0.14 * 1170 / 2532, s: 0.28 };   // 見本のスクショ(1170×2532)で絵が収まる枠。x・s は横幅、y は高さに対する割合
+// 絵を探す範囲(横幅・高さに対する割合)。見本のスクショ(1170×2532)では、絵は横0.39〜0.61・縦0.27〜0.37にある。
+// 上の「スキン」の帯は左右の縁に触れるので除ける。下の「外観」のボタン(縦0.41〜)は細長いので除ける(機種によって絵の位置がずれても入るように、広めにしてある)
+const CHAR_REGION_DEFAULT = { x: 0.12, y: 0.17, w: 0.76, h: 0.29 };
 const CHECKER = ['#e7e1ef', '#cdc4db'];   // 絵を出すマスの市松模様の2色
 const charStore = new Map();   // 名前 → { name, levels: [data URL(LV1から)], urls: [blob URL] }
 function charDb() {
@@ -4918,57 +4932,96 @@ function loadChars() {
     renderBoard();
   }).catch(() => {});
 }
-// 素材とレベルの駒の絵(blob URL)。キャラを選んでいない・そのレベルの絵がないときは null
+// 素材とレベルの駒の絵(blob URL)。ヒーローを選んでいない・そのレベルの絵がないときは null
 function charImage(species, level) {
   const name = state.speciesChars && state.speciesChars[species];
   const rec = name ? charStore.get(name) : null;
   return rec && rec.urls[level - 1] || null;
 }
-// 盤面のマスに絵を出す(市松模様の背景の上)
+// 盤面のマスに絵を出す
+// 盤面の市松模様の板の上に、ゲームと同じく足元の薄い影と絵を置く(マスの背景は塗らない)
+const CHAR_SHADOW = 'radial-gradient(ellipse 36% 9% at 50% 90%, rgba(40, 20, 60, .32), rgba(40, 20, 60, 0))';
 function paintCharCell(div, species, level, x, y) {
   const img = charImage(species, level);
   if (!img) return false;
   div.classList.add('char');
-  div.style.background = `${CHECKER[(x + y) % 2]} url("${img}") center / 92% auto no-repeat`;
-  div.style.color = 'transparent';
+  div.style.background = `url("${img}") center 40% / 100% auto no-repeat, ${CHAR_SHADOW}`;
   div.textContent = '';
   div.title = `${species}${level}`;
   return true;
 }
-// スクショから枠の部分を切り出し、背景(枠の外側から続く、背景と同じような色)を抜いた PNG の data URL を返す
-function cropCharImage(img, frame) {
-  const S = CHAR_OUT, w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
-  const cv = document.createElement('canvas'); cv.width = cv.height = S;
-  const g = cv.getContext('2d');
-  g.drawImage(img, frame.x * w, frame.y * h, frame.s * w, frame.s * w, 0, 0, S, S);
-  const d = g.getImageData(0, 0, S, S), p = d.data;
-  // 背景の色: 枠の縁のマスの色の中央値
-  const edge = [];
-  for (let i = 0; i < S; i++) for (const [x, y] of [[i, 0], [i, S - 1], [0, i], [S - 1, i]]) edge.push((y * S + x) * 4);
-  const med = k => { const v = edge.map(o => p[o + k]).sort((a, b) => a - b); return v[v.length >> 1]; };
-  const bg = [med(0), med(1), med(2)];
-  const dist = o => Math.hypot(p[o] - bg[0], p[o + 1] - bg[1], p[o + 2] - bg[2]);
-  // 縁から、背景に近い色のマスをたどって抜く(絵の中の似た色は、輪郭で区切られているので残る)
-  const T = 38, seen = new Uint8Array(S * S), stack = [];
-  for (let i = 0; i < S; i++) for (const q of [i, (S - 1) * S + i, i * S, i * S + S - 1]) if (!seen[q] && dist(q * 4) < T) { seen[q] = 1; stack.push(q); }
+// スクショの範囲(region。横幅・高さに対する割合 {x, y, w, h})から、ヒーローの絵を探す(2026-10-03 本人「枠は絵のある位置を教えるだけで、大きさや中央への配置はツールが」)。
+// 背景(範囲の中で一番多い色。スキン画面の紫)に近い色をたどって抜き、残ったかたまりのうち、範囲の縁に触れず、細長くない、一番大きいものを絵とする
+// (「LV」の文字・左右の矢印・上の帯・下のボタンを除くため)。そのかたまりの範囲に重なる小さなかたまり(飾りなど)も絵に含める。
+// 返り値: { canvas: 範囲を縮めた絵(背景と他のかたまりは透明), box: 絵のある所 {x, y, w, h}(canvas の中のピクセル) }。見つからなければ null
+const CHAR_WORK = 480;   // 絵を探すときに、範囲をこの横幅に縮めて調べる
+function findCharInShot(img, region) {
+  const W = img.naturalWidth || img.width, H = img.naturalHeight || img.height;
+  const rx = region.x * W, ry = region.y * H, rw = region.w * W, rh = region.h * H;
+  if (rw < 4 || rh < 4) return null;
+  const k = Math.min(1, CHAR_WORK / rw), cw = Math.max(1, Math.round(rw * k)), ch = Math.max(1, Math.round(rh * k));
+  const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+  const g = cv.getContext('2d', { willReadFrequently: true });
+  g.drawImage(img, rx, ry, rw, rh, 0, 0, cw, ch);
+  const d = g.getImageData(0, 0, cw, ch), p = d.data, N = cw * ch;
+  // 背景の色: 範囲の中で一番多い色(スキン画面の紫)。範囲の縁は、機種によって画面の外側の暗い所になるので使わない
+  const hist = new Uint32Array(4096), sum = new Float64Array(4096 * 3);
+  for (let q = 0; q < N; q++) { const b = ((p[q * 4] >> 4) << 8) | ((p[q * 4 + 1] >> 4) << 4) | (p[q * 4 + 2] >> 4); hist[b]++; sum[b * 3] += p[q * 4]; sum[b * 3 + 1] += p[q * 4 + 1]; sum[b * 3 + 2] += p[q * 4 + 2]; }
+  let top = 0; for (let b = 1; b < 4096; b++) if (hist[b] > hist[top]) top = b;
+  const bg = [sum[top * 3] / hist[top], sum[top * 3 + 1] / hist[top], sum[top * 3 + 2] / hist[top]];
+  const dist = q => Math.hypot(p[q * 4] - bg[0], p[q * 4 + 1] - bg[1], p[q * 4 + 2] - bg[2]);
+  // 背景: 背景の色とほぼ同じマスから、背景に近い色をたどる(絵の中の似た色は、輪郭で区切られているので残る)
+  const T = 38, isBg = new Uint8Array(N), stack = [];
+  for (let q = 0; q < N; q++) if (dist(q) < 12) { isBg[q] = 1; stack.push(q); }
   while (stack.length) {
-    const q = stack.pop(), x = q % S, y = (q - x) / S;
-    p[q * 4 + 3] = 0;
-    for (const [nx, ny] of [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]]) {
-      if (nx < 0 || ny < 0 || nx >= S || ny >= S) continue;
-      const n = ny * S + nx;
-      if (!seen[n] && dist(n * 4) < T) { seen[n] = 1; stack.push(n); }
-    }
+    const q = stack.pop(), x = q % cw;
+    if (x > 0 && !isBg[q - 1] && dist(q - 1) < T) { isBg[q - 1] = 1; stack.push(q - 1); }
+    if (x < cw - 1 && !isBg[q + 1] && dist(q + 1) < T) { isBg[q + 1] = 1; stack.push(q + 1); }
+    if (q >= cw && !isBg[q - cw] && dist(q - cw) < T) { isBg[q - cw] = 1; stack.push(q - cw); }
+    if (q < N - cw && !isBg[q + cw] && dist(q + cw) < T) { isBg[q + cw] = 1; stack.push(q + cw); }
   }
-  // 抜いたマスのすぐ隣で、背景に少し近い色のマスは半分透かす(縁のギザギザを減らす)
-  for (let q = 0; q < S * S; q++) {
-    if (seen[q]) continue;
-    const x = q % S, y = (q - x) / S;
-    const near = (x > 0 && seen[q - 1]) || (x < S - 1 && seen[q + 1]) || (y > 0 && seen[q - S]) || (y < S - 1 && seen[q + S]);
-    if (near) { const dd = dist(q * 4); if (dd < T * 2) p[q * 4 + 3] = Math.round(p[q * 4 + 3] * Math.min(1, (dd - T) / T + 0.35)); }
+  // 背景でないかたまりに分ける
+  const label = new Int32Array(N).fill(-1), comps = [];
+  for (let s = 0; s < N; s++) {
+    if (isBg[s] || label[s] >= 0) continue;
+    const c = { id: comps.length, area: 0, x0: cw, y0: ch, x1: -1, y1: -1, edge: false };
+    label[s] = c.id; stack.push(s);
+    while (stack.length) {
+      const q = stack.pop(), x = q % cw, y = (q - x) / cw;
+      c.area++; if (x < c.x0) c.x0 = x; if (x > c.x1) c.x1 = x; if (y < c.y0) c.y0 = y; if (y > c.y1) c.y1 = y;
+      if (x === 0 || y === 0 || x === cw - 1 || y === ch - 1) c.edge = true;
+      for (const n of [x > 0 ? q - 1 : -1, x < cw - 1 ? q + 1 : -1, y > 0 ? q - cw : -1, y < ch - 1 ? q + cw : -1]) if (n >= 0 && !isBg[n] && label[n] < 0) { label[n] = c.id; stack.push(n); }
+    }
+    comps.push(c);
+  }
+  const ok = c => !c.edge && c.area >= N * 0.004 && (c.x1 - c.x0 + 1) <= 3.5 * (c.y1 - c.y0 + 1) && (c.y1 - c.y0 + 1) <= 3.5 * (c.x1 - c.x0 + 1);
+  const main = comps.filter(ok).sort((a, b) => b.area - a.area)[0];
+  if (!main) return null;
+  const keep = new Uint8Array(comps.length);
+  let box = { x0: main.x0, y0: main.y0, x1: main.x1, y1: main.y1 };
+  for (const c of comps) if (!c.edge && c.x0 <= main.x1 && c.x1 >= main.x0 && c.y0 <= main.y1 && c.y1 >= main.y0) {
+    keep[c.id] = 1; box = { x0: Math.min(box.x0, c.x0), y0: Math.min(box.y0, c.y0), x1: Math.max(box.x1, c.x1), y1: Math.max(box.y1, c.y1) };
+  }
+  for (let q = 0; q < N; q++) {
+    if (label[q] < 0 || !keep[label[q]]) { p[q * 4 + 3] = 0; continue; }
+    // 背景のすぐ隣で、背景に少し近い色のマスは半分透かす(縁のギザギザを減らす)
+    const x = q % cw;
+    const near = (x > 0 && isBg[q - 1]) || (x < cw - 1 && isBg[q + 1]) || (q >= cw && isBg[q - cw]) || (q < N - cw && isBg[q + cw]);
+    if (near) { const dd = dist(q); if (dd < T * 2) p[q * 4 + 3] = Math.round(p[q * 4 + 3] * Math.min(1, (dd - T) / T + 0.35)); }
   }
   g.putImageData(d, 0, 0);
-  return cv.toDataURL('image/png');
+  return { canvas: cv, box: { x: box.x0, y: box.y0, w: box.x1 - box.x0 + 1, h: box.y1 - box.y0 + 1 }, scale: k, region };
+}
+// 見つけた絵を、CHAR_OUT 四方の真ん中に置く。縮尺は全レベルで同じ(一番大きい絵が9割に収まるように。レベルごとの大きさの違いはゲームのまま)
+function layoutCharImages(found) {
+  const big = Math.max(...found.map(f => Math.max(f.box.w, f.box.h) / f.scale));
+  return found.map(f => {
+    const s = CHAR_OUT * 0.9 / big / f.scale, w = f.box.w * s, h = f.box.h * s;
+    const cv = document.createElement('canvas'); cv.width = cv.height = CHAR_OUT;
+    const g = cv.getContext('2d'); g.imageSmoothingQuality = 'high';
+    g.drawImage(f.canvas, f.box.x, f.box.y, f.box.w, f.box.h, (CHAR_OUT - w) / 2, (CHAR_OUT - h) / 2, w, h);
+    return cv.toDataURL('image/png');
+  });
 }
 function loadImageFile(file) {
   return new Promise((resolve, reject) => {
@@ -4990,19 +5043,19 @@ function newOverlay() {
   modalRoot.appendChild(overlay);
   return { overlay, modal, close: () => overlay.remove() };
 }
-// 「キャラ」の画面: A〜Dのキャラを選ぶ、登録・一覧・控え
+// 「ヒーロー」の画面: A〜Dのヒーローを選ぶ、登録・一覧・控え
 function openCharsModal() {
   const { overlay, modal, close } = newOverlay();
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
   const names = Array.from(charStore.keys()).sort((a, b) => a.localeCompare(b, 'ja'));
-  let h = '<h2>素材のキャラ</h2><div class="note">ゲームのキャラの絵を登録すると、盤面の駒をその絵で表示します。登録した絵は、この端末のブラウザの中だけに保存します。</div><div class="char-rows">';
+  let h = '<h2>素材のヒーロー</h2><div class="note">ゲームのヒーローの絵を登録すると、盤面の駒をその絵で表示します。登録した絵は、この端末のブラウザの中だけに保存します。</div><div class="char-rows">';
   for (const sp of SPECIES) {
     const cur = state.speciesChars[sp] && charStore.has(state.speciesChars[sp]) ? state.speciesChars[sp] : '';
-    h += `<div class="char-row"><label><span class="species-pill" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${sp}</span> のキャラ</label>` +
+    h += `<div class="char-row"><label><span class="species-pill" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${sp}</span> のヒーロー</label>` +
       `<select data-char="${sp}"><option value="">選ばない</option>${names.map(n => `<option value="${esc(n)}" ${cur === n ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>` +
       `<div class="char-thumbs" data-thumbs="${sp}">${cur ? charThumbsHtml(charStore.get(cur).urls, 24) : ''}</div></div>`;
   }
-  h += '</div><div class="char-buttons"><button id="chRegister" class="primary">キャラを登録</button><button id="chList">登録したキャラ</button><button id="chExport">控えを書き出す</button><button id="chImport">控えを読み込む</button><input type="file" id="chImportFile" accept=".json,application/json" style="display:none"></div>';
+  h += '</div><div class="char-buttons"><button id="chRegister" class="primary">ヒーローを登録</button><button id="chList">登録したヒーロー</button><button id="chExport">控えを書き出す</button><button id="chImport">控えを読み込む</button><input type="file" id="chImportFile" accept=".json,application/json" style="display:none"></div>';
   h += '<div class="note">ブラウザのデータを消したときや、機種を変えたときは、登録した絵が消えます。控えを書き出しておけば、その控えを読み込むだけで、登録した絵を元に戻せます。</div>';
   h += '<div class="modal-actions"><button id="chClose">閉じる</button></div>';
   modal.innerHTML = h;
@@ -5022,14 +5075,27 @@ function openCharsModal() {
   modal.querySelector('#chImport').addEventListener('click', () => fileIn.click());
   fileIn.addEventListener('change', () => { const f = fileIn.files && fileIn.files[0]; fileIn.value = ''; if (f) { close(); importChars(f); } });
 }
-// 「キャラを登録」の画面
+// 「ヒーローを登録」の画面
+// 絵は、まずツールが探す範囲(この端末で合わせた枠か、CHAR_REGION_DEFAULT)から自動で探す。全部のスクショで見つかれば枠の画面は出さない。
+// 見つからないスクショがあったときと、「枠を合わせ直す」を押したときだけ、枠の画面を出す。枠は「この辺りに絵がある」と教えるだけでよい
 function openCharRegister() {
   const { overlay, modal, close } = newOverlay();
-  let shots = [], frame = null, crops = [], picked = -1, sizeKey = '';
+  let shots = [], region = null, crops = [], picked = -1, sizeKey = '', firstBox = null;
   const cleanup = () => { shots.forEach(s => URL.revokeObjectURL(s.url)); close(); };
   overlay.addEventListener('click', e => { if (e.target === overlay) cleanup(); });
+  // 範囲から全部のスクショの絵を探す。全部見つかれば true
+  const tryFind = () => {
+    const found = shots.map(s => findCharInShot(s.img, region));
+    // 枠の画面の最初の枠に使う: 見つかった中で一番大きい絵
+    firstBox = found.filter(Boolean).sort((a, b) => Math.max(b.box.w, b.box.h) / b.scale - Math.max(a.box.w, a.box.h) / a.scale)[0] || null;
+    if (found.some(f => !f)) return false;
+    // 全部のスクショで同じ大きさのものを見つけたときは、絵ではなく文字などを拾っている(レベルごとに絵の大きさは変わる)
+    if (found.length >= 3 && found.every(f => Math.abs(f.box.w / f.scale - found[0].box.w / found[0].scale) < 2 && Math.abs(f.box.h / f.scale - found[0].box.h / found[0].scale) < 2)) return false;
+    crops = layoutCharImages(found); picked = -1;
+    return true;
+  };
   const stepPick = (msg) => {
-    modal.innerHTML = '<h2>キャラを登録</h2><p>ゲームのスキン画面にある「ステージ画像プレビュー」を、LV1から最後のレベルまで1枚ずつスクショしてください。撮ったスクショを全部選んでください。</p>' +
+    modal.innerHTML = '<h2>ヒーローを登録</h2><p>ゲームのスキン画面にある「ステージ画像プレビュー」を、LV1から最後のレベルまで1枚ずつスクショしてください。撮ったスクショを全部選んでください。</p>' +
       `<div class="note char-msg">${esc(msg || '')}</div>` +
       '<div class="modal-actions"><button id="crCancel">やめる</button><button id="crPick" class="primary">スクショを選ぶ</button></div><input type="file" id="crFiles" accept="image/*" multiple style="display:none">';
     const fi = modal.querySelector('#crFiles');
@@ -5047,18 +5113,25 @@ function openCharRegister() {
       if (new Set(times).size === times.length) shots.sort((a, b) => a.time - b.time);
       const im = shots[0].img;
       sizeKey = `${im.naturalWidth}x${im.naturalHeight}`;
-      frame = state.cropFrames[sizeKey] || null;
-      if (frame) stepReview(); else stepFrame();
+      region = state.cropFrames[sizeKey] || CHAR_REGION_DEFAULT;
+      if (tryFind()) stepReview(); else stepFrame('');
     });
   };
-  const stepFrame = () => {
-    const im = shots[0].img, f = Object.assign({}, state.cropFrames[sizeKey] || CHAR_FRAME_DEFAULT);
-    modal.innerHTML = '<h2>キャラを登録</h2><p>枠をキャラの絵に合わせて、「この位置で切り出す」を押してください。この端末で撮ったスクショは、次から同じ位置で切り出します。</p>' +
+  const stepFrame = (msg) => {
+    const im = shots[0].img, W = im.naturalWidth, H = im.naturalHeight;
+    // 最初の枠: 絵が見つかっていれば、一番大きい絵を囲む大きさ。見つかっていなければ、探す範囲の真ん中
+    let f;
+    if (firstBox) {
+      const r = firstBox.region, k = firstBox.scale, bx = r.x * W + (firstBox.box.x + firstBox.box.w / 2) / k, by = r.y * H + (firstBox.box.y + firstBox.box.h / 2) / k;
+      const side = Math.max(firstBox.box.w, firstBox.box.h) / k * 1.5;
+      f = { x: (bx - side / 2) / W, y: (by - side / 2) / H, s: side / W };
+    } else f = { x: region.x + region.w / 2 - 0.16, y: region.y + region.h / 2 - 0.16 * W / H, s: 0.32 };
+    modal.innerHTML = '<h2>ヒーローを登録</h2><p>枠をヒーローの絵に合わせて、「この位置で切り出す」を押してください。この端末で撮ったスクショは、次から同じ位置で切り出します。</p>' +
+      `<div class="note char-msg">${esc(msg || '')}</div>` +
       `<div class="crop-wrap"><img class="crop-img" src="${shots[0].url}" alt=""><div class="crop-frame"></div></div>` +
-      `<div class="crop-size"><span>枠の大きさ</span><input type="range" id="crSize" min="0.08" max="0.6" step="0.005" value="${f.s}"></div>` +
+      `<div class="crop-size"><span>枠の大きさ</span><input type="range" id="crSize" min="0.08" max="0.8" step="0.005" value="${f.s}"></div>` +
       '<div class="modal-actions"><button id="crCancel">やめる</button><button id="crOk" class="primary">この位置で切り出す</button></div>';
     const wrap = modal.querySelector('.crop-wrap'), fr = modal.querySelector('.crop-frame'), sizeIn = modal.querySelector('#crSize');
-    const W = im.naturalWidth, H = im.naturalHeight;
     const place = () => {
       const r = wrap.getBoundingClientRect(), k = r.width / W;
       f.x = Math.max(0, Math.min(1 - f.s, f.x)); f.y = Math.max(0, Math.min(1 - f.s * W / H, f.y));
@@ -5077,16 +5150,16 @@ function openCharRegister() {
     });
     const end = () => { drag = null; };
     fr.addEventListener('pointerup', end); fr.addEventListener('pointercancel', end);
-    sizeIn.addEventListener('input', () => { const c = f.x + f.s / 2, cy = f.y + f.s * W / H / 2; f.s = Number(sizeIn.value); f.x = c - f.s / 2; f.y = cy - f.s * W / H / 2; place(); });
+    sizeIn.addEventListener('input', () => { const cx = f.x + f.s / 2, cy = f.y + f.s * W / H / 2; f.s = Number(sizeIn.value); f.x = cx - f.s / 2; f.y = cy - f.s * W / H / 2; place(); });
     modal.querySelector('#crCancel').addEventListener('click', cleanup);
     modal.querySelector('#crOk').addEventListener('click', () => {
-      frame = { x: f.x, y: f.y, s: f.s };
-      state.cropFrames[sizeKey] = frame; saveState();
+      region = { x: f.x, y: f.y, w: f.s, h: f.s * W / H };
+      if (!tryFind()) { stepFrame('枠の中に絵が見つかりませんでした。枠を絵に合わせ直してください。'); return; }
+      state.cropFrames[sizeKey] = region; saveState();
       stepReview();
     });
   };
-  const stepReview = (msg) => {
-    if (!crops.length || msg === undefined) { crops = shots.map(s => cropCharImage(s.img, frame)); picked = -1; }
+  const stepReview = () => {
     const draw = () => {
       modal.querySelector('.char-review').innerHTML = crops.map((u, i) => `<div class="char-cell"><span class="char-thumb${i === picked ? ' sel' : ''}" data-i="${i}" style="background:${CHECKER[i % 2]} url('${u}') center / 92% auto no-repeat;"></span><span>LV${i + 1}</span></div>`).join('');
       modal.querySelectorAll('.char-review .char-thumb').forEach(el => el.addEventListener('click', () => {
@@ -5096,17 +5169,17 @@ function openCharRegister() {
         draw();
       }));
     };
-    modal.innerHTML = '<h2>キャラを登録</h2><p>切り出した絵を、撮った順にLV1から並べました。順番が違うときは、入れ替えたい2つの絵を順に押してください。</p>' +
+    modal.innerHTML = '<h2>ヒーローを登録</h2><p>切り出した絵を、撮った順にLV1から並べました。順番が違うときは、入れ替えたい2つの絵を順に押してください。</p>' +
       '<div class="char-review"></div>' +
-      '<div class="field-row"><label for="crName">キャラの名前</label><input type="text" id="crName" maxlength="40"></div>' +
-      `<div class="note char-msg">${esc(msg || '')}</div>` +
+      '<div class="field-row"><label for="crName">ヒーローの名前</label><input type="text" id="crName" maxlength="40"></div>' +
+      '<div class="note char-msg"></div>' +
       '<div class="modal-actions"><button id="crRefit">枠を合わせ直す</button><button id="crCancel">やめる</button><button id="crSave" class="primary">保存</button></div>';
     draw();
-    modal.querySelector('#crRefit').addEventListener('click', () => { crops = []; stepFrame(); });
+    modal.querySelector('#crRefit').addEventListener('click', () => stepFrame(''));
     modal.querySelector('#crCancel').addEventListener('click', cleanup);
     modal.querySelector('#crSave').addEventListener('click', () => {
       const name = modal.querySelector('#crName').value.trim();
-      if (!name) { modal.querySelector('.char-msg').textContent = 'キャラの名前を入れてください。'; return; }
+      if (!name) { modal.querySelector('.char-msg').textContent = 'ヒーローの名前を入れてください。'; return; }
       const save = () => charSave({ name, levels: crops.slice() }).then(() => {
         cleanup(); renderBoard();
         openNotice(`「${name}」を登録しました。控えを書き出しておくと、機種を変えたときも登録し直さずに済みます。`, openCharsModal);
@@ -5117,17 +5190,17 @@ function openCharRegister() {
   };
   stepPick('');
 }
-// 「登録したキャラ」の画面: 名前の変更と削除
+// 「登録したヒーロー」の画面: 名前の変更と削除
 function openCharList() {
   const { overlay, modal, close } = newOverlay();
   overlay.addEventListener('click', e => { if (e.target === overlay) { close(); openCharsModal(); } });
   const names = Array.from(charStore.keys()).sort((a, b) => a.localeCompare(b, 'ja'));
-  modal.innerHTML = '<h2>登録したキャラ</h2>' + names.map(n => `<div class="char-item"><div class="char-item-head"><b>${esc(n)}</b><span><button data-ren="${esc(n)}">名前を変える</button> <button class="danger" data-del="${esc(n)}">削除</button></span></div><div class="char-thumbs">${charThumbsHtml(charStore.get(n).urls, 30)}</div></div>`).join('') +
+  modal.innerHTML = '<h2>登録したヒーロー</h2>' + names.map(n => `<div class="char-item"><div class="char-item-head"><b>${esc(n)}</b><span><button data-ren="${esc(n)}">名前を変える</button> <button class="danger" data-del="${esc(n)}">削除</button></span></div><div class="char-thumbs">${charThumbsHtml(charStore.get(n).urls, 30)}</div></div>`).join('') +
     '<div class="modal-actions"><button id="clClose">閉じる</button></div>';
   modal.querySelector('#clClose').addEventListener('click', () => { close(); openCharsModal(); });
   modal.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => {
     const n = b.dataset.del;
-    openAsk(`「${n}」を削除しますか？ A〜Dでこのキャラを選んでいるときは、「選ばない」に戻ります。`, { okLabel: '削除', danger: true, onOk: () => charRemove(n).then(() => { close(); renderBoard(); openCharList(); }) });
+    openAsk(`「${n}」を削除しますか？ A〜Dでこのヒーローを選んでいるときは、「選ばない」に戻ります。`, { okLabel: '削除', danger: true, onOk: () => charRemove(n).then(() => { close(); renderBoard(); openCharList(); }) });
   }));
   modal.querySelectorAll('[data-ren]').forEach(b => b.addEventListener('click', () => {
     const n = b.dataset.ren;
@@ -5137,7 +5210,7 @@ function openCharList() {
     p.modal.querySelector('#rnCancel').addEventListener('click', p.close);
     p.modal.querySelector('#rnOk').addEventListener('click', () => {
       const to = p.modal.querySelector('#rnName').value.trim();
-      if (!to) { p.modal.querySelector('.char-msg').textContent = 'キャラの名前を入れてください。'; return; }
+      if (!to) { p.modal.querySelector('.char-msg').textContent = 'ヒーローの名前を入れてください。'; return; }
       if (to === n) { p.close(); return; }
       const go = () => charRename(n, to).then(() => { p.close(); close(); renderBoard(); openCharList(); });
       if (charStore.has(to)) openAsk(`「${to}」は登録済みです。登録し直しますか？`, { okLabel: '登録し直す', onOk: go });
@@ -5151,7 +5224,7 @@ function exportChars() {
   const data = { type: 'puzzle-navi-chars', version: 1, chars: Array.from(charStore.values()).map(r => ({ name: r.name, levels: r.levels })) };
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' }));
-  a.download = `キャラの控え-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}.json`;
+  a.download = `ヒーローの控え-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}.json`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
@@ -5165,7 +5238,7 @@ function importChars(file) {
     if (!list.length) { openNotice('控えのファイルではありません。', openCharsModal); return; }
     for (const c of list) await charSave({ name: c.name.trim().slice(0, 40), levels: c.levels.slice(0, LEVEL_LIMIT) });
     renderBoard();
-    openNotice(`控えを読み込みました（${list.length}体）。同じ名前のキャラは、控えの絵に置き換えました。`, openCharsModal);
+    openNotice(`控えを読み込みました（${list.length}体）。同じ名前のヒーローは、控えの絵に置き換えました。`, openCharsModal);
   };
   r.onerror = () => openNotice('控えのファイルではありません。', openCharsModal);
   r.readAsText(file);
@@ -5457,7 +5530,7 @@ document.getElementById('chainDepth').addEventListener('change', () => autoSearc
 renderAutoSearchBtn();
 refresh();
 renderPatternList();
-if (!SEARCH_IN_WORKER) loadChars();   // 登録したキャラの絵を読み込んで、盤面に出す
+if (!SEARCH_IN_WORKER) loadChars();   // 登録したヒーローの絵を読み込んで、盤面に出す
 
 </script>
 </body>
