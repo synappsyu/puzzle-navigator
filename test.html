@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" href="data:,">
+<!-- アイコン(題名の横の卵と同じ絵。ホーム画面に追加したときにも使う。元の絵は _work/icon/egg.svg) -->
+<link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAALESURBVEhLzZZLbtswFEWzsQw6yKC7KNBZNtEFFO0mOuqsG4idWKbtOIhcJE2BIHBdoDFFWT+L+pIUxYJWIsn6WGrRAH24E4vkPST9yMcj4U5fVEf1T/9W/xMg3U5y1Vvb1AuQbifcAcwaU1OhpsKsMXdAT0wHILOWvvZ17K6ID4kPY3dF7WtqKn0whwDpdpLYgDlzGm5ELWi4Yc48sTsYrYAnd3vCYqfq/Rwsdpgtux1gtAK4A4gxYpFRdd0PFhnEGHEH1B0OAdLtRO47Xlb9moLiJTWVtkU0AxIbUGuaclY1a4qUM2bLIXWfZsDT9ANYdWoPGsC2RTQAZF5aSs/pZ5FyRi2ZtXW3KiDdTpg1Js73qoerirtTcfVa6u5U/twP4nxj1ri+iAaATJ5QL4byUKw+iNlxVauPsuk5WKgTY9QN4A6I9AvOipEi+iUuX1XdZ8difiKIlvfiLJQDa7vUACCmUrgLIbTPVetc+pdyR7K7PDoAiQ2ICcrDxMO7qm+uH+/LHYkJ6snaAIg3gLO4GLf+VPVtWgFncbzpByCmEnuoAEQ/5XbX3ecnIn7Me8WeRkylFyBAQ1f7mnJaMBr/htL0U85cTQ3QsBuQZZGnXfrGvUjTguGq4ubNk/Xt2/1zkPrGvadd9sqi7BxEhrJdq775UD3PRJcqRcqZbz5soRoZ8vbtPgdZGQjQ0EdTFy4wuo3xOqFB2TSLhAYxhhjdunARaNMQnTcWhiogv+w8ONgxVBcudqSbwFpG7mPkPgbWEqOb7LsLVR9NPTj4g8surzYeHAQIYG2eY/alYu0qQMCDgwM1pxmQ1/oQneP1WaiPfA1gOMPaXArOfA2E+kg2ofPD1b8ZkGNk5TGVSL8I0NCDA7w+w+uz3cqGkX5Bd4nfZt0NyB9b3JFHtPwuSmyQzfqwezcgV/lZ18c3V1/AX+vFAb8BRPDZSgeXpjEAAAAASUVORK5CYII=">
+<link rel="icon" type="image/png" sizes="192x192" href="data:image/png;base64,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">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet">
 <title>EGG Navi</title>
@@ -392,6 +395,8 @@
   .seg button { flex: 1; min-width: 0; border: none; background: transparent; box-shadow: none; border-radius: 11px; padding: 9px 2px; font-size: 13px; color: #6b6458; white-space: nowrap; display: flex; align-items: center; justify-content: center; }
   .seg button .ico { margin-right: 3px; }
   .seg button.on { background: var(--panel); color: var(--text); box-shadow: 0 1px 3px #0002; }
+  /* ボタンの幅は文字の長さに合わせて分ける(全て同じ幅だと、スマホで「盤面を直す」がはみ出す) */
+  .seg button { flex: 1 1 auto; padding-left: 6px; padding-right: 6px; }
   .round-btn { width: 42px; height: 42px; padding: 0; border-radius: 50%; display: grid; place-items: center; flex: none; }
   .round-btn .ico { margin: 0; width: 18px; height: 18px; }
   /* 結果のカード */
@@ -497,7 +502,7 @@
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="brand"><span class="egg" aria-hidden="true"></span><h1>EGG Navi <span class="ver">v2.2.31</span></h1></div>
+    <div class="brand"><span class="egg" aria-hidden="true"></span><h1>EGG Navi <span class="ver">v2.2.36</span></h1></div>
     <div class="top-icons">
       <button id="btnChars" class="icon-btn" title="ヒーロー" aria-label="ヒーロー"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></button>
       <button id="btnMenu" class="icon-btn" title="メニュー" aria-label="メニュー"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
@@ -1877,19 +1882,21 @@ let jumpTimer = 0;   // スクロール中は、50ミリ秒に1回だけ更新�
 const scheduleJumpBtn = () => { if (!jumpTimer) jumpTimer = setTimeout(() => { jumpTimer = 0; updateJumpBtn(); }, 50); };
 window.addEventListener('scroll', scheduleJumpBtn, { passive: true });
 window.addEventListener('resize', scheduleJumpBtn);
-if (typeof MutationObserver !== 'undefined') new MutationObserver(scheduleJumpBtn).observe(document.getElementById('chainList'), { childList: true });   // 結果が出たり消えたりしたとき
+if (typeof MutationObserver !== 'undefined') new MutationObserver(() => { scheduleJumpBtn(); renderDock(); }).observe(document.getElementById('chainList'), { childList: true });   // 結果が出たり消えたりしたとき
 // 事故の確率が 5% 未満なら、数字の行の最後に小さく出す(0%も出す。5%以上は⚠の行。2026-09-28 本人「0%を見て安心するケースもある」)。
 // 事故の確率を計算していないとき(目標MAX布陣もピンもない)は出さない
+// 確率は小数点第1位まで出す(2026-10-03 本人「%は正確に。小数点第一まで。それで統一」)。200回試すので 0.5% 刻み
+function pct(p) { return (p * 100).toFixed(1); }
 function riskSmall(info) {
   if (!info || info.risk >= ACCIDENT_WARN) return '';
-  return ` / 事故の確率 ${Math.round(info.risk * 100)}%`;
+  return ` / 事故の確率 ${pct(info.risk)}%`;
 }
 // 事故の確率が 5% 以上なら、カードの見出しのすぐ下の⚠の注意に出す(5%未満は数字の行に小さく: riskSmall)
 function riskLine(info) {
   if (!info || info.risk < ACCIDENT_WARN) return [];
   const parts = (info.names.length ? ['必要な素材が減る'] : []).concat(info.pinParts || []);
   const why = (parts.length ? parts : ['必要な素材が減る']).join('か、') + 'ことがあります';
-  return [`事故の確率 ${Math.round(info.risk * 100)}%（補充される駒次第で、${why}）`];
+  return [`事故の確率 ${pct(info.risk)}%（補充される駒次第で、${why}）`];
 }
 function renderChainOptionsInner(list, sec, showAll) {
   const pattern = currentTargetPattern();
@@ -1970,7 +1977,7 @@ function unknownNoteFor(kind, unknownN) {
 }
 let chainSearchRun = null;   // 探している間は、その処理(終わるのを待つため)
 function runChainSearch() {
-  chainSearchRun = runChainSearchInner().finally(() => { chainSearchRun = null; });
+  chainSearchRun = runChainSearchInner().finally(() => { chainSearchRun = null; renderDock(); });   // 探し終えたら「次の手を探す」を隠す(searchResultsFresh)
   return chainSearchRun;
 }
 async function runChainSearchInner() {
@@ -3494,7 +3501,7 @@ function openAccidentModal(move, names, risk, onPlay, sure, pathLen, pinParts, s
       ? `<p>この${pathLen > 1 ? '手順' : '手'}を打つと、補充が来なかったときは、目標MAX布陣${names.map(n => `「${esc(n)}」`).join('・')}の素材が<b style="color:var(--danger);font-size:18px;">${sureLoss}個分</b>減ります（補充を入れた平均では減りません）。</p>`
       : sure
       ? `<p>この${pathLen > 1 ? '手順' : '手'}を打つと、補充される駒に関係なく、<b style="color:var(--danger);font-size:18px;">必ず</b>目標MAX布陣${names.map(n => `「${esc(n)}」`).join('・')}に必要な素材が減るか、使わないレベルの駒ができます。</p>`
-      : `<p>この${pathLen > 1 ? '手順' : '手'}を打つと、補充される駒次第で、<b style="color:var(--danger);font-size:18px;">${Math.round(risk * 100)}%</b> の確率で、${(names.length ? [`目標MAX布陣${names.map(n => `「${esc(n)}」`).join('・')}に必要な素材が減るか、使わないレベルの駒ができる`] : []).concat(pinParts || []).join('か、')}ことがあります。</p>
+      : `<p>この${pathLen > 1 ? '手順' : '手'}を打つと、補充される駒次第で、<b style="color:var(--danger);font-size:18px;">${pct(risk)}%</b> の確率で、${(names.length ? [`目標MAX布陣${names.map(n => `「${esc(n)}」`).join('・')}に必要な素材が減るか、使わないレベルの駒ができる`] : []).concat(pinParts || []).join('か、')}ことがあります。</p>
 `}
     <div class="modal-actions"><button id="btnAccCancel">やめる</button><button id="btnAccPlay" class="danger">${pathLen > 1 ? 'この手順を打つ' : '打つ'}</button></div>`;
   overlay.appendChild(modal);
@@ -4104,9 +4111,17 @@ function renderGameControls() {
 }
 // 画面の下のボタン(スマホだけ。2026-10-03 v3.0)。そのときの大事なボタンを、親指の届く所に大きく出す。
 // 押すと、元のボタン(盤面の下や「手順を探す」にある)を押したのと同じ動きをする。元のボタンは、スマホでは隠す(.in-dock)
+// 出ている結果が、今の盤面・残り手数・布陣・設定・ピン・探す手数で探したものか(自動で探す条件と同じ鍵で比べる)
+function searchResultsFresh() {
+  return !!(lastSearch && lastSearch.key === searchContextKey() && !chainSearchRun && hasShownResults());
+}
 function renderDock() {
   const dock = document.getElementById('dock');
   if (!dock) return;
+  // 結果が今の状態のものなら「次の手を探す」は隠す(2026-10-03 本人「結果を見ているときに間違って押して、計算し直すのを防ぎたい。
+  // 設定を変えたときなどに出てくる方がいい」)。盤面・設定などが変わると、また出る
+  const fresh = state.game.phase === 'move' && searchResultsFresh();
+  btnSearch.style.display = fresh ? 'none' : '';
   document.querySelectorAll('.in-dock').forEach(e => e.classList.remove('in-dock'));
   const g = state.game, items = [];
   const mirror = (id, cls, html) => { const el = document.getElementById(id); if (el) items.push({ el, cls, html: html || el.innerHTML }); };
@@ -4118,7 +4133,7 @@ function renderDock() {
   } else if (g.phase === 'move' && moveMode !== 'edit') {
     if (document.getElementById('btnQueueNext')) mirror('btnQueueNext', 'primary');
     else if (btnChainCancel.style.display !== 'none') mirror('btnChainCancel', '');
-    else mirror('btnSearch', 'primary', btnSearch.innerHTML + ` <small>${document.getElementById('chainDepth').value}手</small>`);
+    else if (!fresh) mirror('btnSearch', 'primary', btnSearch.innerHTML + ` <small>${document.getElementById('chainDepth').value}手</small>`);
   }
   dock.innerHTML = '';
   for (const it of items) {
@@ -4565,8 +4580,8 @@ function openSavePresetModal(p) {
   modal.innerHTML = `<h2>プリセットに保存</h2>
     <div class="field-row"><label>名前 <input type="text" id="presetName" maxlength="40" value="${esc(p.name)}" style="width:14em;"></label></div>
     <div class="field-row" style="gap:12px;">
-      <label><input type="radio" name="presetGroup" value="normal" ${g === 'normal' ? 'checked' : ''}> 斜め移動なし</label>
-      <label><input type="radio" name="presetGroup" value="diagonal" ${g === 'diagonal' ? 'checked' : ''}> 斜め移動あり</label>
+      <label><input type="radio" name="presetGroup" value="normal" ${g === 'normal' ? 'checked' : ''}> 斜め入替なし</label>
+      <label><input type="radio" name="presetGroup" value="diagonal" ${g === 'diagonal' ? 'checked' : ''}> 斜め入替あり</label>
     </div>
     <div class="modal-actions"><button id="presetCancel">キャンセル</button><button id="presetSave" class="primary">保存</button></div>`;
   overlay.appendChild(modal);
@@ -4578,7 +4593,7 @@ function openSavePresetModal(p) {
     state.presets.push({ id: 'preset-user-' + Date.now(), name, species: p.species, group, cells: p.cells.map(r => r.slice()) });
     saveState();
     modalRoot.innerHTML = '';
-    openNotice(`プリセット「${name}」を保存しました（${group === 'diagonal' ? '斜め移動あり' : '斜め移動なし'}）。`);
+    openNotice(`プリセット「${name}」を保存しました（${group === 'diagonal' ? '斜め入替あり' : '斜め入替なし'}）。`);
   });
 }
 function openPatternModal(existingPattern) {
@@ -4763,7 +4778,7 @@ document.getElementById('btnPickPattern').addEventListener('click', () => {
   modal.appendChild(wrap);
   function render() {
     wrap.innerHTML = '';
-    for (const [group, heading] of [['normal', '斜め移動なし'], ['diagonal', '斜め移動あり']]) {
+    for (const [group, heading] of [['normal', '斜め入替なし'], ['diagonal', '斜め入替あり']]) {
       const h3 = document.createElement('h3');
       h3.className = 'cfg-h'; h3.textContent = heading;
       wrap.appendChild(h3);
@@ -4818,7 +4833,7 @@ document.getElementById('btnPickPattern').addEventListener('click', () => {
   render();
   const restore = document.createElement('button');
   restore.className = 'small'; restore.textContent = 'もとの一覧に戻す';
-  restore.title = '最初からあるプリセット（斜め移動なし6つ・斜め移動あり5つ）のうち、消したものを戻します。自分で追加したプリセットは消えません。';
+  restore.title = '最初からあるプリセット（斜め入替なし6つ・斜め入替あり5つ）のうち、消したものを戻します。自分で追加したプリセットは消えません。';
   restore.addEventListener('click', () => {
     const missing = defaultPresets().filter(d => !state.presets.some(q => q.id === d.id));
     if (!missing.length) { openNotice('最初からあるプリセットは、全て一覧にあります。'); return; }
@@ -4923,14 +4938,14 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
   <p class="lead">今の盤面から3手先（「4手まで」なら4手先）までの手順を全て調べて、良い手順をカードで出します。</p>
   <p class="sec-h">使い方</p>
   <ol>
-    <li>「次の手を探す」を押します。「自動：オン」にすると、盤面が変わるたびに自動で探します。</li>
+    <li>「次の手を探す」を押します。「自動：オン」にすると、盤面や残り手数などが変わるたびに自動で探します（「この手順を打つ」の途中は除きます）。出ている結果が今の盤面のものの間は、「次の手を探す」のボタンは隠れます。</li>
     <li>カードを見て、打つ手順を選びます。「素材」のタブは目標MAX布陣の素材が増える手順、「連鎖」のタブは手数が増える手順です。</li>
-    <li>「この手順を打つ」を押すと、盤面に1手目の印が出ます。ゲームで同じ手を打ってから、「① を打つ」を押して進めます。</li>
+    <li>「この手順を打つ」（1手だけのときは「この手を打つ」）を押すと、盤面に1手目の印が出ます。ゲームで同じ手を打ってから、「① を打つ」を押して進めます。</li>
   </ol>
   <p class="sec-h">カードの見方</p>
   <ul>
-    <li><b>素材の増加 ＋◯個</b>: その手順で増える、目標MAX布陣の素材の見込みです（Lv1に換算。Lv2は3個分）。</li>
-    <li><b>差し引き ＋◯手</b>: 連鎖で増える手数から、使う手数を引いた数です。プラスなら手数が増えます。</li>
+    <li><b>素材の増加 +◯個</b>: その手順で増える、目標MAX布陣の素材の見込みです（Lv1に換算。Lv2は3個分）。</li>
+    <li><b>差し引き +◯手</b>: 連鎖で増える手数から、使う手数を引いた数です。プラスなら手数が増えます。</li>
     <li><svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>の行: 事故の確率が高いときなど、注意が必要なことです。</li>
   </ul>
   <details class="more"><summary>詳しく</summary>
@@ -4944,23 +4959,23 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
   <p class="sec-h">■ カードの見方</p>
   <p>見出し</p>
   <ul>
-    <li><b>素材の増加 ＋◯個</b>: その手順で増える素材の見込みです（Lv1換算。Lv2＝3個分）。</li>
-    <li><b>（1手当たり ＋◯個）</b>: 素材の増加を、減る手数の見込み（使う手数 − 手数の増加の平均）で割った数です。手数が減らない見込みの手順は「手数消費なし」と出ます。</li>
-    <li><b>差し引き ＋◯手</b>: 増える手数から使う手数を引いた数です。プラスなら手数が増えます。</li>
+    <li><b>素材の増加 +◯個</b>: その手順で増える素材の見込みです（Lv1換算。Lv2＝3個分）。</li>
+    <li><b>（1手当たり +◯個）</b>: 素材の増加を、減る手数の見込み（使う手数 − 手数の増加の平均）で割った数です。減る手数の見込みが0と1の間のときは、1で割ります。手数が減らない見込みの手順は「手数消費なし」と出ます。</li>
+    <li><b>差し引き +◯手</b>: 増える手数から使う手数を引いた数です。プラスなら手数が増えます。</li>
     <li>素材のタブでは素材の増加を、連鎖のタブでは差し引きを、大きな文字で出します。同じ手順なら、どちらのタブでも数字は同じです。</li>
   </ul>
   <p>数字の行</p>
   <ul>
     <li><b>手数の増加 ◯手（◯〜◯手）</b>: 連鎖で増える手数の、補充をいろいろ試した平均です。括弧の中は、補充された駒がどれともマッチしなかったときから、試したうちで一番多く増えたときまでの幅です。</li>
-    <li><b>事故の確率 ◯%</b>: 補充次第で、布陣の素材が減る・ピンの駒がマッチする・動くなどが起きる確率です。5%以上は下の<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>の行に出ます。</li>
+    <li><b>事故の確率 ◯.◯%</b>: 補充次第で、布陣の素材が減る・ピンの駒がマッチする・動くなどが起きる確率です。5%以上は下の<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>の行に出ます。</li>
     <li><b>連鎖のタブにもあります（◯番目）</b>: 同じ手順が、もう一方のタブの「◯番目」のカードにもあります。</li>
   </ul>
   <p><svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>の行（注意が必要なこと）</p>
   <ul>
-    <li><b>事故の確率 ◯%（…）</b>: 5%以上のときです。ピンが元なら、「ピン⑥の駒（A3）がマッチする」のように、どのピンかを書きます。</li>
+    <li><b>事故の確率 ◯.◯%（…）</b>: 5%以上のときです。ピンが元なら、「ピン⑥の駒（A3）がマッチする」のように、どのピンかを書きます。</li>
     <li><b>「◯」の素材が◯個分減ります</b>: 連鎖のタブで、補充が来なかったときに減る素材の量です。</li>
-    <li><b>「◯」のA3が減ります／使わないA4ができます</b>: 2番目以降に登録したMAX布陣への影響です。</li>
-    <li><b>そろえたマスを動かします</b>: 目標MAX布陣の形どおりに置いた駒を動かします。</li>
+    <li><b>「◯」のA3が減ります／「◯」で使わないA4ができます</b>: 次に目指すMAX布陣への影響です。</li>
+    <li><b>そろえたマスを◯マス動かします</b>: 目標MAX布陣の形どおりに置いた駒を動かします。</li>
     <li><b>減点 −◯個</b>: 効率の悪い手順に付けたペナルティです。見出しの数字には減点は含まれていませんが、並び順を決める際に減点しています。</li>
   </ul>
   <p>盤面と素材の数</p>
@@ -4977,7 +4992,8 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
   <p class="sec-h">■ ピン</p>
   <ul>
     <li>「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/></svg>ピン」を選んで駒を押すとピンが付き、その駒を動かさない手順だけを探します。</li>
-    <li>ピンの駒を運びたいマスまでドラッグすると「行き先付きのピン」になり、そこへ近づく（か動かない）手順だけを探します。</li>
+    <li>ピンの駒を運びたいマスまでドラッグすると「行き先付きのピン」になり、行き先から遠ざからない手順だけを探します。</li>
+    <li>どちらのピンも、目標MAX布陣を起爆する手順は出します。</li>
     <li>押すと1段階戻ります（行き先付き → ピン → なし）。行き先のマスは、押すと外れ、ドラッグで移せます。</li>
   </ul>
   <p class="sec-h">■ 絞り込み</p>
@@ -4992,19 +5008,19 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
     </li>
     <li>括弧の中は平均の見込みなので、出たカードでも3個に届くとは限りません。「届く見込みがある」という目安です。</li>
   </ul>
-  <p class="note">※必ず事故になる手順、MAXの駒を削除する手順などは出しません（詳しくは下の「計算のしくみ」）。</p>
+  <p class="note">※今目指しているMAX布陣で必ず事故になる手順、MAXの駒を削除する手順などは出しません（詳しくは下の「計算のしくみ」）。</p>
   <details class="more"><summary>計算のしくみ（詳しい仕様）</summary>
     <p class="sec-h">■ 計算の流れ</p>
     <p><b>方法論</b>: 手順の候補は総当たり（全探索）で作り、補充の運はモンテカルロ法で平均を出しています。モンテカルロ法は、乱数を使ったシミュレーションを何回も繰り返して、その平均で期待値を求める方法です。</p>
     <ul>
-      <li><b>Step1 全部の手順を打つ</b>: 入替と削除を3手まで（「4手まで」なら4手まで）組み合わせて打ちます（3手で約90万通り）。この段階では、補充される駒はどれともマッチしない駒として扱います。この計算は1回だけで、2つのタブで共有します。</li>
+      <li><b>Step1 全部の手順を打つ</b>: 入替と削除を3手まで（「4手まで」なら4手まで）組み合わせて打ちます（斜め入替なしの3手で約90万通り）。この段階では、補充される駒はどれともマッチしない駒として扱います。この計算は1回だけで、2つのタブで共有します。</li>
       <li><b>Step2 見積もる</b>: 手順ごとに、タブごとの見積もりを出します。
         <ul>
-          <li>素材: 素材の増加に、補充される1マスにつき1/4個を足して見積もります。</li>
+          <li>素材: 素材の増加に、補充される1マスにつき1/4個（補充がLv2なら3/4個）を足し、減点を引いて見積もります。足すのは、足りない素材の数までです。</li>
           <li>連鎖: 補充がどれともマッチしないとしたときの差し引きで見積もります。</li>
         </ul>
       </li>
-      <li><b>Step3 候補を選ぶ</b>: タブごとに、見積もりの上位150件を選びます。素材のタブは、表示と同じ並べ方（手数消費なしを先、その後は1手当たり）で選びます。</li>
+      <li><b>Step3 候補を選ぶ</b>: タブごとに、見積もりの上位150件を選びます（連鎖のタブは、素材が減る連鎖を足すので、150件より多くなることがあります）。素材のタブは、表示と同じ並べ方（手数消費なしを先、その後は1手当たり）で選びます。</li>
       <li><b>Step4 シミュレーションする</b>: 選んだ手順を、補充をランダムにして各32回ずつ打ち、平均を出します。
         <ul>
           <li>素材のタブの上位20件と連鎖のタブの上位20件は、精度を高めるため各256回にします。</li>
@@ -5040,9 +5056,9 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
           <li>ピンの駒がマッチする・動く（行き先付きのピンは、マッチするか行き先から離れる）。</li>
         </ul>
       </li>
-      <li>次に目指すMAX布陣は、Lv3以上の素材が減るときと、使わないレベルの駒ができるときだけ数えます。</li>
+      <li>次に目指すMAX布陣は、Lv3以上（補充がLv2の素材はLv4以上）の素材が減るときと、使わないレベルの駒ができるときだけ数えます。</li>
       <li>5%未満の事故の確率は、数字の行に小さく出します。</li>
-      <li>0%は、200回試して1回も起きなかったという意味で、全く起きないとは限りません。起爆の手順と、目標MAX布陣もピンもないときは出しません。</li>
+      <li>0.0%は、200回試して1回も起きなかったという意味で、全く起きないとは限りません。起爆の手順と、目標MAX布陣もピンもないときは出しません。</li>
     </ul>
     <p>どの数字も補充を試した平均なので、ぶれがあります。</p>
     <p class="sec-h">■ 並び順</p>
@@ -5061,6 +5077,7 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
       <li>素材のタブ: 素材が増えない手順、連鎖の後に手を足しただけの手順、最後の手でマッチが起きない手順（1手だけの削除は出します）、手順の一部の手だけを打つ方が得な手順</li>
       <li>連鎖のタブ: 連鎖の後に手を足しただけの手順</li>
     </ul>
+    <p>素材が増えるか減るかは、減点を引いた数字で決めます。このため、見出しの「素材の増加」がプラスでも、減点を引くと0以下になる手順は、素材のタブに出ません。</p>
     <p>似た手順のまとめ方</p>
     <ul>
       <li>最後の手と手数が同じ手順は、一番良い1件だけを出します。連鎖のタブでは、「布陣の素材が減らない手順」と「布陣の素材が減るかわりに、手数がもっと増える手順」があれば両方出します。</li>
@@ -5103,7 +5120,7 @@ document.getElementById('btnHowItWorks').addEventListener('click', () => openInf
     </ul>
     <p class="sec-h">■ 駒の相対的な位置を見られない理由</p>
     <ul>
-      <li>1手の候補は、入替と削除でおよそ100通りあります。3手先まで読むだけで約90万通り、補充される駒の出方まで含めると、更にその何十万倍にもなります。</li>
+      <li>1手の候補は、斜め入替なしでも、入替と削除でおよそ100通りあります。3手先まで読むだけで約90万通り、補充される駒の出方まで含めると、更にその何十万倍にもなります。</li>
       <li>しかも、ゲームの始めから終わりまでは、長いと百手を超えます。今駒をどこに置くのが良いかは、そのずっと先まで打ってみないと分かりません。</li>
       <li>人は「この辺りに集めておけば、後で使える」と感覚で判断できます。これをコンピューターにさせるには、大量の対局から盤面の良し悪しを学ばせる、囲碁や将棋のAIと同じような開発が必要になります。</li>
       <li>そこでこのツールは、コンピューターが得意な「素材の数を数えること」と「補充の運の平均を出すこと」を受け持ちます。駒をどこに置くかの判断は、ご自身でお願いします。動かしたくない駒は「<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/></svg>ピン」で固定できます。</li>
@@ -5116,9 +5133,9 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
   <p class="lead">この画面では、ゲームと同じ盤面を入れて、1手ずつ打って進められます。</p>
   <p class="sec-h">使い方</p>
   <ol>
-    <li>ゲームと同じ盤面と残り手数を入れて、「この盤面で始める」を押します。ゲームのスクショから読み取ることもできます（「スクショから読み取る」）。</li>
+    <li>ゲームと同じ盤面と残り手数を入れて、「この盤面で始める」を押します。A〜Dの全てにヒーローを選んでいるときは、「スクショから読み取る」で、ゲームのスクショから盤面と残り手数を読み取れます。</li>
     <li>ゲームで打った手を、ツールでも打ちます。操作はゲームと同じで、駒をドラッグすると入替、長押しすると削除です。2つのマスを順に押す入替と、「削除」を選んでマスを押す削除もできます。</li>
-    <li>マッチが止まったら、補充されたマス（「?」のマス）をゲームに合わせて入れて、「確定」を押します。ここでもスクショから読み取れます。</li>
+    <li>マッチが止まったら、補充されたマス（「?」のマス）をゲームに合わせて入れて、「確定」を押します。ヒーローを選んでいるときは、ここでもスクショから読み取れます。</li>
   </ol>
   <p class="sec-h">困ったとき</p>
   <ul>
@@ -5132,7 +5149,7 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
     <p class="sec-h">「?」のマス</p>
     <p>入力を省いたマスと、補充されたマスは「?」になります。「?」は、どの駒ともマッチしない駒として扱います。「「?」のまま確定」を押すと、補充されたマスを入れずに進められます。ただし、盤面に「?」が残るので、そこを通る連鎖は見つからず、事故の注意も出せません。</p>
     <p class="sec-h">盤面で光っている駒</p>
-    <p>目標MAX布陣の形どおりに置いた駒のうち、その列の上も全て形どおりの駒です。「次の手を探す」で「<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>そろえたマスを動かします」と出るのは、この駒を動かす手順です。光らせたくないときは、設定の「画面の表示」でチェックを外してください。</p>
+    <p>目標MAX布陣の形どおりに置いた駒のうち、その列の上も全て形どおりの駒です。「次の手を探す」で「<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>そろえたマスを◯マス動かします」と出るのは、この駒を動かす手順です。光らせたくないときは、設定の「画面の表示」でチェックを外してください。</p>
     <p class="sec-h">残り手数の下の「◯◯まで」</p>
     <p>今目指している目標MAX布陣まで、レベルごとに素材があと何個足りないかです。盤面の駒を数え、置いた場所は見ません。ただし、布陣に使えない駒は数えません（条件は、「手順を探す」の「?」の「詳しく」にあります）。布陣に使えない駒があるときは、その数も出します。入替で運べば使えることもあるので、盤面を見て判断してください。この表示は設定で消せます。</p>
     <p class="sec-h">赤い点線の枠</p>
@@ -5165,7 +5182,7 @@ document.getElementById('btnPatternHelp').addEventListener('click', () => openIn
     <p class="sec-h">プリセット</p>
     <p>よく使われるMAX布陣が入っています（斜め入替なし: 3・4・7・8・10・12MAX ／ 斜め入替あり: 3・4・6・12・18MAX）。自分で作った布陣も、プリセットとして保存できます。</p>
     <p class="sec-h">2番目以降の布陣</p>
-    <p>次に目指す布陣の素材が減る手順や、使わないレベルの駒ができる手順にも、カードに<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>を付けて知らせます（Lv3以上の素材が減るときと、使わないレベルの駒ができるとき）。</p>
+    <p>次に目指す布陣の素材が減る手順や、使わないレベルの駒ができる手順にも、カードに<svg class="ico-warn" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l10 18.4H2z" fill="#f2b33d" stroke="#8a5a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9.5v5.5" stroke="#3a2a00" stroke-width="2.4" stroke-linecap="round"/><path d="M12 18.2v.01" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/></svg>を付けて知らせます。数えるのはLv3以上の素材です（補充がLv2の素材はLv4以上）。今目指している布陣と同じ素材の布陣には、付けません。</p>
     <p class="sec-h">カードの「その他の操作」</p>
     <ul>
       <li>左右反転: 布陣の形を左右反転します。反転するとMAXの数が減ることがあるので、起爆の位置を確かめてください。</li>
@@ -5551,6 +5568,135 @@ function rdRobust(d, W, pts, cx, cy, keep = 0.7) {
 
 // ヒーローの絵(blob URL)を画像にする。読み取りのたびに作り直さないように覚えておく
 const rdImageCache = new Map();
+/* ============================== スクショから残り手数を読み取る ==============================
+ * 2026-10-03 本人「極力そこも読み取って入力してくれるとありがたい」。
+ * 本人のスクショ8枚(2つのゲームモード)を、画面の大きさを変えた6通りで試して全て正しく読めた。
+ * 写っていない数字は、普通の太字の書体8種で 0〜170 を描いて試し、全て正しく読めた(試しは _work/readtest/moves.js)。 */
+// 1. 盤面より上で、明るい緑の点(入替の矢印の絵)のかたまりを探す
+// 2. 矢印の右の、暗い点のかたまり(数字)を切り出す
+// 3. 数字ごとに、穴の数と、書体で描いた 0〜9 の形との近さで決める。はっきりしないときは読まない(null)
+function rdMovesFind(im, boardTop) {
+  const W0 = im.naturalWidth || im.width, H0 = im.naturalHeight || im.height;
+  const SW = 400, k = SW / W0, top = Math.max(1, Math.min(H0, boardTop || H0 * 0.6)), SH = Math.round(top * k);
+  const d = rdPixels(im, 0, 0, W0, top, SW, SH);
+  const green = new Uint8Array(SW * SH);
+  for (let i = 0; i < SW * SH; i++) { const r = d[i * 4], g = d[i * 4 + 1], b = d[i * 4 + 2]; if (g > 150 && g - r > 90 && g - b > 40) green[i] = 1; }
+  const comps = rdComponents(green, SW, SH).filter(c => c.n >= 6);
+  if (!comps.length) return null;
+  // 一番大きいかたまりと、その近くのかたまり(矢印は2本)をまとめる
+  comps.sort((a, b) => b.n - a.n);
+  const m = comps[0], box = { x0: m.x0, y0: m.y0, x1: m.x1, y1: m.y1 }, hh = m.y1 - m.y0 + 1;
+  for (const c of comps.slice(1)) if (c.x0 <= box.x1 + hh && c.x1 >= box.x0 - hh && c.y0 <= box.y1 + hh && c.y1 >= box.y0 - hh) {
+    box.x0 = Math.min(box.x0, c.x0); box.y0 = Math.min(box.y0, c.y0); box.x1 = Math.max(box.x1, c.x1); box.y1 = Math.max(box.y1, c.y1);
+  }
+  return { x0: box.x0 / k, y0: box.y0 / k, x1: (box.x1 + 1) / k, y1: (box.y1 + 1) / k };
+}
+// 4近傍のかたまり。{ n, x0, y0, x1, y1, pts }
+function rdComponents(mask, W, H, keepPts) {
+  const seen = new Uint8Array(W * H), out = [];
+  for (let s = 0; s < W * H; s++) {
+    if (!mask[s] || seen[s]) continue;
+    const st = [s], c = { n: 0, x0: W, y0: H, x1: 0, y1: 0, pts: keepPts ? [] : null };
+    seen[s] = 1;
+    while (st.length) {
+      const p = st.pop(), x = p % W, y = p / W | 0;
+      c.n++; if (x < c.x0) c.x0 = x; if (x > c.x1) c.x1 = x; if (y < c.y0) c.y0 = y; if (y > c.y1) c.y1 = y;
+      if (keepPts) c.pts.push(p);
+      if (x > 0 && mask[p - 1] && !seen[p - 1]) { seen[p - 1] = 1; st.push(p - 1); }
+      if (x < W - 1 && mask[p + 1] && !seen[p + 1]) { seen[p + 1] = 1; st.push(p + 1); }
+      if (y > 0 && mask[p - W] && !seen[p - W]) { seen[p - W] = 1; st.push(p - W); }
+      if (y < H - 1 && mask[p + W] && !seen[p + W]) { seen[p + W] = 1; st.push(p + W); }
+    }
+    out.push(c);
+  }
+  return out;
+}
+const RDM_N = [12, 16];   // 数字の形を比べる大きさ(横・縦)
+// 0/1 の形(w×h)を、RDM_N の大きさの濃さ(0〜1)にする
+function rdmNormalize(bits, w, h) {
+  const [NW, NH] = RDM_N, out = new Float32Array(NW * NH);
+  for (let y = 0; y < NH; y++) for (let x = 0; x < NW; x++) {
+    const xa = x * w / NW, xb = (x + 1) * w / NW, ya = y * h / NH, yb = (y + 1) * h / NH;
+    let s = 0, n = 0;
+    for (let yy = Math.floor(ya); yy < Math.ceil(yb); yy++) for (let xx = Math.floor(xa); xx < Math.ceil(xb); xx++) { s += bits[yy * w + xx]; n++; }
+    out[y * NW + x] = n ? s / n : 0;
+  }
+  return out;
+}
+// 穴の数(形の外につながらない背景のかたまり。小さすぎるものは数えない)
+function rdmHoles(bits, w, h) {
+  const W = w + 2, H = h + 2, bg = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) bg[y * W + x] = (x === 0 || y === 0 || x === W - 1 || y === H - 1) ? 1 : (bits[(y - 1) * w + (x - 1)] ? 0 : 1);
+  const comps = rdComponents(bg, W, H, true);
+  const minN = Math.max(3, w * h * 0.01);
+  return comps.filter(c => c.x0 > 0 && c.y0 > 0 && c.x1 < W - 1 && c.y1 < H - 1 && c.n >= minN).length;
+}
+let rdmTemplates = null;
+function rdmGetTemplates() {
+  if (rdmTemplates) return rdmTemplates;
+  const fonts = ['800 64px "M PLUS Rounded 1c"', 'bold 64px Arial', 'bold 64px Verdana', 'bold 64px "Segoe UI"', 'bold 64px "Helvetica Neue"', 'bold 64px sans-serif'];
+  const cv = document.createElement('canvas'); cv.width = 80; cv.height = 90;
+  const g = cv.getContext('2d', { willReadFrequently: true });
+  rdmTemplates = [];
+  for (const f of fonts) for (let dgt = 0; dgt <= 9; dgt++) {
+    g.fillStyle = '#fff'; g.fillRect(0, 0, 80, 90); g.fillStyle = '#000'; g.font = f; g.textBaseline = 'middle'; g.fillText(String(dgt), 10, 45);
+    const d = g.getImageData(0, 0, 80, 90).data, m = new Uint8Array(80 * 90);
+    for (let i = 0; i < 80 * 90; i++) m[i] = d[i * 4] < 128 ? 1 : 0;
+    const c = rdComponents(m, 80, 90).sort((a, b) => b.n - a.n)[0];
+    let x0 = 80, y0 = 90, x1 = 0, y1 = 0;
+    for (let i = 0; i < 80 * 90; i++) if (m[i]) { const x = i % 80, y = i / 80 | 0; x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+    if (!c) continue;
+    const w = x1 - x0 + 1, h = y1 - y0 + 1, bits = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) bits[y * w + x] = m[(y + y0) * 80 + x + x0];
+    rdmTemplates.push({ d: dgt, v: rdmNormalize(bits, w, h), aspect: w / h });
+  }
+  return rdmTemplates;
+}
+const RDM_HOLES = [[1], [0], [0], [0], [0, 1], [0], [1], [0], [2], [1]];
+function rdReadMoves(im, boardTop) {
+  const ic = rdMovesFind(im, boardTop);
+  if (!ic) return { n: null, why: 'icon' };
+  const ih = ic.y1 - ic.y0, iw = ic.x1 - ic.x0;
+  // 矢印の右の、高さが矢印の1.6倍、幅が矢印の高さの4倍の範囲(3桁まで入る)
+  const sx = ic.x1, sy = ic.y0 - ih * 0.3, sw = ih * 4, sh = ih * 1.6, S = 60 / ih, CW = Math.round(sw * S), CH = Math.round(sh * S);
+  const d = rdPixels(im, sx, sy, sw, sh, CW, CH);
+  const dark = new Uint8Array(CW * CH);
+  for (let i = 0; i < CW * CH; i++) { const l = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]; if (l < 100) dark[i] = 1; }
+  // 数字: 上下の端に付かず、高さが矢印の高さの0.5〜1.2倍、横長すぎないかたまり
+  let cs = rdComponents(dark, CW, CH, true).filter(c => {
+    const h = c.y1 - c.y0 + 1, w = c.x1 - c.x0 + 1;
+    return c.y0 > 0 && c.y1 < CH - 1 && h >= 30 && h <= 72 && w <= h * 1.1 && c.n >= h * 3;
+  });
+  if (!cs.length) return { n: null, why: 'digits' };
+  // 一番左の数字から、高さのそろった数字を右へつなぐ
+  cs.sort((a, b) => a.x0 - b.x0);
+  const first = cs[0], fh = first.y1 - first.y0 + 1, digits = [first];
+  for (const c of cs.slice(1)) {
+    const last = digits[digits.length - 1], h = c.y1 - c.y0 + 1;
+    if (Math.abs(h - fh) > fh * 0.15 || Math.abs(c.y0 - first.y0) > fh * 0.15) continue;
+    if (c.x0 - last.x1 > fh * 0.6) break;
+    digits.push(c);
+  }
+  if (digits.length > 3) return { n: null, why: 'many' };
+  const T = rdmGetTemplates(), out = [];
+  for (const c of digits) {
+    const w = c.x1 - c.x0 + 1, h = c.y1 - c.y0 + 1, bits = new Uint8Array(w * h);
+    for (const p of c.pts) bits[((p / CW | 0) - c.y0) * w + (p % CW) - c.x0] = 1;
+    const holes = rdmHoles(bits, w, h), v = rdmNormalize(bits, w, h), aspect = w / h;
+    const best = new Array(10).fill(Infinity);
+    for (const t of T) {
+      let s = 0; for (let i = 0; i < v.length; i++) s += Math.abs(v[i] - t.v[i]);
+      s = s / v.length + Math.abs(Math.log(aspect / t.aspect)) * 0.3;
+      if (s < best[t.d]) best[t.d] = s;
+    }
+    const cand = best.map((s, dg) => ({ dg, s })).filter(o => RDM_HOLES[o.dg].includes(holes)).sort((a, b) => a.s - b.s);
+    if (!cand.length) return { n: null, why: 'holes', holes };
+    // はっきりしないときは読まない(違う数を入れるより、入れない方が安全)
+    if (cand[0].s > 0.25 || (cand[1] && cand[1].s - cand[0].s < 0.06)) return { n: null, why: 'unsure', s: cand[0].s };
+    out.push({ dg: cand[0].dg, s: cand[0].s, next: cand[1] ? cand[1].s : 1, holes });
+  }
+  return { n: Number(out.map(o => o.dg).join('')), detail: out, icon: ic };
+}
 function rdLoadImage(url) {
   if (rdImageCache.has(url)) return rdImageCache.get(url);
   const p = new Promise((resolve, reject) => { const im = new Image(); im.onload = () => resolve(im); im.onerror = reject; im.src = url; });
@@ -5583,7 +5729,9 @@ function bindBoardReadButton() {
         await new Promise(r => setTimeout(r, 30));   // 「読み取り中…」を画面に出してから読む
         const t0 = performance.now();
         const res = rdRead(shot.img, heroes);
-        applyBoardRead(res, (performance.now() - t0) / 1000);
+        let moves = null;
+        try { moves = rdReadMoves(shot.img, res.board ? res.board.y0 : null).n; } catch (e) { moves = null; }
+        applyBoardRead(res, (performance.now() - t0) / 1000, moves);
       } catch (e) {
         openNotice('スクショを読み込めませんでした。別のスクショを選んでください。');
       } finally {
@@ -5594,7 +5742,7 @@ function bindBoardReadButton() {
     fi.click();
   });
 }
-function applyBoardRead(res, sec) {
+function applyBoardRead(res, sec, moves) {
   // 試しの版(test.html)だけ、スマホでの時間を測るために、かかった時間を出す
   const time = /test\.html$/.test(location.pathname) ? `（読み取りにかかった時間: ${sec.toFixed(1)}秒）` : '';
   if (!res.grid) { openNotice('スクショの中に盤面が見つかりませんでした。ゲームの盤面が全て写っているスクショを選んでください。' + time); return; }
@@ -5610,9 +5758,17 @@ function applyBoardRead(res, sec) {
   const apply = () => {
     for (let i = 0; i < SIZE * SIZE; i++) state.board[i / SIZE | 0][i % SIZE] = cells[i] || { species: '?', level: 1 };
     if (g.phase === 'move') g.queue = [];
+    // 残り手数: 読めたときだけ入れる(始める前・打った後の確定・盤面を直す)
+    const okMoves = moves != null && moves >= 0 && moves <= 999;
+    if (okMoves) {
+      if (g.phase === 'setup') { if (moves > 0) g.start = moves; }
+      else if (g.phase === 'fix' && g.pending && g.pending.mode === 'final') { g.pending.enteredLeft = moves; g.pending.confirmLow = false; }
+      else if (g.phase === 'move') { setLeftTo(moves); clearChainResults(); }
+    }
     onBoardChanged();
-    openNotice('スクショから盤面を読み取りました。ゲーム画面と見比べて、違うマスがあれば直してください。' +
-      (unread ? `読み取れなかった${unread}マスは「?」にしました。ゲーム画面を見て入力してください。` : '') + time);
+    openNotice('スクショから盤面' + (okMoves ? `と残り手数（${moves}）` : '') + 'を読み取りました。ゲーム画面と見比べて、違う所があれば直してください。' +
+      (unread ? `読み取れなかった${unread}マスは「?」にしました。ゲーム画面を見て入力してください。` : '') +
+      (okMoves ? '' : '残り手数は読み取れなかったので、ゲーム画面を見て入力してください。') + time);
   };
   if (g.phase === 'move' && g.future.length) withFutureDropped(apply); else apply();
 }
@@ -5752,8 +5908,8 @@ function openCharsModal(msg) {
     info.modal.innerHTML = `<h2>ヒーローの選択</h2>
       <ul>
         <li>A〜Dに、ゲームと同じヒーローを選ぶと、盤面の駒がその絵になります。</li>
-        <li>A〜Dの4つ全てにヒーローを選ぶと、盤面を入れるときに「スクショから読み取る」のボタンが出ます。読み取れなかったマスは「?」になるので、ゲーム画面を見て入れてください。</li>
-        <li>登録は、ゲームのスキン画面にある「ステージ画像プレビュー」を、LV1から最後のレベルまで1枚ずつスクショして、「ヒーローを登録」で選ぶだけです。登録に使ったスクショは、登録した後に消して構いません。</li>
+        <li>A〜Dの4つ全てにヒーローを選ぶと、盤面を入れるときに「スクショから読み取る」のボタンが出ます。盤面と残り手数を、ゲームのスクショから読み取ります。読み取れなかったマスは「?」になるので、ゲーム画面を見て入れてください。多くのマスを読み取れないときは、盤面を変えずに知らせます。</li>
+        <li>登録は、ゲームのスキン画面にある「ステージ画像プレビュー」を、LV1から最後のレベルまで1枚ずつスクショして、「ヒーローを登録」で選んで、名前を付けるだけです。登録に使ったスクショは、登録した後に消して構いません。</li>
         <li>このツールには、ゲームの画像は入っていません。出すのは、使う人が自分の端末で登録した絵だけです。</li>
         <li>登録した絵は、このブラウザの中だけに保存されます。機種を変えるときは、「控えを書き出す」で作ったファイルを新しい端末の「控えを読み込む」で読み込むと、登録し直さずに済みます。</li>
       </ul>
@@ -5980,7 +6136,7 @@ document.getElementById('btnConfig').addEventListener('click', () => {
     h += `<div class="config-item"><label><span class="species-pill${heroNameOf(sp) ? ' named' : ''}" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${esc(spLabel(sp))}</span> 色</label><select data-color="${sp}">${famOptions(cur)}</select>${heroNameOf(sp) ? '' : ` <span data-color-preview="${sp}">${famPreview(cur)}</span>`}</div>`;
   }
   h += '</div><div class="note" id="cfgColorWarn" style="color:var(--danger);"></div>';
-  if (maxSp.length) h += '<p class="sec-h">■ 素材ごとの最大レベル</p><div class="note">このレベルに達した駒は、それ以上マッチしません。' + (someHero ? 'ヒーローを選んでいる素材は、登録した絵のレベルの数で決まるので、ここには出しません。' : '') + '</div><div class="config-grid">';
+  if (maxSp.length) h += '<p class="sec-h">■ 素材ごとの最大レベル</p><div class="note">このレベルに達した駒は、それ以上マッチしません。' + (someHero ? 'ヒーローを選んでいる素材の最大レベルは、登録した絵のレベルの数で決まります。' : '') + '</div><div class="config-grid">';
   for (const sp of maxSp) {
     h += `<div class="config-item"><label><span class="species-pill${heroNameOf(sp) ? ' named' : ''}" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${esc(spLabel(sp))}</span> 最大Lv</label>` +
       `<input type="number" min="2" max="15" data-max="${sp}" value="${state.maxLevels[sp]}"></div>`;
