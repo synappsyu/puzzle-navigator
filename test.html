@@ -130,7 +130,7 @@
   .board.play, .board.pin-mode { touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; }
   /* ドラッグ中: 元のマスは空いたように暗く、駒は指(マウス)に付いて動く */
   .cell.drag-origin { background: #202228 !important; color: transparent !important; }
-  .drag-piece { position: fixed; z-index: 50; pointer-events: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; box-shadow: 0 6px 16px rgba(0,0,0,.6); transform: translate(-50%, -50%) scale(1.08); }
+  .drag-piece { position: fixed; z-index: 50; pointer-events: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; box-shadow: 0 4px 10px rgba(40,20,60,.35); transform: translate(-50%, -50%) scale(1.08); }
   /* 盤面の外で離すと削除になる間: 長押しの削除と同じ白い光 */
   .drag-piece.drag-delete { filter: brightness(2); box-shadow: inset 0 0 18px 14px #fff, 0 0 12px 5px #fff; transform: translate(-50%, -50%) scale(.82); }
   /* 長押し: 光り始めてから削除までに、「そろったマスが白く光って少し小さくなる」強さまで強くなる */
@@ -198,8 +198,17 @@
   .mini-board.chain .cell { margin: 6%; }
   #board .cell.gone { background: transparent; }
   #board .cell.drag-origin { background: transparent !important; }
-  /* 明るい板の上でも、ピンの白い点線と行き先の白い枠が見えるように、外側に細い濃い縁を足す */
-  #board .cell.pinned, #board .cell.pin-dest { outline: 1px solid rgba(50, 30, 80, .6); }
+  /* 明るい板の上の枠: 前の暗い盤面では、駒と枠の間に背景と同じ暗い色の線を入れてすき間に見せていたが、明るい板では黒い線に見えるのでやめる(2026-10-03 本人)。
+     ピンの点線・行き先の枠は、白では明るい板の上で見えにくいので、濃い紫にする */
+  #board .cell.highlight, #board .cell.highlight-del { box-shadow: 0 0 0 3px var(--mark); }
+  #board .cell.pinned { border-color: #4b2f7a; }
+  #board .cell.pin-dest { box-shadow: inset 0 0 0 2px #4b2f7a; }
+  #board .cell.pin-dest.highlight, #board .cell.pin-dest.highlight-del { box-shadow: inset 0 0 0 2px #4b2f7a, 0 0 0 3px var(--mark); }
+  #board .cell.dest-hover { box-shadow: inset 0 0 0 3px #4b2f7a; }
+  #board .cell.aligned-glow.highlight, #board .cell.aligned-glow.highlight-del { animation-name: alignedGlowRingLight; }
+  @keyframes alignedGlowRingLight { 0%, 100% { box-shadow: 0 0 0 3px var(--mark), 0 0 0 0 rgba(255,184,0,0); } 50% { box-shadow: 0 0 0 3px var(--mark), 0 0 15px 8px rgba(255,184,0,1); } }
+  .mini-board.chain .cell.mini.highlight, .mini-board.chain .cell.mini.highlight-del { box-shadow: 0 0 0 2px var(--mark); }
+  .mini-board.chain .cell.mini.align-new { box-shadow: 0 0 0 2px rgb(255,184,0); }
   /* ヒーローの絵(2026-10-03) */
   .cell.char { text-shadow: none; }
   .char-rows { display:flex; flex-direction:column; gap:8px; margin:10px 0; }
@@ -305,7 +314,7 @@
 <div class="app">
   <header>
     <div>
-      <h1>スラだんパズルナビゲーター <span class="ver">v2.2.4</span></h1>
+      <h1>スラだんパズルナビゲーター <span class="ver">v2.2.6</span></h1>
       <div class="credit"><span>created by シナっぷ ／</span> <span>thanks to EGGのみんな</span></div>
       <div class="sub">ゲームと同じ盤面を入力して1手ずつ進められるシミュレーターです。MAX布陣に必要な素材を効率よく集める手順や、手数が増える連鎖も探せます。</div>
     </div>
@@ -1541,7 +1550,7 @@ function chainMiniBoard(grid, opts) {
     let style = '';
     let text = '';
     if (!cell || cell.species === '?') { cls.push('x'); text = '?'; }
-    else if (charImage(cell.species, cell.level)) { cls.push('char'); style = `background:url('${charImage(cell.species, cell.level)}') center 40% / 100% auto no-repeat, ${CHAR_SHADOW}`; }   // ヒーローの絵
+    else if (charImage(cell.species, cell.level)) { cls.push('char'); style = `background:url('${charImage(cell.species, cell.level)}') center / 100% auto no-repeat`; }   // ヒーローの絵
     else { const bg = levelShade(cell.species, cell.level, state.maxLevels[cell.species] || 7); style = `background:${bg};color:${textOn(bg)}`; text = `${cell.species}${cell.level}`; }
     let extra = '';
     const m = opts && opts.move;
@@ -4939,13 +4948,12 @@ function charImage(species, level) {
   return rec && rec.urls[level - 1] || null;
 }
 // 盤面のマスに絵を出す
-// 盤面の市松模様の板の上に、ゲームと同じく足元の薄い影と絵を置く(マスの背景は塗らない)
-const CHAR_SHADOW = 'radial-gradient(ellipse 36% 9% at 50% 90%, rgba(40, 20, 60, .32), rgba(40, 20, 60, 0)) no-repeat';
+// 盤面の市松模様の板の上に、絵だけを置く(マスの背景は塗らない。足元の影は付けない: 2026-10-03 本人「やりすぎ」、小さい盤面で汚れに見えるため)
 function paintCharCell(div, species, level, x, y) {
   const img = charImage(species, level);
   if (!img) return false;
   div.classList.add('char');
-  div.style.background = `url("${img}") center 40% / 100% auto no-repeat, ${CHAR_SHADOW}`;
+  div.style.background = `url("${img}") center / 100% auto no-repeat`;
   div.textContent = '';
   div.title = `${species}${level}`;
   return true;
