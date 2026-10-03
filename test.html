@@ -372,11 +372,17 @@
   .board { width: 100%; max-width: 460px; margin: 0 auto; }
   #board { border-radius: 20px; box-shadow: 0 0 0 1px #d8cfe6; }
   .cell.empty { background: #f3eee4; border: 2px dashed #d8ccb8 !important; color: #b0a796; }
-  .cell.unknown { background: repeating-linear-gradient(45deg, #4a4458, #4a4458 6px, #554e66 6px, #554e66 12px); color: #ffd36b; border-color: #ffd36b !important; }
+  /* 「?」のマス: 明るい板の上で重く見えないよう、白い駒に薄い紫の点線と「?」 */
+  .cell.unknown { background: #fffdf9; color: #9c90b8; border-color: #b9aed0 !important; font-weight: 800; }
   .cell.x { background: #efe9dd !important; color: #b0a796; }
   .cell.gone, .cell.drag-origin { background: #efe9dd; }
   .brush-row { margin: 0 0 10px; }
-  .brush-row .sw { border-radius: 10px; }
+  .brush-row .sw { border-radius: 10px; padding: 0; display: inline-grid; place-items: center; line-height: 1; }
+  /* Lv と「?」はひとまとまり。入り切らないときは、まとめて次の行へ送る */
+  .brush-row .lv-group { display: inline-flex; align-items: center; gap: 3px; flex-wrap: nowrap; }
+  .brush-row { gap: 4px; }
+  .brush-row .note { margin-top: 0; }   /* 「素材」「Lv」の文字をボタンの高さの真ん中に */
+  @media (min-width: 720px) { .brush-row .lv { min-width: 26px; } }   /* PC では素材から「?」までを1行に収める */
   .brush-row .sw.on { border-color: var(--text); }
   .brush-row .lv { border-radius: 10px; }
   .brush-row .lv.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
@@ -403,6 +409,9 @@
   footer { color: var(--text-dim); }
   footer .credit { margin-top: 6px; }
   /* メニュー(≡) */
+  /* 小さな画面の右上の ✕(スクロールしても上に残る) */
+  .modal-x { position: sticky; top: 0; z-index: 3; float: right; width: 34px; height: 34px; padding: 0; border-radius: 50%; display: grid; place-items: center; margin: -6px -6px 0 8px; background: var(--panel2); border: none; box-shadow: 0 1px 4px #0001; color: var(--text-dim); }
+  .modal-x .ico { margin: 0; width: 18px; height: 18px; }
   .menu-list { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 4px; }
   .menu-list button { display: flex; align-items: center; gap: 10px; justify-content: flex-start; padding: 13px 14px; font-size: 14px; border-radius: 14px; text-align: left; }
   .menu-list button .ico { margin: 0; width: 18px; height: 18px; }
@@ -426,9 +435,15 @@
   /* 目標MAX布陣のカードの「その他の操作」 */
   details.pattern-more { margin-top: 8px; }
   details.pattern-more > summary { cursor: pointer; font-size: 12px; font-weight: 700; color: var(--text-dim); }
-  /* 残り手数のカード: 右上に「?」、下にゲームモード */
-  #statusArea { position: relative; padding-right: 44px; }
-  #statusArea #btnSimHelp { position: absolute; top: 10px; right: 10px; }
+  /* 残り手数のカード: 右上に「リセット」と「?」、下にゲームモード */
+  #statusArea::after { content: ""; display: block; clear: both; }
+  #statusArea .card-tools { float: right; display: flex; align-items: center; gap: 6px; margin: 0 -6px 4px 10px; }
+  #statusArea .card-tools #btnResetGame { padding: 0 10px; height: 28px; }
+  /* 右上のボタンの横に1行目が並ぶよう、残り手数の行は普通の文の並びにする(括弧の中は次の行) */
+  #statusArea .moves-left { display: block; }
+  #statusArea .moves-left .note { display: block; margin-top: 0; }
+  #statusArea .moves-left .practice-label { margin-left: 8px; }
+  .nobr { display: inline-block; }   /* 改行するなら、この言葉の前で */
   #statusArea .rule-note { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
   #statusArea .rule-note:empty { display: none; }
   #statusArea .game-status { margin: 4px 0; color: var(--text); font-weight: 700; }
@@ -482,13 +497,13 @@
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="brand"><span class="egg" aria-hidden="true"></span><h1>EGG Navi <span class="ver">v2.2.23</span></h1></div>
+    <div class="brand"><span class="egg" aria-hidden="true"></span><h1>EGG Navi <span class="ver">v2.2.31</span></h1></div>
     <div class="top-icons">
       <button id="btnChars" class="icon-btn" title="ヒーロー" aria-label="ヒーロー"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></button>
       <button id="btnMenu" class="icon-btn" title="メニュー" aria-label="メニュー"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     </div>
   </header>
-  <!-- メニュー(≡): 目標MAX布陣・設定・記録・リセット -->
+  <!-- メニュー(≡): 目標MAX布陣・設定・記録 -->
   <div id="menuOverlay" class="overlay" style="display:none;"><div class="modal" id="menuModal">
     <h2>メニュー</h2>
     <div class="menu-list">
@@ -496,7 +511,6 @@
       <button id="btnConfig"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.49 10.69L22.14 10.88L22.14 13.12L19.49 13.31L19.42 13.66L18.22 16.37L19.96 18.38L18.38 19.96L16.37 18.22L16.07 18.42L13.31 19.49L13.12 22.14L10.88 22.14L10.69 19.49L10.34 19.42L7.63 18.22L5.62 19.96L4.04 18.38L5.78 16.37L5.58 16.07L4.51 13.31L1.86 13.12L1.86 10.88L4.51 10.69L4.58 10.34L5.78 7.63L4.04 5.62L5.62 4.04L7.63 5.78L7.93 5.58L10.69 4.51L10.88 1.86L13.12 1.86L13.31 4.51L13.66 4.58L16.37 5.78L18.38 4.04L19.96 5.62L18.22 7.63L18.42 7.93Z"/><circle cx="12" cy="12" r="3"/></svg>設定</button>
       <button id="btnExportGame" class="dim" title="1手以上打つと押せます。"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/></svg>記録を書き出す</button>
       <button id="btnImportGame"  title="書き出した記録を読み込んで、最初の盤面から1手ずつ再現します。"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4"/><path d="M7 8l5-5 5 5"/><path d="M4 20h16"/></svg>記録を読み込む</button>
-      <button id="btnResetGame" class="danger" title="盤面を全部「?」に戻し、打った手の記録も消します。目標MAX布陣と設定は残ります。"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></svg>リセット</button>
     </div>
     <input type="file" id="importFile" accept=".txt,.json,text/plain,application/json" style="display:none">
     <div class="modal-actions"><button id="btnMenuClose">閉じる</button></div>
@@ -507,7 +521,7 @@
   <div class="layout">
     <div class="col-left">
       <div class="panel" id="simPanel">
-        <div class="panel-head"><div class="panel-title"><h2>シミュレーター</h2><button id="btnSimHelp" class="help-btn" title="説明" aria-label="説明">?</button></div><span class="note" id="ruleBadge"></span></div>
+        <div class="panel-head"><div class="panel-title"><h2>シミュレーター</h2><button id="btnResetGame" class="small danger" title="盤面を全部「?」に戻し、打った手の記録も消します。目標MAX布陣と設定は残ります。">リセット</button><button id="btnSimHelp" class="help-btn" title="説明" aria-label="説明">?</button></div><span class="note" id="ruleBadge"></span></div>
         <div id="statusArea"></div>
         <div class="brush-row" id="brushRow"></div>
         <div class="board-wrap">
@@ -552,7 +566,7 @@
 
   <div id="dock"></div>
   <button id="btnJump" class="fab-round" style="display:none;"></button><button id="btnChainCollapse" class="fab-pill" style="display:none;"></button>
-  <footer>データは、このブラウザの中だけに保存します。残しておきたい対局は、メニューの「記録を書き出す」で書き出してください。<div class="disclaimer">このツールは非公式のファンツールで、ゲームの運営とは関係ありません。ゲームには一切触れないので、アカウントに影響はありません。</div><div class="credit"><span>created by シナっぷ ／</span> <span>thanks to EGGのみんな</span></div></footer>
+  <footer>データは、このブラウザの中だけに保存されます。<div class="disclaimer">このツールは非公式のファンツールで、ゲームの運営とは関係ありません。</div><div class="credit"><span>created by シナっぷ ／</span> <span>thanks to EGGのみんな</span></div></footer>
 </div>
 
 <div id="modalRoot"></div>
@@ -3930,7 +3944,7 @@ function renderBrushRow() {
       ? `<button class="sw hero ${brush.species === sp && !brush.erase ? 'on' : ''}" style="background:${CHECKER[0]} url('${img}')" data-sp="${sp}" title="${esc(pieceLabel(sp, lvSp))}"></button>`
       : `<button class="sw ${brush.species === sp && !brush.erase ? 'on' : ''}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}" data-sp="${sp}">${sp}</button>`;
   }
-  h += '<span class="row-break"></span><span class="note" style="margin:0 2px;">Lv</span>';
+  h += '<span class="row-break"></span><span class="lv-group"><span class="note" style="margin:0 2px;">Lv</span>';
   fixBrushLevel();
   // ボタンはいちばん大きい最大レベルまで並べ(素材を変えても並びが動かないように)、選んでいる素材で入力できないレベルは押せなくする
   const spMax = state.maxLevels[brush.species] || 7, spMin = minBoardLevelOf(brush.species);
@@ -3940,7 +3954,7 @@ function renderBrushRow() {
     h += `<button class="lv ${brush.level === lv && !brush.erase ? 'on' : ''}" data-lv="${lv}" ${off ? `disabled title="${why}"` : ''}>${lv}</button>`;
   }
   // 「?」のボタン: 入力を省くマスにする
-  h += `<button class="sw ${brush.erase ? 'on' : ''}" data-erase="1" style="background:#4a4458;color:#ffd36b;width:auto;padding:0 8px;margin-left:6px;" title="入力を省くマスにします。どの駒ともマッチしない駒として計算します。">?</button>`;
+  h += `<button class="sw ${brush.erase ? 'on' : ''}" data-erase="1" style="background:#fffdf9;color:#9c90b8;border:2px dashed #b9aed0;width:auto;padding:0 8px;margin-left:3px;" title="入力を省くマスにします。どの駒ともマッチしない駒として計算します。">?</button></span>`;
   // マウスを乗せたときの説明はスマホで見えないので、Lv1 を選べない理由は文でも出す
   if (spMin > 1) h += `<span class="note" style="margin:0 0 0 4px;">（${esc(spLabel(brush.species))}は補充がLv2なのでLv1は選べません）</span>`;
   brushRowEl.innerHTML = h;
@@ -4075,14 +4089,17 @@ function updateShortageLine() {
 function renderGameControls() {
   renderGameControlsInner();
   const area = document.getElementById('statusArea');
-  const help = document.getElementById('btnSimHelp');   // 「?」は描き直しで消えないよう、先に取っておく
+  const help = document.getElementById('btnSimHelp');   // 「?」と「リセット」は描き直しで消えないよう、先に取っておく
+  const reset = document.getElementById('btnResetGame');
   area.innerHTML = '';
+  // 右上の「リセット」と「?」。右に寄せ、文は下の行から全ての幅を使う
+  const tools = document.createElement('div'); tools.className = 'card-tools';
+  tools.appendChild(reset); tools.appendChild(help); area.appendChild(tools);
   const ml = gameControlsEl.querySelector('.moves-left'), sl = gameControlsEl.querySelector('#shortageLine');
   if (state.game.phase === 'setup') { const gs = gameControlsEl.querySelector('.game-status'); if (gs) area.appendChild(gs); }
   if (ml) area.appendChild(ml);
   if (sl) area.appendChild(sl);
   const rule = document.createElement('div'); rule.className = 'rule-note'; rule.textContent = ruleText(); area.appendChild(rule);
-  area.appendChild(help);
   renderDock();
 }
 // 画面の下のボタン(スマホだけ。2026-10-03 v3.0)。そのときの大事なボタンを、親指の届く所に大きく出す。
@@ -4118,8 +4135,8 @@ function renderGameControlsInner() {
   if (g.phase === 'setup') {
     const u = countUnresolvedCells(state.board);
     gameControlsEl.innerHTML = `
-      <div class="game-status">ゲームと同じ盤面と残り手数を入れてください。</div>
-      <div class="toolbar" style="margin-top:0;margin-bottom:8px;align-items:center;">
+      <div class="game-status">ゲームと同じ盤面と残り手数を<span class="nobr">入れてください。</span></div>
+      <div class="toolbar" style="margin-top:14px;margin-bottom:8px;align-items:center;">
         <label class="small">残り手数 <input type="number" id="startMovesInput" min="1" max="999" value="${g.start}" style="width:5em;"></label>
         <button id="btnStartGame" class="primary">この盤面で始める</button>
         ${boardReadButtonHtml()}
@@ -4360,7 +4377,7 @@ window.addEventListener('pointermove', (ev) => {
     const piece = document.createElement('div');
     piece.className = 'drag-piece';
     piece.style.width = r.width + 'px'; piece.style.height = r.height + 'px';
-    piece.style.background = src.style.background || '#4a4458'; piece.style.color = src.style.color || 'var(--accent)';
+    piece.style.background = src.style.background || '#fffdf9'; piece.style.color = src.style.color || '#9c90b8';
     piece.textContent = src.classList.contains('char') ? '' : c && c.species !== '?' ? `${c.species}${c.level}` : '?';
     document.body.appendChild(piece);
     press.pieceEl = piece; press.cx = r.left + r.width / 2; press.cy = r.top + r.height / 2;
@@ -4836,7 +4853,7 @@ function openAsk(message, opts = {}) {
   const overlay = document.createElement('div');
   overlay.className = 'overlay';
   const modal = document.createElement('div');
-  modal.className = 'modal';
+  modal.className = 'modal ask';   // 確かめとお知らせの短い画面。右上の ✕ は付けない(どちらかを選んでもらう)
   modal.style.maxWidth = '420px';
   const p = document.createElement('p');
   p.className = 'ask-text';
@@ -4872,6 +4889,20 @@ function openAsk(message, opts = {}) {
   modalRoot.appendChild(overlay);
   ok.focus();
 }
+// 小さな画面の右上に、いつも見える ✕ を付ける(2026-10-03 本人「スマホだと閉じるまでかなりスクロールが必要」)。
+// ✕ は、その画面の下の「閉じる」「キャンセル」「やめる」を押したのと同じ。画面の中身を描き直しても付け直す
+const CLOSE_LABELS = ['閉じる', 'キャンセル', 'やめる'];
+function ensureModalX(modal) {
+  if (modal.classList.contains('ask') || modal.querySelector(':scope > .modal-x')) return;
+  const btns = Array.from(modal.querySelectorAll('.modal-actions button')).filter(b => CLOSE_LABELS.includes(b.textContent.trim()));
+  if (!btns.length) return;
+  const x = document.createElement('button');
+  x.className = 'modal-x'; x.title = '閉じる'; x.setAttribute('aria-label', '閉じる');
+  x.innerHTML = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  x.addEventListener('click', () => { const b = Array.from(modal.querySelectorAll('.modal-actions button')).filter(b => CLOSE_LABELS.includes(b.textContent.trim())).pop(); if (b) b.click(); });
+  modal.insertBefore(x, modal.firstChild);
+}
+new MutationObserver(() => document.querySelectorAll('.modal').forEach(ensureModalX)).observe(document.body, { childList: true, subtree: true });
 function openNotice(message, onClose) { openAsk(message, { cancelLabel: null, onOk: onClose, onCancel: onClose }); }
 
 /* ============================== 説明の画面 ============================== */
@@ -5086,7 +5117,7 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
   <p class="sec-h">使い方</p>
   <ol>
     <li>ゲームと同じ盤面と残り手数を入れて、「この盤面で始める」を押します。ゲームのスクショから読み取ることもできます（「スクショから読み取る」）。</li>
-    <li>ゲームで打った手を、ツールでも打ちます。入替は、駒をドラッグするか、2つのマスを順に押します。削除は、駒を長押しするか、「削除」を選んでマスを押します。</li>
+    <li>ゲームで打った手を、ツールでも打ちます。操作はゲームと同じで、駒をドラッグすると入替、長押しすると削除です。2つのマスを順に押す入替と、「削除」を選んでマスを押す削除もできます。</li>
     <li>マッチが止まったら、補充されたマス（「?」のマス）をゲームに合わせて入れて、「確定」を押します。ここでもスクショから読み取れます。</li>
   </ol>
   <p class="sec-h">困ったとき</p>
@@ -5097,7 +5128,7 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
   </ul>
   <details class="more"><summary>詳しく</summary>
     <p class="sec-h">練習モード</p>
-    <p>始める前に残り手数を入れて「練習モードで始める」を押すと、ランダムな盤面で練習できます。補充はツールが決めるので、入力は要りません。やめるときは、メニューの「リセット」を押してください。</p>
+    <p>始める前に残り手数を入れて「練習モードで始める」を押すと、ランダムな盤面で練習できます。補充はツールが決めるので、入力は要りません。やめるときは、残り手数の右にある「リセット」を押してください。</p>
     <p class="sec-h">「?」のマス</p>
     <p>入力を省いたマスと、補充されたマスは「?」になります。「?」は、どの駒ともマッチしない駒として扱います。「「?」のまま確定」を押すと、補充されたマスを入れずに進められます。ただし、盤面に「?」が残るので、そこを通る連鎖は見つからず、事故の注意も出せません。</p>
     <p class="sec-h">盤面で光っている駒</p>
@@ -5106,21 +5137,11 @@ document.getElementById('btnSimHelp').addEventListener('click', () => openInfoMo
     <p>今目指している目標MAX布陣まで、レベルごとに素材があと何個足りないかです。盤面の駒を数え、置いた場所は見ません。ただし、布陣に使えない駒は数えません（条件は、「手順を探す」の「?」の「詳しく」にあります）。布陣に使えない駒があるときは、その数も出します。入替で運べば使えることもあるので、盤面を見て判断してください。この表示は設定で消せます。</p>
     <p class="sec-h">赤い点線の枠</p>
     <p>「確定」を押したときに、打った手とつじつまが合わない盤面を見つけると、枠を出します。枠は「ここを直せばつじつまが合う」という候補で、間違えた場所そのものとは限りません。枠のマスが合っていても、盤面のどこかがゲームとずれていることがあります。</p>
-    <p class="sec-h">スクショから読み取る</p>
-    <p>ヒーローの画面で、A〜Dの4つ全てにヒーローを選んでいるときに使えます。読み取れなかったマスは「?」になるので、ゲーム画面を見て入れてください。</p>
-    <p class="sec-h">ヒーローの絵</p>
-    <ul>
-      <li>右上のヒーローのボタン（人の絵）の画面でヒーローを選ぶと、盤面のその素材の駒を、ゲームと同じ絵で出します。</li>
-      <li>このツールには、ゲームの画像は入っていません。出すのは、使う人が自分の端末で登録した絵だけです。</li>
-      <li>登録は、ゲームのスキン画面にある「ステージ画像プレビュー」を、LV1から最後のレベルまで1枚ずつスクショして、「ヒーローを登録」で選ぶだけです。登録に使ったスクショは、登録した後に消して構いません。</li>
-      <li>登録した絵は、この端末のブラウザの中だけに保存します。ブラウザのデータを消したときや機種を変えたときに備えて、「控えを書き出す」で控えのファイルを作っておいてください。</li>
-    </ul>
     <p class="sec-h">メニュー（右上の ≡）</p>
     <ul>
       <li>目標MAX布陣: 作りたいMAX布陣を登録します（PCでは、画面の右に出ます）。</li>
       <li>設定: ゲームモード（補充のレベル・斜め入替・PvPなど）を、ゲームに合わせます。残り手数の計算と、手順の探し方が変わります。</li>
       <li>記録を書き出す・読み込む: 打った手と盤面を、1局分まるごとファイル（.txt）に保存して、読み込んで再現できます。</li>
-      <li>リセット: 盤面を全て「?」に戻して、打った手の記録を消します。目標MAX布陣と設定は残ります。</li>
     </ul>
     <p class="sec-h">▲ 盤面へ・▼ 結果へ</p>
     <p>スマホで、盤面と「次の手を探す」の結果が1画面に収まらないときに、画面の右下に出ます。押すと、盤面と、最後に見ていた結果のカードの間を移動できます。</p>
@@ -5596,7 +5617,7 @@ function applyBoardRead(res, sec) {
   if (g.phase === 'move' && g.future.length) withFutureDropped(apply); else apply();
 }
 function charThumbsHtml(levels, size = 30, selected = -1) {
-  return levels.map((u, i) => `<span class="char-thumb${i === selected ? ' sel' : ''}" data-i="${i}" style="width:${size}px;height:${size}px;background:${CHECKER[i % 2]} url('${u}') center / 92% auto no-repeat;" title="LV${i + 1}"></span>`).join('');
+  return levels.map((u, i) => `<span class="char-thumb${i === selected ? ' sel' : ''}" data-i="${i}" style="width:${size}px;height:${size}px;background:${CHECKER[0]} url('${u}') center / 92% auto no-repeat;" title="LV${i + 1}"></span>`).join('');
 }
 function newOverlay() {
   const overlay = document.createElement('div');
@@ -5633,11 +5654,72 @@ function syncMaxLevelToChar(sp) {
 function syncMaxLevelsForChar(name) {
   return SPECIES.filter(sp => state.speciesChars[sp] === name).map(syncMaxLevelToChar).filter(Boolean).join('');
 }
+// ヒーローを選んでいる素材の色を、ヒーローの絵に合わせて決める(2026-10-03 本人「一度ヒーローを選ぶと色が変えられない」)。
+// 絵の色の付いた点を、色の系統(黒と白を除く5つ)のうち色合いが一番近いものに振り分けて数え、多い系統にする。
+// ヒーロー同士で同じ系統にならないよう、はっきり決まるヒーローから順に、まだ使っていない系統を取る。
+// 決め直すのはヒーローを選んだとき・登録し直したとき・控えを読み込んだときだけ。設定の「素材の色」で変えることもできる
+const HUE_FAMILIES = ['red', 'yellow', 'green', 'blue', 'purple'];
+const heroColorCache = new Map();
+function rgbToHsv(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), d = mx - Math.min(r, g, b);
+  let h = 0;
+  if (d) h = mx === r ? 60 * (((g - b) / d) % 6) : mx === g ? 60 * ((b - r) / d + 2) : 60 * ((r - g) / d + 4);
+  return [h < 0 ? h + 360 : h, mx ? d / mx : 0, mx];
+}
+// 系統ごとの点数を、多い順に [系統, 点数] で返す
+async function heroColorVotes(name) {
+  const urls = charStore.get(name).urls, key = name + ':' + urls.map(u => u.length).join(',');
+  if (heroColorCache.has(key)) return heroColorCache.get(key);
+  const famHue = HUE_FAMILIES.map(k => rgbToHsv(...hexToRgb(COLOR_FAMILIES[k].stops[1]))[0]);
+  const votes = {}, S = 48, cv = document.createElement('canvas');
+  cv.width = S; cv.height = S;
+  const cx = cv.getContext('2d', { willReadFrequently: true });
+  for (const u of urls) {
+    const img = await new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = u; });
+    if (!img) continue;
+    cx.clearRect(0, 0, S, S); cx.drawImage(img, 0, 0, S, S);
+    const d = cx.getImageData(0, 0, S, S).data, lv = {};
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] < 200) continue;
+      const [h, sat, v] = rgbToHsv(d[i], d[i + 1], d[i + 2]);
+      if (sat < 0.35 || v < 0.3) continue;   // 線・影・白っぽい所は数えない
+      let best = 0, bd = 1e9;
+      famHue.forEach((fh, k) => { const dh = Math.min(Math.abs(h - fh), 360 - Math.abs(h - fh)); if (dh < bd) { bd = dh; best = k; } });
+      lv[HUE_FAMILIES[best]] = (lv[HUE_FAMILIES[best]] || 0) + sat * v;
+    }
+    // レベルごとに合計1にしてから足す(高いレベルほど絵が大きく派手なので、そのままだと元の色が負ける。例: 紫のフードが、LV6・7の青い飾りに負ける)
+    const sum = Object.values(lv).reduce((a, b) => a + b, 0);
+    if (sum) for (const k in lv) votes[k] = (votes[k] || 0) + lv[k] / sum;
+  }
+  const ranked = Object.entries(votes).sort((a, b) => b[1] - a[1]);
+  heroColorCache.set(key, ranked);
+  return ranked;
+}
+async function autoHeroColors() {
+  const list = [];
+  for (const sp of SPECIES) { const n = heroNameOf(sp); if (n) list.push({ sp, votes: await heroColorVotes(n) }); }
+  if (!list.length) return;
+  const sure = v => !v.length ? 0 : v.length < 2 ? Infinity : v[0][1] / v[1][1];
+  list.sort((a, b) => sure(b.votes) - sure(a.votes));
+  const taken = new Set();
+  let changed = false;
+  for (const { sp, votes } of list) {
+    const fam = votes.map(v => v[0]).find(k => !taken.has(k)) || HUE_FAMILIES.find(k => !taken.has(k)) || state.speciesColors[sp];
+    taken.add(fam);
+    if (state.speciesColors[sp] !== fam) { state.speciesColors[sp] = fam; changed = true; }
+  }
+  if (!changed) return;
+  applySpeciesColors();
+  saveState();
+  refresh(); renderPatternList(); renderFilterRow();
+}
 function openCharsModal(msg) {
   const { overlay, modal, close } = newOverlay();
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
   const names = Array.from(charStore.keys()).sort((a, b) => a.localeCompare(b, 'ja'));
-  let h = '<h2>素材のヒーロー</h2><div class="note">ゲームのヒーローの絵を登録すると、盤面の駒をその絵で出します。登録した絵は、この端末のブラウザの中だけに保存します。機種を変えたときなどに備えて、「控えを書き出す」で控えを作っておいてください。</div><div class="char-rows">';
+  let h = '<div class="panel-title"><h2>ヒーローの選択</h2><button id="chHelp" class="help-btn" title="説明" aria-label="説明">?</button></div>' +
+    (names.length ? '' : '<div class="note">先に「ヒーローを登録」で、ゲームのヒーローを登録してください。</div>') + '<div class="char-rows">';
   for (const sp of SPECIES) {
     const cur = state.speciesChars[sp] && charStore.has(state.speciesChars[sp]) ? state.speciesChars[sp] : '';
     h += `<div class="char-row"><label><span class="species-pill" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${sp}</span> のヒーロー</label>` +
@@ -5656,11 +5738,28 @@ function openCharsModal(msg) {
     // 素材の名前・素材のボタンの絵・目標MAX布陣の札を、選んだヒーローに合わせて描き直す
     refresh(); renderPatternList(); renderFilterRow();
     saveState();
+    autoHeroColors();
     const t = modal.querySelector(`[data-thumbs="${sp}"]`);
     t.innerHTML = sel.value && charStore.has(sel.value) ? charThumbsHtml(charStore.get(sel.value).urls, 24) : '';
     renderBoard();
   }));
   modal.querySelector('#chClose').addEventListener('click', close);
+  // 「?」の説明は、ヒーローの画面の上に重ねて出す(閉じるとヒーローの画面に戻る)
+  modal.querySelector('#chHelp').addEventListener('click', () => {
+    const info = newOverlay();
+    info.modal.classList.add('info-modal');
+    info.overlay.addEventListener('click', e => { if (e.target === info.overlay) info.close(); });
+    info.modal.innerHTML = `<h2>ヒーローの選択</h2>
+      <ul>
+        <li>A〜Dに、ゲームと同じヒーローを選ぶと、盤面の駒がその絵になります。</li>
+        <li>A〜Dの4つ全てにヒーローを選ぶと、盤面を入れるときに「スクショから読み取る」のボタンが出ます。読み取れなかったマスは「?」になるので、ゲーム画面を見て入れてください。</li>
+        <li>登録は、ゲームのスキン画面にある「ステージ画像プレビュー」を、LV1から最後のレベルまで1枚ずつスクショして、「ヒーローを登録」で選ぶだけです。登録に使ったスクショは、登録した後に消して構いません。</li>
+        <li>このツールには、ゲームの画像は入っていません。出すのは、使う人が自分の端末で登録した絵だけです。</li>
+        <li>登録した絵は、このブラウザの中だけに保存されます。機種を変えるときは、「控えを書き出す」で作ったファイルを新しい端末の「控えを読み込む」で読み込むと、登録し直さずに済みます。</li>
+      </ul>
+      <div class="modal-actions"><button class="primary">閉じる</button></div>`;
+    info.modal.querySelector('.modal-actions button').addEventListener('click', info.close);
+  });
   modal.querySelector('#chRegister').addEventListener('click', () => { close(); openCharRegister(); });
   modal.querySelector('#chList').addEventListener('click', () => { close(); openCharList(); });
   modal.querySelector('#chExport').addEventListener('click', exportChars);
@@ -5688,7 +5787,7 @@ function openCharRegister() {
     return true;
   };
   const stepPick = (msg) => {
-    modal.innerHTML = '<h2>ヒーローを登録</h2><p>ゲームのスキン画面にある「ステージ画像プレビュー」を、LV1から最後のレベルまで1枚ずつスクショしてください。撮ったスクショを全部選んでください。最後のレベルまで登録すると、その素材の最大レベルは、登録したレベルの数で決まります。途中のレベルまでしか登録しないと、最大レベルがゲームより小さくなるので、必ず最後のレベルまで撮ってください。</p>' +
+    modal.innerHTML = '<h2>ヒーローを登録</h2><p>ゲームのスキン画面の「ステージ画像プレビュー」を、LV1から最後のレベルまで1枚ずつスクショして、全て選んでください。途中のレベルまでしか登録しないと、このヒーローを選んだ素材の最大レベルが、ゲームより小さくなります。</p>' +
       `<div class="note char-msg">${esc(msg || '')}</div>` +
       '<div class="modal-actions"><button id="crCancel">やめる</button><button id="crPick" class="primary">スクショを選ぶ</button></div><input type="file" id="crFiles" accept="image/*" multiple style="display:none">';
     const fi = modal.querySelector('#crFiles');
@@ -5754,7 +5853,7 @@ function openCharRegister() {
   };
   const stepReview = () => {
     const draw = () => {
-      modal.querySelector('.char-review').innerHTML = crops.map((u, i) => `<div class="char-cell"><span class="char-thumb${i === picked ? ' sel' : ''}" data-i="${i}" style="background:${CHECKER[i % 2]} url('${u}') center / 92% auto no-repeat;"></span><span>LV${i + 1}</span></div>`).join('');
+      modal.querySelector('.char-review').innerHTML = crops.map((u, i) => `<div class="char-cell"><span class="char-thumb${i === picked ? ' sel' : ''}" data-i="${i}" style="background:${CHECKER[0]} url('${u}') center / 92% auto no-repeat;"></span><span>LV${i + 1}</span></div>`).join('');
       modal.querySelectorAll('.char-review .char-thumb').forEach(el => el.addEventListener('click', () => {
         const i = Number(el.dataset.i);
         if (picked < 0) picked = i;
@@ -5777,6 +5876,7 @@ function openCharRegister() {
         cleanup();
         const m = syncMaxLevelsForChar(name);
         onBoardChanged(); renderPatternList();
+        autoHeroColors();
         openNotice(`「${name}」を登録しました。控えを書き出しておくと、機種を変えたときも登録し直さずに済みます。`, () => openCharsModal(m));
       });
       if (charStore.has(name)) openAsk(`「${name}」は登録済みです。登録し直しますか？`, { okLabel: '登録し直す', onOk: save });
@@ -5837,6 +5937,7 @@ function importChars(file) {
     const m = SPECIES.map(syncMaxLevelToChar).filter(Boolean).join('');
     if (m) onBoardChanged();
     refreshCharUi();
+    autoHeroColors();
     openNotice(`控えを読み込みました（${list.length}体）。同じ名前のヒーローは、控えの絵に置き換えました。`, () => openCharsModal(m));
   };
   r.onerror = () => openNotice('控えのファイルではありません。', openCharsModal);
@@ -5854,18 +5955,18 @@ document.getElementById('btnConfig').addEventListener('click', () => {
   // ゲームのルールに合わせる設定(連鎖による手数の増加・斜め入替・PvP)は見出し「ゲームモード」1つにまとめ、一番上に置く(v3.0。一番大事な設定のため)
   h += '<p class="sec-h">■ ゲームモード</p>' +
     '<div class="cfg-box"><div class="cfg-sub">連鎖による手数の増加</div>' +
-    `<label class="opt"><input type="radio" name="cfgRecovery" value="normal" ${state.increasingRecovery ? '' : 'checked'}> 通常</label>` +
-    `<label class="opt"><input type="radio" name="cfgRecovery" value="increasing" ${state.increasingRecovery ? 'checked' : ''}> ラウンドごとに増える</label>` +
+    `<label class="opt"><input type="radio" name="cfgRecovery" value="normal" ${state.increasingRecovery ? '' : 'checked'}> 通常（魔神とーばつ・PvPなど）</label>` +
+    `<label class="opt"><input type="radio" name="cfgRecovery" value="increasing" ${state.increasingRecovery ? 'checked' : ''}> ラウンドごとに増える（勇者しゅーらいなど）</label>` +
     '<div class="note">1手の中でマッチが起きる回を、ラウンド1・2・3…と数えます。通常は、ラウンド2以降のマッチ1回につき1手増えます。ラウンドごとに増えるは、ラウンド2で1手、ラウンド3で2手…と増えます。</div></div>';
   h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgDiagonal" ${state.diagonal ? 'checked' : ''}> 斜め入替（斜めに隣り合うマスとも入れ替えられる）</label>` +
     '<div class="note">オンにすると「次の手を探す」で調べる手が増えるので、計算に時間が掛かります。</div></div>';
   h += `<div class="cfg-box"><label class="opt"><input type="checkbox" id="cfgPvp" ${state.pvp ? 'checked' : ''}> PvPモード</label>` +
     `<div class="note">打った手と残り手数の合計が${PVP_MOVE_CAP}手に届くと、連鎖が起きても手数が増えなくなります。</div></div>`;
-  // ヒーローを選んでいる素材は、色(盤面に絵を出すので使わない)と最大レベル(登録した絵で決まる)の行を出さない。全部選んでいれば項目ごと出さない
+  // ヒーローを選んでいる素材は、最大レベル(登録した絵で決まる)の行を出さない。色の行は、名前の札などに使うので全ての素材に出す
   const plainSp = SPECIES.filter(sp => !heroNameOf(sp)), someHero = plainSp.length < SPECIES.length;
   // 最大レベルの行: ヒーローを選んでいない素材と、記録を読み込んだときなどに、絵のレベルの数と最大レベルが違ってしまった素材
   const maxSp = SPECIES.filter(sp => !heroNameOf(sp) || charStore.get(heroNameOf(sp)).levels.length !== state.maxLevels[sp]);
-  if (plainSp.length) h += '<p class="sec-h">■ 素材の色</p><div class="note">ゲーム画面の素材の色に合わせて変えられます。最大レベルに近づくほど色が濃くなります。' + (someHero ? 'ヒーローを選んでいる素材は、盤面に絵を出すので、ここには出しません。' : '') + '</div><div class="config-grid">';
+  h += '<p class="sec-h">■ 素材の色</p><div class="note">ゲーム画面の素材の色に合わせて変えられます。最大レベルに近づくほど色が濃くなります。' + (someHero ? 'ヒーローを選んだ素材の色は、ヒーローの絵に合わせて自動で決まります。' : '') + '</div><div class="config-grid">';
   const famOptions = cur => Object.keys(COLOR_FAMILIES).map(k => `<option value="${k}" ${cur === k ? 'selected' : ''}>${COLOR_FAMILIES[k].name}</option>`).join('');
   const famPreview = k => [0, 0.25, 0.5, 0.75, 1].map(t => {
     const st = COLOR_FAMILIES[k].stops.map(hexToRgb);
@@ -5873,11 +5974,12 @@ document.getElementById('btnConfig').addEventListener('click', () => {
     const c = `rgb(${[0, 1, 2].map(i => Math.round(a[i] + (b[i] - a[i]) * u)).join(',')})`;
     return `<span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${c};border:1px solid #0003;"></span>`;
   }).join('');
-  for (const sp of plainSp) {
+  for (const sp of SPECIES) {
     const cur = state.speciesColors[sp];
-    h += `<div class="config-item"><label>${esc(spLabel(sp))} の色</label><select data-color="${sp}">${famOptions(cur)}</select> <span data-color-preview="${sp}">${famPreview(cur)}</span></div>`;
+    // ヒーローを選んだ素材は、盤面に絵を出すので、レベルごとの濃さの見本は出さない(名前の札の色で分かる)
+    h += `<div class="config-item"><label><span class="species-pill${heroNameOf(sp) ? ' named' : ''}" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${esc(spLabel(sp))}</span> 色</label><select data-color="${sp}">${famOptions(cur)}</select>${heroNameOf(sp) ? '' : ` <span data-color-preview="${sp}">${famPreview(cur)}</span>`}</div>`;
   }
-  h += (plainSp.length ? '</div>' : '') + '<div class="note" id="cfgColorWarn" style="color:var(--danger);"></div>';
+  h += '</div><div class="note" id="cfgColorWarn" style="color:var(--danger);"></div>';
   if (maxSp.length) h += '<p class="sec-h">■ 素材ごとの最大レベル</p><div class="note">このレベルに達した駒は、それ以上マッチしません。' + (someHero ? 'ヒーローを選んでいる素材は、登録した絵のレベルの数で決まるので、ここには出しません。' : '') + '</div><div class="config-grid">';
   for (const sp of maxSp) {
     h += `<div class="config-item"><label><span class="species-pill${heroNameOf(sp) ? ' named' : ''}" data-pill="${sp}" style="background:${SPECIES_COLOR_HEX[sp]};color:${textOn(SPECIES_COLOR_HEX[sp])}">${esc(spLabel(sp))}</span> 最大Lv</label>` +
@@ -5922,7 +6024,8 @@ document.getElementById('btnConfig').addEventListener('click', () => {
   const colorCheck = () => {
     const chosen = {};
     modal.querySelectorAll('[data-color]').forEach(sel => {
-      modal.querySelector(`[data-color-preview="${sel.dataset.color}"]`).innerHTML = famPreview(sel.value);
+      const pv = modal.querySelector(`[data-color-preview="${sel.dataset.color}"]`);
+      if (pv) pv.innerHTML = famPreview(sel.value);
       // 「素材ごとの最大レベル」「補充される駒のレベル」に付いている印も、選んだ色にその場で変える(決まるのは「保存」を押したとき)
       const hex = (COLOR_FAMILIES[sel.value] || COLOR_FAMILIES.blue).stops[1];
       modal.querySelectorAll(`.species-pill[data-pill="${sel.dataset.color}"]`).forEach(pill => { pill.style.background = hex; pill.style.color = textOn(hex); });
